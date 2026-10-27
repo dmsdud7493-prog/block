@@ -40,3 +40,15 @@ describe("a11y — 결과 영역", () => {
   it("AfterExplain", () => noViolations(<AfterExplain targets={densityCatalog.predictionTargets} predictions={[{ target: "same_density", choice: "same", rationale: "같은 철이라서", hintsUsed: 0 }]} onSave={() => undefined} />));
   it("ReferencePanel (용해도 표)", () => noViolations(<ReferencePanel table={separation2Catalog.reference![0]} />));
 });
+
+import ReportForm from "@/components/report/ReportForm";
+import ReflectionForm from "@/components/report/ReflectionForm";
+import SubmitGate from "@/components/report/SubmitGate";
+import { emptyReport } from "@/lib/report/template";
+
+describe("a11y — 보고서 (S6)", () => {
+  const c = emptyReport();
+  it("ReportForm", () => noViolations(<ReportForm content={c} update={() => undefined} readOnly={false} onFocusSection={() => undefined} />));
+  it("ReflectionForm", () => noViolations(<ReflectionForm content={c} update={() => undefined} readOnly={false} onFocusSection={() => undefined} />));
+  it("SubmitGate", () => noViolations(<SubmitGate content={c} aiAssisted={[]} setAi={() => undefined} onSubmit={() => undefined} error={null} mode="session" locked={false} />));
+});

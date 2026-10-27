@@ -1,7 +1,7 @@
 /**
  * 밀도 실험 전체 흐름 (plan S2·S5 수용 기준):
  * 블록 → 실시간 점검 → 예측 게이트(3.1) → 실행·모니터 → 측정값 표 → 계산값 오답 안내(5.3) → 정답
- * → 그래프 전 예측 → 그래프 → 예상과 비교(3.3) → 보고서 버튼 열림
+ * → 그래프 전 예측 → 그래프 → 예상과 비교(3.3) → 보고서(초안 옮기기·성찰·제출 체크리스트, S6)
  */
 import { expect, test, type Page } from "@playwright/test";
 import { item, qty, workspace } from "./workspace";
@@ -35,7 +35,7 @@ async function predict(page: Page, choiceText: string) {
   await dialog.getByRole("button", { name: "예상 저장하기" }).click();
 }
 
-test("밀도: 설계부터 보고서 직전까지", async ({ page }) => {
+test("밀도: 설계부터 보고서까지", async ({ page }) => {
   await page.goto("/demo/density");
   await load(page, workspace(D, [...ironSteps("iron_big"), ...ironSteps("iron_small")], vars));
   await expect(page.getByText("점검 결과: 지금은 걸리는 곳이 없어요.")).toBeVisible();
@@ -73,6 +73,23 @@ test("밀도: 설계부터 보고서 직전까지", async ({ page }) => {
     await box.getByRole("button", { name: "저장" }).click();
   }
   await expect(report).toBeEnabled();
+
+  // S6: 보고서 — 기록이 초안으로 옮겨지고, 해석·성찰은 비어 있으며, 체크리스트가 채워져야 제출 조건 충족
+  await report.click();
+  await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
+  await expect(page.locator("#r-procedure")).toHaveValue(/1\. /);
+  await expect(page.locator("#r-results")).toHaveValue(/큰 철조각/);
+  await expect(page.locator("#r-evidence")).toHaveValue("");
+  const gate = page.locator("section[aria-labelledby=submit-title]");
+  await expect(gate.getByText(/아직: 성찰 질문 4개 중 3개 이상/)).toBeVisible();
+  await page.getByLabel("가설이 지지되었다").check();
+  await page.locator("#r-evidence").fill("표의 밀도 7.9 g/mL 두 값");
+  await page.locator("#r-error").fill("눈금을 읽을 때 오차");
+  await page.locator("#r-improve").fill("여러 번 재서 평균");
+  for (const id of ["diff", "hardest", "curious"]) await page.locator(`#r-ref-${id}`).fill("예상과 결과를 비교하며 생각한 점");
+  await expect(gate.getByText(/완료: 성찰 질문 4개 중 3개 이상/)).toBeVisible();
+  await expect(gate.getByRole("button", { name: "제출하기" })).toBeDisabled();
+  await expect(gate.getByText(/체험 모드에서는 제출되지 않아요/)).toBeVisible();
 });
 
 test("예측 없이 실행 API를 부르면 403 (지침 3.1 서버 가드)", async ({ request }) => {
