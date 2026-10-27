@@ -39,11 +39,11 @@
 src/
 ├── app/
 │   ├── (auth)/login/            # C-01 학생(반 코드+학번+PIN) / 교사(이메일)
-│   ├── lab/                     # S-01 과제 목록, [sessionId]/ S-02~S-05, [sessionId]/report S-06~S-08
-│   ├── dashboard/               # T-01~T-05 교사
+│   ├── lab/                     # S-01 과제 목록, [sessionId]/ S-02~S-08 (같은 화면 안에서 보고서 단계로 전환)
+│   ├── dashboard/               # T-03 4카드, classes/[id] 반 관리, classes/[id]/live 실시간 보드, sessions/[id] 학생 상세, submissions/[id] 채점
 │   ├── demo/[slug]/             # 로그인 없는 체험(메모리 상태)
 │   ├── privacy/ netcheck/       # 처리방침, 망 점검
-│   └── api/                     # tutor, check, run, predict, report/{draft,submit,feedback}, grade, class/*, events, session
+│   └── api/                     # tutor, check, run, predict, events, session/*, report/{draft,submit}, grade, class/*, demo/*, health
 ├── components/
 │   ├── blocks/  monitor/  inquiry/  data/  tutor/  report/  teacher/  ui/
 ├── lib/
@@ -51,25 +51,25 @@ src/
 │   ├── tutor/                   # prompts, schemas, ladder, stateInjection, safety, localTutor
 │   ├── supabase/                # client.ts, server.ts, admin.ts, env.ts
 │   ├── server/                  # 데이터 접근 계층(DAL) — Route Handler만 import
-│   ├── events/                  # log.ts, fold.ts
+│   ├── events/                  # types.ts(이벤트 종류), fold.ts(학생별 상태·막힘), cards.ts(4카드)
 │   └── report/                  # template.ts, rubric.ts, transcribe.ts
 └── proxy.ts                     # 세션 쿠키 갱신 + 역할별 라우트 보호(낙관적 검사)
 supabase/
 ├── config.toml
-├── migrations/0001_init.sql 0002_rls.sql 0003_rpc.sql 0004_views.sql
+├── migrations/0001_init 0002_rls 0003_rpc 0004_tutor 0005_report 0006_teacher 0007_sketch 0008_compliance
 └── seed.sql
 tests/ unit/ db/ a11y/ e2e/
 ```
 
 ## 4. 데이터 모델 요약
 
-`profiles`(role, display_name, consent_on_file) · `classes`(join_code, settings) · `enrollments` · `experiments`(spec 서버 전용, `experiments_public` 뷰) · `assignments` · `sessions`(seed, status, current_step, scaffold_level) · `block_programs`(version 누적) · `runs`(run_no 누적) · `measurements`(제시값/학생 입력, error_type, attempt) · `predictions`(choice, rationale, matched, rationale_after) · `reports`(content jsonb) · `submissions`(상태 머신) · `chat_messages`(meta.hint_level·usage, flagged) · `events`(불변 로그, payload.guideline) · `grade_audit_log`.
+`profiles`(role, display_name, consent_on_file) · `classes`(join_code, settings) · `enrollments` · `experiments`(spec 서버 전용, `experiments_public` 뷰) · `assignments` · `sessions`(seed, status, current_step, scaffold_level) · `block_programs`(version 누적) · `runs`(run_no 누적) · `measurements`(제시값/학생 입력, error_type, attempt) · `predictions`(choice, rationale, matched, rationale_after) · `reports`(content jsonb) · `submissions`(상태 머신) · `chat_messages`(meta.hint_level·usage, flagged) · `events`(불변 로그, payload.guideline) · `grade_audit_log` · `grade_drafts`(교사 전용 채점 초안) · `llm_prices` · 뷰 `v_llm_usage_daily`·`v_guideline_metrics`(security_invoker).
 
 세부 컬럼은 `supabase/migrations/0001_init.sql`이 단일 진실 공급원이다.
 
 ## 5. API 응답 형식
 
-모든 JSON Route Handler는 `{ data, error, status }` 형식으로 응답한다(`src/lib/server/respond.ts`). 오류 코드: `unauthorized`(401), `forbidden`·`prediction_required`·`consent_required`·`late_not_allowed`(403), `invalid_input`·`reflection_required`(422).
+모든 JSON Route Handler는 `{ data, error, status }` 형식으로 응답한다(`src/lib/server/respond.ts`). 오류 코드: `unauthorized`(401), `forbidden`·`prediction_required`·`consent_required`·`late_not_allowed`(403), `not_found`(404), `session_locked`·`not_submitted`(409), `invalid_input`·`reflection_required`·`invalid_rubric`(422), `rate_limited`(429), `upstream_unavailable`(503).
 
 ## 6. 승인 필요 영역 (사용자 승인 후 변경)
 
@@ -88,5 +88,6 @@ tests/ unit/ db/ a11y/ e2e/
 | `ANTHROPIC_API_KEY` | 서버 전용(`src/app/api/**`) |
 | `CLAUDE_MODEL_TUTOR`(기본 `claude-haiku-5-5`), `CLAUDE_MODEL_GRADER`(기본 `claude-sonnet-5-5`) | 서버 |
 | `TEXTBOOK_MODE`(기본 `true`) | 서버·엔진 |
-| `TEACHER_EMAIL_DOMAIN_ALLOWLIST` | 서버 |
+| `TEACHER_EMAIL_DOMAIN_ALLOWLIST`, `STUDENT_EMAIL_DOMAIN`, `STUDENT_PIN_PEPPER` | 서버(계정) |
+| `DEMO_TUTOR_ENABLED` | 서버(체험 모드 Claude 사용) |
 | `APP_ENV` | `local`/`staging`/`production` |

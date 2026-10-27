@@ -142,6 +142,15 @@ bash .claude/hooks/harness-checkpoint.sh checkpoint "[기능명] 구현 전"
 - 학생이 계산에 쓰는 교과서 표는 `catalog.reference`(공개), 정답 공식·물성은 `physics.ts`(server-only)
 - JSX 목록은 `items.map((x) => <Row key=… x={x} />)` 한 줄로 — 중첩 5단계(10칸 들여쓰기) 금지 규칙을 지키는 기본 패턴
 
+### 규칙 8 — 교사 화면·평가 공개 (S6~S9에서 학습)
+
+- 총괄 결과(루브릭·코멘트)는 **반환할 때만** `submissions`에 쓴다. 채점 중 값은 교사 전용 `grade_drafts`에 — 학생이 RLS로 읽는 테이블에 미공개 점수를 두지 않는다 (ADR-P09)
+- 학생 브라우저가 남길 수 있는 이벤트 종류는 `lib/events/types.ts` `CLIENT_EVENTS`와 DB `app_log_events` 목록 **둘 다** 고친다. 제출·반환·AI 플래그 이벤트는 서버 함수만
+- 대시보드 집계(반 평균·순위·막힘)는 `lib/events/*`·`components/teacher/*`에서만. 학생 화면 코드는 이 모듈을 import하지 않는다 (`boundaries.test.ts`)
+- 새 DB 게이트 코드를 만들면 `rpc.ts` GATES·`respond.ts` ErrorCode/STATUS·`route.ts` 안내 문구 세 곳을 함께 고친다(빠지면 503으로 숨겨짐)
+- 집계 뷰는 `with (security_invoker = true)`로 만들어 RLS가 그대로 적용되게 한다
+- 되돌릴 수 없는 삭제는 브라우저 `confirm()` 대신 같은 자리 2단계 확인(`DangerButton`) — 대화상자는 자동화·접근성을 막는다
+
 ---
 
 ## 단일 기능 세션 경계
