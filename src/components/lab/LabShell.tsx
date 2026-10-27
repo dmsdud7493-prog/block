@@ -17,6 +17,7 @@ import { useLabController, type LabController } from "./useLabController";
 import { afterExplained, latestRun } from "./state";
 import type { LabState, Phase } from "./types";
 import ResultsSection from "./ResultsSection";
+import { DEFAULT_SETTINGS, editorDiagnostics, type LabSettings } from "./editorDiagnostics";
 
 const BlocklyWorkspace = dynamic(() => import("@/components/blocks/BlocklyWorkspace"), {
   ssr: false,
@@ -31,7 +32,10 @@ interface Props {
   tutor?: (ctl: LabController) => React.ReactNode;
   report?: (ctl: LabController, back: () => void) => React.ReactNode;
   badge?: string;
+  /** 교사 설정 (지침 2.4·4.4): 편집 중 점검 안내 수준, 실행 전 변인 이유 요구 */
+  settings?: LabSettings;
 }
+
 
 function stepperState(s: LabState): { done: Partial<Record<Phase, boolean>>; locked: Partial<Record<Phase, string>> } {
   const run = latestRun(s);
@@ -75,29 +79,32 @@ function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBl
   );
 }
 
-function MonitorPane({ slug, ctl, runError, focusBlock, onFocus, onActive, onFinish }: {
-  slug: string; ctl: LabController; runError: Diagnostic | null; focusBlock: string | null; onFocus: (id: string) => void; onActive: (id: string | null) => void; onFinish: () => void;
+function MonitorPane({ slug, ctl, settings, runError, focusBlock, onFocus, onActive, onFinish }: {
+  slug: string; ctl: LabController; settings: LabSettings; runError: Diagnostic | null; focusBlock: string | null; onFocus: (id: string) => void; onActive: (id: string | null) => void; onFinish: () => void;
 }) {
   const { state } = ctl;
   const run = latestRun(state);
-  const errors = state.diagnostics.filter((d) => d.severity === "error").length;
+  const shown = editorDiagnostics(state.diagnostics, settings.hintLevelEditing);
+  const errors = shown.filter((d) => d.severity === "error").length;
+  const missingWhy = settings.rationaleGate && state.program.variables.some((v) => !(v.rationale ?? "").trim());
+  const onRun = () => (missingWhy ? ctl.dispatch({ type: "runFail", message: "실행 전에 변인 블록마다 '이유' 칸을 채워 주세요. 왜 그렇게 정했는지 적어 봐요." }) : void ctl.run());
   return (
     <section aria-label="점검과 실험 모니터" className="flex flex-col gap-2">
-      <RunButton running={state.running} onRun={() => void ctl.run()} errors={errors} />
+      <RunButton running={state.running} onRun={onRun} errors={errors} />
       {state.runError ? <p role="alert" className="text-sm text-err">{state.runError}</p> : null}
-      <CheckPanel diagnostics={state.diagnostics} onFocusBlock={onFocus} />
+      {settings.hintLevelEditing === "none" ? <p className="text-sm text-muted">이번 실험은 실행할 때만 점검 결과를 보여 줘요.</p> : <CheckPanel diagnostics={shown} onFocusBlock={onFocus} />}
       <LabMonitor key={run?.runNo ?? 0} slug={slug} frames={run?.frames ?? []} runError={runError} focusBlockId={focusBlock} onActiveBlock={onActive} onFinish={onFinish} />
     </section>
   );
 }
 
-export default function LabShell({ slug, backend, hydrate, initialBlockly, tutor, report, badge }: Props) {
+export default function LabShell({ slug, backend, hydrate, initialBlockly, tutor, report, badge, settings }: Props) {
   const catalog = getCatalog(slug);
   if (!catalog) return <p role="alert">알 수 없는 실험이에요.</p>;
-  return <LabShellInner slug={slug} backend={backend} hydrate={hydrate} initialBlockly={initialBlockly} tutor={tutor} report={report} badge={badge} />;
+  return <LabShellInner slug={slug} backend={backend} hydrate={hydrate} initialBlockly={initialBlockly} tutor={tutor} report={report} badge={badge} settings={settings ?? DEFAULT_SETTINGS} />;
 }
 
-function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, badge }: Props) {
+function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, badge, settings = DEFAULT_SETTINGS }: Props) {
   const catalog = getCatalog(slug)!;
   const ctl = useLabController(catalog, backend, hydrate);
   const { state, dispatch } = ctl;
@@ -136,8 +143,8 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
       <InquiryCards catalog={catalog} program={state.program} inquiry={state.inquiry} predictions={state.predictions} onInquiry={(field, value) => dispatch({ type: "inquiry", field, value })} />
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)]">
-        <DesignPane slug={slug} examples={catalog.exampleSteps} initial={initial} diagnostics={state.diagnostics} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onFocus={setFocusBlock} />
-        <MonitorPane slug={slug} ctl={ctl} runError={runError} focusBlock={focusBlock} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />
+        <DesignPane slug={slug} examples={catalog.exampleSteps} initial={initial} diagnostics={editorDiagnostics(state.diagnostics, settings.hintLevelEditing)} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onFocus={setFocusBlock} />
+        <MonitorPane slug={slug} ctl={ctl} settings={settings} runError={runError} focusBlock={focusBlock} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />
         <aside aria-label="AI 튜터" className="min-h-[300px]">{tutor ? tutor(ctl) : null}</aside>
       </div>
 

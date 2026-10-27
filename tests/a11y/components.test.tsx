@@ -23,3 +23,20 @@ describe("a11y", () => {
   it("PredictionGate", () => noViolations(<PredictionGate target={densityCatalog.predictionTargets[0]} record={{ target: "same_density", choice: "", rationale: "", hintsUsed: 2 }} purpose="실험하기 전에" onHint={() => undefined} onSubmit={() => undefined} onCancel={() => undefined} />));
   it("CalcCell (힌트 표시 상태)", () => noViolations(<CalcCell request={{ key: "density.water.t1", trial: 1, label: "밀도", unit: "g/mL", subject: "water", inputs: [] }} entry={{ key: "density.water.t1", runNo: 1, value: "1.2", unit: "g/mL", attempts: 1, correct: false, errorType: "swapped", hint: "나누는 순서를 다시 확인해 볼까요?" }} onCheck={async () => undefined} />));
 });
+
+import DataTable from "@/components/data/DataTable";
+import AfterExplain from "@/components/data/AfterExplain";
+import ReferencePanel from "@/components/data/ReferencePanel";
+import { separation2Catalog } from "@/lib/engine/experiments/separation2/catalog";
+
+const run = {
+  runNo: 1, ok: true, frames: [], diagnostics: [], series: [], changedVars: [], program: { experiment: "density", steps: [], variables: [] },
+  measurements: [{ key: "mass.water.t1", trial: 1, label: "질량", value: 50, unit: "g" as const, subject: "water" }, { key: "volume.water.t1", trial: 1, label: "부피", value: 50, unit: "mL" as const, subject: "water" }],
+  calcRequests: [{ key: "density.water.t1", trial: 1, label: "밀도", unit: "g/mL", subject: "water", inputs: ["mass.water.t1", "volume.water.t1"] }],
+};
+
+describe("a11y — 결과 영역", () => {
+  it("DataTable", () => noViolations(<DataTable catalog={densityCatalog} run={run} calc={{}} onCheck={async () => undefined} />));
+  it("AfterExplain", () => noViolations(<AfterExplain targets={densityCatalog.predictionTargets} predictions={[{ target: "same_density", choice: "same", rationale: "같은 철이라서", hintsUsed: 0 }]} onSave={() => undefined} />));
+  it("ReferencePanel (용해도 표)", () => noViolations(<ReferencePanel table={separation2Catalog.reference![0]} />));
+});

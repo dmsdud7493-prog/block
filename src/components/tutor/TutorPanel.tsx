@@ -12,6 +12,7 @@ import { SUGGESTION_CHIPS } from "@/lib/tutor/chips";
 import type { TutorResponse } from "@/lib/tutor/schemas";
 import { buildTutorContext } from "./context";
 import HintLadderBadge from "./HintLadderBadge";
+import { editorDiagnostics } from "@/components/lab/editorDiagnostics";
 import { useIdle } from "./useIdle";
 
 export interface ChatMsg { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean }
@@ -24,6 +25,8 @@ interface Props {
   seed?: string;
   initial?: ChatMsg[];
   reportSection?: string | null;
+  /** 교사 설정: 편집 중 점검을 숨긴 수업이면 튜터에게도 숨긴다 */
+  hintLevelEditing?: "none" | "slots" | "all";
 }
 
 const GREETING: ChatMsg = { role: "assistant", content: "안녕하세요! 저는 실험을 함께 생각하는 AI 도우미예요. 답을 대신 알려 주기보다 질문으로 도와줄게요. 막히면 언제든 물어보세요.", hintLevel: -1 };
@@ -38,7 +41,7 @@ function Bubble({ m }: { m: ChatMsg }) {
   );
 }
 
-export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null }: Props) {
+export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null, hintLevelEditing = "all" }: Props) {
   const [msgs, setMsgs] = useState<ChatMsg[]>(initial?.length ? initial : [GREETING]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,7 +56,8 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
     if (!nudge) setMsgs((prev) => [...prev, outgoing]);
     setBusy(true);
     try {
-      const context = buildTutorContext(ctl.state, catalog, { idleSeconds: idle.seconds(), lastHintLevel: lastHint, nudgeSent: nudged, reportSection });
+      const visible = { ...ctl.state, diagnostics: editorDiagnostics(ctl.state.diagnostics, hintLevelEditing) };
+      const context = buildTutorContext(visible, catalog, { idleSeconds: idle.seconds(), lastHintLevel: lastHint, nudgeSent: nudged, reportSection });
       const res = await postJson<TutorResponse>("/api/tutor", { mode, slug: catalog.slug, sessionId, seed, runNo: latestRun(ctl.state)?.runNo ?? null, program: ctl.state.program, messages: history, context, nudge });
       const reply = res.data ? res.data.reply : res.error?.message ?? "지금은 답하기 어려워요. 잠시 후 다시 물어봐 주세요.";
       setMsgs((prev) => [...prev, { role: "assistant", content: reply, hintLevel: res.data?.hint_level, source: res.data?.source, nudge }]);

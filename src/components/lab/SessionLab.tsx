@@ -16,7 +16,8 @@ export default function SessionLab({ view }: { view: SessionView }) {
       backend={backend}
       hydrate={view.hydrate}
       initialBlockly={view.blockly}
-      tutor={(ctl) => (catalog ? <TutorPanel ctl={ctl} catalog={catalog} mode="session" sessionId={view.sessionId} initial={view.chat} /> : null)}
+      settings={{ hintLevelEditing: (view.classSettings.hint_level_editing as "none" | "slots" | "all") ?? "slots", rationaleGate: Boolean(view.classSettings.rationale_gate) }}
+      tutor={(ctl) => (catalog ? <TutorPanel ctl={ctl} catalog={catalog} mode="session" sessionId={view.sessionId} initial={view.chat} hintLevelEditing={(view.classSettings.hint_level_editing as "none" | "slots" | "all") ?? "slots"} /> : null)}
     />
   );
 }
