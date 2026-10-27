@@ -64,3 +64,15 @@ export interface LabState {
   graphOpened: boolean;
   programVersion: number;
 }
+
+/** 서버가 불러온 세션 화면 상태 (lib/server/hydrate.ts가 만든다) */
+export interface SessionView {
+  sessionId: string;
+  slug: string;
+  status: string;
+  classSettings: Record<string, unknown>;
+  hydrate: Partial<LabState>;
+  blockly: object | null;
+  report: { content: Record<string, unknown>; aiAssisted: string[]; version: number } | null;
+  submission: { rubric_scores: unknown; teacher_feedback: string | null; returned_at: string | null; submitted_at: string; late: boolean; version: number } | null;
+}

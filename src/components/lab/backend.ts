@@ -4,7 +4,7 @@
 import type { Program } from "@/lib/engine/types";
 import type { ErrorType } from "@/lib/engine/grader/errorTypes";
 import type { Frame, Measurement, CalcRequest, Series, Diagnostic } from "@/lib/engine/types";
-import type { PredictionRecord } from "./types";
+import type { InquiryText, PredictionRecord } from "./types";
 import { postJson, type ApiResult } from "./api";
 
 export interface RunPayload {
@@ -29,7 +29,7 @@ export interface LabBackend {
   run(program: Program, runNo: number, predictions: PredictionRecord[]): Promise<ApiResult<RunPayload>>;
   check(program: Program, runNo: number, key: string, value: number, unit: string): Promise<ApiResult<CheckPayload>>;
   savePrediction(p: PredictionRecord, runNo: number | null): Promise<ApiResult<unknown>>;
-  saveProgram(program: Program, blockly: object): Promise<void>;
+  saveProgram(program: Program, blockly: object | null, inquiry: InquiryText): Promise<void>;
   logEvent(type: string, payload: Record<string, unknown>): void;
 }
 
@@ -60,9 +60,9 @@ export function sessionBackend(sessionId: string): LabBackend {
       postJson<RunPayload>("/api/run", { sessionId, program, runNo, predictionTargets: predictions.map((p) => p.target) }),
     check: (_program, runNo, key, value, unit) => postJson<CheckPayload>("/api/check", { sessionId, runNo, key, value, unit }),
     savePrediction: (p, runNo) => postJson("/api/predict", { sessionId, runNo, ...p }),
-    saveProgram: async (program, blockly) => {
+    saveProgram: async (program, blockly, inquiry) => {
       try {
-        await postJson("/api/session/program", { sessionId, program, blockly }, "PUT");
+        await postJson("/api/session/program", { sessionId, program, blockly, inquiry }, "PUT");
       } catch {
         // 자동저장 실패는 다음 변경 때 다시 시도한다
       }

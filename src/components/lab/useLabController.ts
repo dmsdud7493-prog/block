@@ -5,7 +5,7 @@
  * - 실행마다 runs 누적·바뀐 변인 기록(지침 3.4·3.3)
  * - 블록 변경 즉시 dryRun(지침 1.3·2.3)
  */
-import { useCallback, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { CalcRequest, Program } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import { dryRun } from "@/lib/engine/simulator/run";
@@ -21,10 +21,23 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
 
   const onProgram = useCallback((program: Program, blockly: object) => {
     dispatch({ type: "program", program, blockly, diagnostics: dryRun(program, catalog) });
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => void backend.saveProgram(program, blockly), 1500);
     backend.logEvent("block_edit", { steps: program.steps.length, variables: program.variables.length });
   }, [backend, catalog]);
+
+  // 블록·탐구 카드가 바뀌면 1.5초 뒤 자동저장 (첫 렌더는 건너뜀 — 불러온 상태를 다시 저장하지 않기 위해)
+  const firstSave = useRef(true);
+  const { program, blockly, inquiry, programVersion } = state;
+  useEffect(() => {
+    if (firstSave.current) {
+      firstSave.current = false;
+      return undefined;
+    }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => void backend.saveProgram(program, blockly, inquiry), 1500);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [backend, program, blockly, inquiry, programVersion]);
 
   const run = useCallback(async (justSaved?: PredictionRecord) => {
     const first = targets[0];

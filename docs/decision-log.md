@@ -169,3 +169,20 @@ plan.md §3.5는 스트리밍 + 메타데이터 추출 방식을 S4에서 택1�
 `/demo/[slug]`는 로그인·저장 없이 같은 컴포넌트·엔진을 쓴다. 서버 판정은 상태 없는 `/api/demo/run`·`/api/demo/check`가 seed와 프로그램을 받아 재계산한다. 튜터는 `ANTHROPIC_API_KEY`가 없으면 로컬 규칙 튜터(`localTutor.ts`)로 응답한다.
 ### 결과
 E2E가 결정론적이고, 교사 시연이 쉽다. 데모 결과는 저장되지 않음을 화면에 표시한다.
+
+## ADR-P07: 쓰기는 서버 함수만, 로그인 사용자는 읽기 전용 RLS
+
+**날짜**: 2026-10-27 · **상태**: ACTIVE
+### 맥락
+Supabase 공개 키는 브라우저에 있으므로 학생이 개발자 도구로 직접 `insert into measurements (is_correct=true)`를 시도할 수 있다. 채점·실행 결과는 평가 무결성(CLAUDE.md 규칙 3) 대상이다.
+### 결정
+`authenticated`에는 SELECT 정책만 두고 INSERT/UPDATE/DELETE 권한을 회수한다. 모든 쓰기는 `app_*` SECURITY DEFINER 함수로 하되 실행 권한은 `service_role`에만 준다. Route Handler가 `getClaims()`로 사용자를 확인한 뒤 서버에서만 호출한다. 교육적 게이트(예측·동의·성찰·잠금)도 이 함수들 안에 있다(ADR-P03).
+### 결과
+- 긍정: 클라이언트가 어떤 경로로 와도 채점값·실행 결과를 위조할 수 없다(tests/db/gates.test.ts가 직접 쓰기 거부를 검증).
+- 부정: 모든 쓰기가 서버 왕복을 거친다. Realtime은 읽기 정책 기준으로만 동작(교사만 events 구독).
+
+## ADR-P08: 학생 계정 = 반 코드 + 번호 + PIN (내부 합성 로그인 ID)
+
+**날짜**: 2026-10-27 · **상태**: ACTIVE
+### 결정
+교사가 번호 목록을 넣으면 서버가 `s-<uuid>@STUDENT_EMAIL_DOMAIN` 형식의 내부 ID와 `sha256(STUDENT_PIN_PEPPER:반코드:PIN)` 비밀번호로 계정을 만든다. 실명·이메일·전화번호는 받지 않는다(R2). PIN은 생성 직후 한 번만 보여 주고 재발급할 수 있다. 공개 회원가입은 끄고(교사도 서버 액션으로 학교 도메인 확인 후 생성) 역할은 `app_metadata.role`로 지정한다.

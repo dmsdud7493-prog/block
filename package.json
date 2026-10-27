@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "test:all": "vitest run",
     "db:apply": "node scripts/db-apply.mjs",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "db:types": "supabase gen types typescript --local > src/types/database.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.89",

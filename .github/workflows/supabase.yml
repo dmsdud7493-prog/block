@@ -16,10 +16,10 @@ jobs:
       - uses: supabase/setup-cli@v1
         with: { version: latest }
       - run: supabase db start
-      - name: 타입 drift 검사
+      - name: 타입 drift 검사 (src/types/database.ts가 생긴 뒤부터)
         run: |
           supabase gen types typescript --local > /tmp/database.ts
-          diff -u src/types/database.ts /tmp/database.ts
+          if [ -f src/types/database.ts ]; then diff -u src/types/database.ts /tmp/database.ts; else echo "타입 파일 없음 — 첫 배포 뒤 'npm run db:types'로 생성하세요"; fi
   deploy:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest

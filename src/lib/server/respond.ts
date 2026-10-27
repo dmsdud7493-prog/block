@@ -25,6 +25,7 @@ export function fail(code: ErrorCode, message?: string) {
 /** DB 함수가 던진 예외 메시지에서 알려진 게이트 코드를 찾는다 (ADR-P03) */
 export function gateCode(err: unknown): ErrorCode | null {
   const text = err instanceof Error ? err.message : typeof err === "object" && err ? JSON.stringify(err) : String(err);
-  const known: ErrorCode[] = ["prediction_required", "consent_required", "reflection_required", "late_not_allowed", "session_locked", "forbidden"];
+  const known: ErrorCode[] = ["prediction_required", "consent_required", "reflection_required", "late_not_allowed", "session_locked", "forbidden", "not_found", "invalid_input", "upstream_unavailable"];
+  if (text.includes("invalid_join_code")) return "not_found";
   return known.find((c) => text.includes(c)) ?? null;
 }
