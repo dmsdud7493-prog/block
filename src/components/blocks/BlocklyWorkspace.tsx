@@ -41,6 +41,8 @@ export interface BlocklyWorkspaceProps {
   activeBlockId?: string | null;
   errorBlockId?: string | null;
   readOnly?: boolean;
+  /** 점검 패널에서 고른 블록으로 이동·선택 */
+  selectBlockId?: string | null;
   onProgramChange: (program: Program, state: object) => void;
   onBlockClick?: (blockId: string) => void;
 }
@@ -59,6 +61,13 @@ function applyDiagnostics(ws: Blockly.WorkspaceSvg, diags: Diagnostic[]) {
 
 function markBlock(ws: Blockly.WorkspaceSvg, id: string | null | undefined, cls: string) {
   ws.getAllBlocks(false).forEach((b) => b.getSvgRoot().classList.toggle(cls, b.id === id));
+}
+
+/** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
+function exposeForE2E(ws: Blockly.WorkspaceSvg) {
+  if (process.env.NEXT_PUBLIC_E2E !== "1") return;
+  const w = window as unknown as { __labLoad?: (state: object) => void };
+  w.__labLoad = (state: object) => Blockly.serialization.workspaces.load(state, ws);
 }
 
 export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
@@ -89,9 +98,12 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       move: { scrollbars: true, drag: true, wheel: true },
       grid: { spacing: 24, length: 2, colour: "#e2e8f0", snap: true },
       sounds: false,
+      // 학교 망에서 외부 CDN이 막혀도 아이콘이 보이도록 자체 호스팅 (R13)
+      media: "/blockly-media/",
     });
     Blockly.serialization.workspaces.load(initialState ?? EMPTY_WORKSPACE, ws);
     wsRef.current = ws;
+    exposeForE2E(ws);
     let timer: ReturnType<typeof setTimeout> | null = null;
     const emit = () => cbRef.current(workspaceToProgram(ws, slug), Blockly.serialization.workspaces.save(ws));
     ws.addChangeListener((e: Blockly.Events.Abstract) => {
@@ -122,6 +134,14 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
   useEffect(() => {
     if (wsRef.current) markBlock(wsRef.current, props.errorBlockId, "lab-block-error");
   }, [props.errorBlockId]);
+
+  useEffect(() => {
+    const ws = wsRef.current;
+    const block = ws && props.selectBlockId ? ws.getBlockById(props.selectBlockId) : null;
+    if (!ws || !block) return;
+    ws.centerOnBlock(block.id);
+    block.select();
+  }, [props.selectBlockId]);
 
   return (
     <div
