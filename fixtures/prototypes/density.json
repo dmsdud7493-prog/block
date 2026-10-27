@@ -1,0 +1,55 @@
+{
+  "experiment": "density",
+  "source": "density_lab.html (프로토타입) — MATERIALS: 물 1.0, 식용유 0.92, 큰 철조각 79 g/10 mL, 작은 철조각 39.5 g/5 mL",
+  "scenarios": [
+    {
+      "name": "정상: 물 50 mL의 밀도",
+      "steps": [["a1","E:cylinder","E:scale"],["a2","E:water","Q:50:mL"],["a3","E:water"],["a4","E:water"],["a5"]],
+      "expect": { "ok": true, "measurements": { "volume.water.t1": 50, "mass.water.t1": 50 }, "calcKeys": ["density.water.t1"] }
+    },
+    {
+      "name": "정상: 식용유 50 mL의 밀도",
+      "steps": [["a1","E:cylinder","E:scale"],["a2","E:oil","Q:50:mL"],["a3","E:oil"],["a4","E:oil"],["a5"]],
+      "expect": { "ok": true, "measurements": { "volume.oil.t1": 50, "mass.oil.t1": 46 }, "calcKeys": ["density.oil.t1"] }
+    },
+    {
+      "name": "정상: 큰·작은 철조각 (질량 먼저, 물 50 mL에 넣어 부피변화) — 변인 선언 포함",
+      "variables": [["independent","iron_size"],["dependent","density"],["controlled","liquid_volume"],["experimental_group","g_iron_big"],["comparison_group","g_iron_small"],["method","m_scale_cylinder"]],
+      "steps": [["a4","E:iron_big"],["a2","E:water","Q:50:mL"],["a7","E:iron_big","E:cylinder"],["a8","E:cylinder"],["a5"],
+                ["a4","E:iron_small"],["a2","E:water","Q:50:mL"],["a7","E:iron_small","E:cylinder"],["a8","E:cylinder"],["a5"]],
+      "expect": { "ok": true, "measurements": { "mass.iron_big.t1": 79, "volume.iron_big.t1": 10, "mass.iron_small.t2": 39.5, "volume.iron_small.t2": 5 }, "calcKeys": ["density.iron_big.t1","density.iron_small.t2"], "codes": [] }
+    },
+    {
+      "name": "오류: 영점조정 없이 액체 질량 측정",
+      "steps": [["a2","E:water","Q:50:mL"],["a3","E:water"],["a4","E:water"]],
+      "expect": { "ok": false, "codes": ["mass_no_tare"] }
+    },
+    {
+      "name": "오류: 물에 넣은 뒤 고체 질량 측정",
+      "steps": [["a2","E:water","Q:50:mL"],["a7","E:iron_big","E:cylinder"],["a8","E:cylinder"],["a4","E:iron_big"]],
+      "expect": { "ok": false, "codes": ["mass_after_submerge"] }
+    },
+    {
+      "name": "오류: 고체 부피를 직접 측정",
+      "steps": [["a3","E:iron_big"]],
+      "expect": { "ok": false, "codes": ["solid_volume_direct"] }
+    },
+    {
+      "name": "오류: 빈 구멍과 단위 불일치",
+      "steps": [["a1","E:cylinder","_"],["a2","E:water","Q:50:g"]],
+      "expect": { "ok": false, "codes": ["slot_invalid","slot_invalid"] }
+    },
+    {
+      "name": "오류: 통제변인(물의 양) 불일치",
+      "variables": [["independent","iron_size"],["controlled","liquid_volume"]],
+      "steps": [["a4","E:iron_big"],["a2","E:water","Q:50:mL"],["a7","E:iron_big","E:cylinder"],["a8","E:cylinder"],["a5"],
+                ["a4","E:iron_small"],["a2","E:water","Q:30:mL"],["a7","E:iron_small","E:cylinder"],["a8","E:cylinder"],["a5"]],
+      "expect": { "ok": true, "codes": ["controlled_var_mismatch"] }
+    },
+    {
+      "name": "오류: 질량과 부피를 다른 물질에서 측정",
+      "steps": [["a1","E:cylinder","E:scale"],["a2","E:water","Q:50:mL"],["a4","E:water"],["a4","E:iron_big"],["a5"]],
+      "expect": { "ok": false, "codes": ["calc_no_volume"] }
+    }
+  ]
+}
