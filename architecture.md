@@ -56,7 +56,7 @@ src/
 └── proxy.ts                     # 세션 쿠키 갱신 + 역할별 라우트 보호(낙관적 검사)
 supabase/
 ├── config.toml
-├── migrations/0001_init 0002_rls 0003_rpc 0004_tutor 0005_report 0006_teacher 0007_sketch 0008_compliance
+├── migrations/0001_init … 0008_compliance 0009_hardening
 └── seed.sql
 tests/ unit/ db/ a11y/ e2e/
 ```

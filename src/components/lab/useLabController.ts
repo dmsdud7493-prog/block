@@ -4,6 +4,7 @@
  * - 실행 전 첫 예측 필수(지침 3.1), 그래프 공개 전 나머지 예측 필수
  * - 실행마다 runs 누적·바뀐 변인 기록(지침 3.4·3.3)
  * - 블록 변경 즉시 dryRun(지침 1.3·2.3)
+ * - 실행·채점·예측 이벤트는 서버 기록에서 DB 트리거가 남긴다(위조 방지, 0009) — 여기서는 화면 조작만 로그
  */
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { CalcRequest, Program } from "@/lib/engine/types";
@@ -64,8 +65,6 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const changed = changedVariables(prev, state.program, catalog.variableOptions, catalog.isTrialEnd);
     const record: RunRecord = { ...res.data, runNo, program: state.program, changedVars: changed };
     dispatch({ type: "runDone", run: record });
-    const firstError = record.diagnostics.find((d) => d.severity === "error");
-    backend.logEvent(record.ok ? "run_completed" : "sim_error_flagged", { runNo, codes: record.diagnostics.map((d) => d.code), message: firstError?.message ?? null, guideline: "3.2" });
   }, [backend, catalog, state, targets]);
 
   const predict = useCallback(async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
@@ -73,7 +72,6 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const record: PredictionRecord = { target, choice, rationale, hintsUsed: prev?.hintsUsed ?? 0, ...(sketch ? { sketch } : {}) };
     dispatch({ type: "predicted", record });
     await backend.savePrediction(record, latestRun(state)?.runNo ?? null);
-    backend.logEvent("prediction_made", { target, hintsUsed: record.hintsUsed, sketched: Boolean(sketch), guideline: "3.1" });
     return record;
   }, [backend, state]);
 
@@ -84,7 +82,6 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const data = res.data;
     const entry = { key: req.key, runNo, value: String(value), unit, attempts, correct: data?.correct ?? false, errorType: data?.errorType ?? null, hint: data?.hint ?? res.error?.message ?? null };
     dispatch({ type: "calc", entry });
-    backend.logEvent("calc_checked", { key: req.key, correct: entry.correct, errorType: entry.errorType, attempt: attempts, guideline: "5.3" });
   }, [backend, state]);
 
   const openGraph = useCallback((justSaved?: PredictionRecord) => {
@@ -101,7 +98,6 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
   const explainAfter = useCallback((target: string, matched: boolean, text: string) => {
     dispatch({ type: "after", target, matched, text });
     void backend.savePrediction({ ...(state.predictions.find((p) => p.target === target) as PredictionRecord), matched, rationaleAfter: text }, latestRun(state)?.runNo ?? null);
-    backend.logEvent("prediction_explained", { target, matched, guideline: "3.3" });
   }, [backend, state]);
 
   return { state, dispatch, onProgram, run, predict, check, openGraph, explainAfter };

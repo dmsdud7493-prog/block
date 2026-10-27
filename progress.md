@@ -11,9 +11,9 @@
 |---|---|
 | intent | docs/plan.md Sprint 0~9 순서대로 구현 |
 | changes_made | S0~S9 전부 구현 (각 스프린트 요약: `_workspace/S1~S9/summary.md`) |
-| decisions_taken | ADR-P01~P10 (docs/decision-log.md) |
+| decisions_taken | ADR-P01~P11 (docs/decision-log.md) |
 | next_steps | 사용자 계정으로 DEPLOY.md 실행(GitHub·Supabase·Vercel·Claude 키) → 스테이징 점검(교사 E2E·Realtime 10초·부하 30명) → 파일럿(docs/pilot-checklist.md) |
-| test_status | unit 436 passed(실 API 회귀 25 skipped), DB 46 passed, E2E 28 passed(+axe 10페이지), verify SCORE=100 APPROVED |
+| test_status | unit 436 passed(실 API 회귀 25 skipped), DB 50 passed, E2E 28 passed(+axe 10페이지), verify SCORE=100 APPROVED |
 
 ---
 

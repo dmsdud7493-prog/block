@@ -90,3 +90,14 @@ describe("격리·무결성", () => {
     expect((await pool.query("select allow_late from public.assignments where id = $1", [asg])).rows[0].allow_late).toBe(false);
   });
 });
+
+describe("재제출하면 이전 반환 표시가 지워진다 (0009)", () => {
+  it("학생 화면에 지난 점수가 '현재'로 보이지 않는다", async () => {
+    await pool.query("update public.sessions set status = 'returned' where id = $1", [sess]);
+    await svc("select public.app_save_report($1, $2, $3, '{}')", [S, sess, READY]);
+    await svc("select * from public.app_submit_report($1, $2)", [S, sess]);
+    const r = (await pool.query("select returned_at, rubric_scores from public.submissions where id = $1", [sub])).rows[0];
+    expect([r.returned_at, r.rubric_scores]).toEqual([null, null]);
+    expect((await pool.query("select count(*)::int n from public.grade_audit_log where submission_id = $1", [sub])).rows[0].n).toBe(2);
+  });
+});

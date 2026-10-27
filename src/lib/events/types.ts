@@ -1,15 +1,14 @@
 /**
  * 학습 이벤트 종류 (D11 — 불변 events 로그가 교사 대시보드의 원천).
- * CLIENT_EVENTS: 학생 브라우저가 /api/events로 보낼 수 있는 것.
+ * CLIENT_EVENTS: 학생 브라우저가 /api/events로 보낼 수 있는 화면 조작 3종.
  * SERVER_EVENTS: 서버 함수만 남기는 것 (제출·반환·AI 플래그 — 학생이 위조할 수 없다).
  */
-export const CLIENT_EVENTS = [
-  "block_edit", "run_completed", "sim_error_flagged", "playback_done", "prediction_made",
-  "prediction_explained", "calc_checked", "graph_opened",
-] as const;
+export const CLIENT_EVENTS = ["block_edit", "playback_done", "graph_opened"] as const;
 
+/** 실행·채점·예측 이벤트는 DB 트리거가 서버 기록(runs·measurements·predictions)에서 만든다 (0009) */
 export const SERVER_EVENTS = [
-  "session_started", "ai_reply", "ai_nudge", "ai_flagged", "report_submitted", "report_resubmitted", "report_returned",
+  "session_started", "run_completed", "sim_error_flagged", "prediction_made", "prediction_explained", "calc_checked",
+  "ai_reply", "ai_nudge", "ai_flagged", "report_submitted", "report_resubmitted", "report_returned",
 ] as const;
 
 export type ClientEventType = (typeof CLIENT_EVENTS)[number];

@@ -208,3 +208,15 @@ plan S8은 예측 그리기 위젯으로 Chart.js + chartjs-plugin-dragdata를 [
 ### 결과
 - 긍정: 의존성 추가 없음, 키보드·스크린리더 대안 내장, 축 범위를 넓게 잡아 정답 위치를 암시하지 않음.
 - 부정: 자유 곡선이 아니라 고정 시점 점 찍기(교실 사용에는 충분하다고 판단).
+
+## ADR-P11: 독립 보안 검토 반영 (0009_hardening)
+
+**날짜**: 2026-10-27 · **상태**: ACTIVE
+### 결정
+- 학생 등록·삭제 대상은 `role='student'`만, 검사와 삭제 사이 다른 반 등록이 끼어들지 않게 학생 행 잠금(`private.lock_student`)
+- 실행·채점·예측 이벤트(`run_completed`·`sim_error_flagged`·`calc_checked`·`prediction_made`·`prediction_explained`)는 DB 트리거가 서버 기록에서 생성. 브라우저는 화면 조작 3종만, payload 2 KB 이하(zod·SQL 둘 다)
+- 반환은 세션 행을 잠근 뒤 상태 확인(이중 클릭 시 감사 로그 중복 방지), `first_return`/`regrade`는 감사 로그 유무로 판정
+- 재제출 시 `returned_at`·루브릭·코멘트를 비워 지난 점수가 "현재"로 보이지 않게 함(이력은 감사 로그)
+- 새 테이블·뷰 기본 권한 회수 후 SELECT만, LLM 단가는 교사·관리자만(학생에게 비용 null)
+### 수용한 위험
+- Supabase Realtime의 DELETE 변경 알림은 RLS 없이 기본 키만 보낸다 → 반·학생 삭제 시 다른 구독자가 삭제된 행의 id(UUID·번호)만 볼 수 있음. 내용·개인정보는 없으므로 수용하고, 파일럿 후 반별 Broadcast 채널로 바꿀지 결정

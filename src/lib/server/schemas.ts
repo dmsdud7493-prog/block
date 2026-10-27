@@ -70,7 +70,7 @@ export const predictSchema = z.object({
 /** 학생 브라우저가 보낼 수 있는 이벤트만 (제출·반환·플래그는 서버 함수가 남긴다 — DB에서도 같은 목록으로 거른다) */
 export const eventsSchema = z.object({
   sessionId: uuid,
-  events: z.array(z.object({ type: z.enum(CLIENT_EVENTS), payload: z.record(z.string(), z.unknown()) })).max(50),
+  events: z.array(z.object({ type: z.enum(CLIENT_EVENTS), payload: z.record(z.string(), z.unknown()).refine((p) => JSON.stringify(p).length <= 2048) })).max(50),
 });
 
 export const classCreateSchema = z.object({ name: z.string().trim().min(1).max(60) });

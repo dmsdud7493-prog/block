@@ -93,3 +93,36 @@ describe("삭제 (R10)", () => {
     expect(Number((await pool.query("select count(*) n from public.profiles where id = $1", [N])).rows[0].n)).toBe(0);
   });
 });
+
+describe("보안 검토 반영 (0009)", () => {
+  it("교사 계정은 학생 삭제·등록 대상이 될 수 없다", async () => {
+    const T3 = await createUser("teacher", "세번째교사");
+    const c3 = (await svc("select * from public.app_create_class($1, '3반')", [T3])).rows[0].id;
+    expect(await errorOf(svc("select public.app_enroll_student($1, $2, $3, '9')", [T3, c3, T2]))).toContain("forbidden");
+    expect(await errorOf(svc("select public.app_delete_student($1, $2)", [T3, T2]))).toContain("forbidden");
+  });
+  it("실행·채점·예측 이벤트는 서버 기록에서 만들어지고, 브라우저 payload는 2 KB 제한", async () => {
+    const T4 = await createUser("teacher", "네번째교사");
+    const S4 = await createUser("student", "40101");
+    const c4 = (await svc("select * from public.app_create_class($1, '4반')", [T4])).rows[0].id;
+    await svc("select public.app_enroll_student($1, $2, $3, '1')", [T4, c4, S4]);
+    await svc("select public.app_set_consent($1, $2, true, null)", [T4, S4]);
+    const a4 = (await svc("select public.app_assign($1, $2, 'density', null, true, '{}') as id", [T4, c4])).rows[0].id;
+    const id = (await svc("select id from public.app_start_session($1, $2)", [S4, a4])).rows[0].id;
+    await svc("select public.app_upsert_prediction($1, $2, 't', 'c', '왜냐하면 그래서', 0, null)", [S4, id]);
+    await svc("select public.app_record_run($1, $2, 1, 1, '{}', 's', false, $3, '[]', '[]', '[]', '{}')", [S4, id, JSON.stringify([{ severity: "error", code: "tare_not_scale", message: "저울" }])]);
+    await svc("select public.app_record_run($1, $2, 2, 1, '{}', 's', true, '[]', '[]', '[]', '[]', '{}')", [S4, id]);
+    await svc("select public.app_record_check($1, $2, 2, 'k', 1, 'g/mL', false, 'swapped')", [S4, id]);
+    await svc("select public.app_explain_prediction($1, $2, 't', true, '같았다 왜냐하면')", [S4, id]);
+    const types = (await pool.query("select event_type, payload from public.events where session_id = $1 order by id", [id])).rows;
+    expect(types.map((r) => r.event_type)).toEqual(["session_started", "prediction_made", "sim_error_flagged", "run_completed", "calc_checked", "prediction_explained"]);
+    expect(types[2].payload).toMatchObject({ codes: ["tare_not_scale"], message: "저울" });
+    expect(types[4].payload).toMatchObject({ key: "k", correct: false, errorType: "swapped" });
+    const big = JSON.stringify([{ type: "block_edit", payload: { x: "가".repeat(3000) } }, { type: "run_completed", payload: {} }, { type: "block_edit", payload: {} }]);
+    expect((await svc("select public.app_log_events($1, $2, $3) as n", [S4, id, big])).rows[0].n).toBe(1);
+  });
+  it("학생은 LLM 단가를 볼 수 없다", async () => {
+    const S5 = await createUser("student", "50101");
+    expect((await asUser(S5, (q) => q("select * from public.llm_prices"))).rowCount).toBe(0);
+  });
+});
