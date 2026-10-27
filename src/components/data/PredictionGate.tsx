@@ -7,12 +7,13 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import type { PredictionTarget } from "@/lib/engine/experiments/types";
 import type { PredictionRecord } from "@/components/lab/types";
+import SketchPad, { type Sketch } from "./SketchPad";
 
 interface Props {
   target: PredictionTarget;
   record: PredictionRecord | undefined;
   onHint: () => void;
-  onSubmit: (choice: string, rationale: string) => void;
+  onSubmit: (choice: string, rationale: string, sketch?: Sketch) => void;
   onCancel: () => void;
   purpose: string;
 }
@@ -58,10 +59,11 @@ function Actions({ ready, onCancel }: { ready: boolean; onCancel: () => void }) 
 export default function PredictionGate({ target, record, onHint, onSubmit, onCancel, purpose }: Props) {
   const [choice, setChoice] = useState(record?.choice ?? "");
   const [why, setWhy] = useState(record?.rationale ?? "");
+  const [sketch, setSketch] = useState<Sketch>(record?.sketch ?? Array.from({ length: target.sketch?.points ?? 0 }, () => null));
   const ready = choice !== "" && why.trim().length >= 5;
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (ready) onSubmit(choice, why.trim());
+    if (ready) onSubmit(choice, why.trim(), sketch.some((v) => v !== null) ? sketch : undefined);
   };
   return (
     <Modal labelledBy="gate-title" onClose={onCancel}>
@@ -70,6 +72,7 @@ export default function PredictionGate({ target, record, onHint, onSubmit, onCan
         <ChoiceSet target={target} choice={choice} onPick={setChoice} />
         <label className="mt-3 block text-sm font-semibold" htmlFor="gate-why">왜 그렇게 생각했나요? (한 줄, 5자 이상)</label>
         <input id="gate-why" className="tap mt-1 w-full rounded border border-line px-2" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="왜냐하면 …" maxLength={200} />
+        {target.sketch ? <SketchPad spec={target.sketch} value={sketch} onChange={setSketch} /> : null}
         <Hints target={target} used={record?.hintsUsed ?? 0} onHint={onHint} />
         <Actions ready={ready} onCancel={onCancel} />
       </form>

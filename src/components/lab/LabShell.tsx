@@ -118,10 +118,10 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);
   const onFinish = useCallback(() => backend.logEvent("playback_done", {}), [backend]);
   /** 실행 버튼에서 열린 예측 게이트는 저장 뒤 바로 실행, 그래프에서 열린 게이트는 바로 그래프를 연다 */
-  const submitGate = async (target: string, choice: string, rationale: string) => {
+  const submitGate = async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
     const before = state.runs.length;
     try {
-      const rec = await ctl.predict(target, choice, rationale);
+      const rec = await ctl.predict(target, choice, rationale, sketch);
       if (before === 0) await ctl.run(rec);
       else ctl.openGraph(rec);
     } catch {
@@ -149,7 +149,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
       </div>
 
       <ResultsSection catalog={catalog} ctl={ctl} />
-      {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.runs.length ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r) => void submitGate(gate.id, c, r)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
+      {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.runs.length ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
     </main>
   );
 }

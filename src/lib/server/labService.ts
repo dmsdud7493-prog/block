@@ -53,7 +53,7 @@ export async function checkForStudent(userId: string, a: CheckInputArgs) {
   }
 }
 
-export interface PredictArgs { sessionId: string; runNo: number | null; target: string; choice: string; rationale: string; hintsUsed: number; matched?: boolean | null; rationaleAfter?: string }
+export interface PredictArgs { sessionId: string; runNo: number | null; target: string; choice: string; rationale: string; hintsUsed: number; matched?: boolean | null; rationaleAfter?: string; sketch?: (number | null)[] }
 
 /** 예측 저장(3.1)과 결과 후 비교 설명(3.3) */
 export async function predictForStudent(userId: string, p: PredictArgs) {
@@ -61,6 +61,7 @@ export async function predictForStudent(userId: string, p: PredictArgs) {
     const id = await rpc<number>("app_upsert_prediction", {
       p_student: userId, p_session: p.sessionId, p_target: p.target, p_choice: p.choice, p_rationale: p.rationale, p_hints: p.hintsUsed, p_run_no: p.runNo,
     });
+    if (p.sketch) await rpc("app_set_prediction_sketch", { p_student: userId, p_session: p.sessionId, p_target: p.target, p_sketch: p.sketch });
     if (typeof p.matched === "boolean" && p.rationaleAfter) {
       await rpc("app_explain_prediction", { p_student: userId, p_session: p.sessionId, p_target: p.target, p_matched: p.matched, p_text: p.rationaleAfter });
     }

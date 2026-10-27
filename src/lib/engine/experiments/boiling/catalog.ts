@@ -89,6 +89,7 @@ const PREDICTIONS: PredictionTarget[] = [
       { id: "rising", label: "온도가 같은 빠르기로 계속 올라간다" },
       { id: "falling", label: "끓기 시작하면 온도가 내려간다" },
     ],
+    sketch: { xMax: 600, yMin: 0, yMax: 140, points: 9 },
     hints: [
       "주전자의 물이 펄펄 끓을 때, 불을 더 세게 하면 물의 온도는 어떻게 될지 떠올려 볼까요?",
       "끓는 동안 가한 열은 어디에 쓰일까요? 액체가 기체로 변하는 데도 에너지가 필요해요.",

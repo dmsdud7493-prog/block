@@ -65,6 +65,7 @@ export const predictSchema = z.object({
   hintsUsed: z.number().int().min(0).max(3),
   matched: z.boolean().nullable().optional(),
   rationaleAfter: z.string().max(500).optional(),
+  sketch: z.array(z.number().finite().min(-50).max(400).nullable()).min(2).max(12).optional(),
 });
 /** 학생 브라우저가 보낼 수 있는 이벤트만 (제출·반환·플래그는 서버 함수가 남긴다 — DB에서도 같은 목록으로 거른다) */
 export const eventsSchema = z.object({

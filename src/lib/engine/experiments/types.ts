@@ -43,12 +43,25 @@ export interface PredictionChoice {
  */
 export const PREDICTION_ASSESSMENT = { type: "FORMATIVE", maxAttempts: null, showAnswerAfter: "NEVER" } as const;
 
+/**
+ * 곡선 예측 그리기 (지침 3.1 곡선 예측, plan S8). 축 범위는 넓게 잡아 정답 위치를 암시하지 않는다.
+ * points개의 시점(0 ~ xMax 초, 같은 간격)마다 학생이 온도를 하나씩 찍는다.
+ */
+export interface SketchSpec {
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  points: number;
+}
+
 export interface PredictionTarget {
   id: string;
   question: string;
   choices: PredictionChoice[];
   /** 예측 힌트 P1~P3 (정답 미포함) — 지침 4.2 */
   hints: [string, string, string];
+  /** 있으면 선택지 외에 시간–온도 곡선을 직접 그려 볼 수 있다(선택) */
+  sketch?: SketchSpec;
 }
 
 export interface ExperimentCatalog<S> {

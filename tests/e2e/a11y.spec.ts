@@ -2,7 +2,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-for (const path of ["/", "/demo/density"]) {
+for (const path of ["/", "/demo/density", "/demo/melting", "/demo/boiling", "/demo/solubility", "/demo/separation1", "/demo/separation2", "/login"]) {
   test(`axe: ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.waitForLoadState("load");

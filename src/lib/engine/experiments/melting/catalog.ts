@@ -69,6 +69,7 @@ const PREDICTIONS: PredictionTarget[] = [
       { id: "flat_then_rise", label: "한동안 변하지 않다가 다 녹은 뒤 다시 올라간다" },
       { id: "drop", label: "녹는 동안 온도가 내려간다" },
     ],
+    sketch: { xMax: 600, yMin: 20, yMax: 100, points: 9 },
     hints: [
       "얼음이 든 물을 데울 때, 얼음이 다 녹기 전까지 물의 온도는 어땠는지 떠올려 보세요.",
       "핫플레이트가 계속 주는 열은 녹는 동안 어디에 쓰일까요? 온도를 올리는 데일까요, 다른 일일까요?",

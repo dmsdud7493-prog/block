@@ -144,3 +144,14 @@ describe("제출 잠금", () => {
     expect(await errorOf(asService((q) => q("select public.app_save_program($1, $2, '{}', '{}', null)", [B, sessB])))).toContain("session_locked");
   });
 });
+
+describe("곡선 예측 저장 (S8)", () => {
+  it("예측이 있어야 그림을 저장할 수 있고, 12점을 넘으면 거부", async () => {
+    expect(await errorOf(asService((q) => q("select public.app_set_prediction_sketch($1, $2, 'nope', '[1,2]')", [A, sessA])))).toContain("not_found");
+    await asService((q) => q("select public.app_upsert_prediction($1, $2, 'graph_shape', 'rise', '왜냐하면 그럴 것 같아서', 0, null)", [A, sessA]));
+    await asService((q) => q("select public.app_set_prediction_sketch($1, $2, 'graph_shape', '[20, null, 44]')", [A, sessA]));
+    const r = await pool.query("select sketch from public.predictions where session_id = $1 and target = 'graph_shape'", [sessA]);
+    expect(r.rows[0].sketch).toEqual([20, null, 44]);
+    expect(await errorOf(asService((q) => q("select public.app_set_prediction_sketch($1, $2, 'graph_shape', $3)", [A, sessA, JSON.stringify(Array(13).fill(1))])))).toContain("invalid_input");
+  });
+});

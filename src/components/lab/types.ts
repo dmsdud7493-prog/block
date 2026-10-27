@@ -19,6 +19,8 @@ export interface PredictionRecord {
   hintsUsed: number;
   matched?: boolean | null;
   rationaleAfter?: string;
+  /** 곡선 예측 그리기 값 (SketchSpec.points개, 빈 점은 null) */
+  sketch?: (number | null)[];
 }
 
 export interface RunRecord {

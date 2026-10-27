@@ -40,7 +40,7 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
   const [prog, runs, preds, meas, report, sub, chat] = await Promise.all([
     db.from("block_programs").select("program, blockly, version").eq("session_id", sessionId).order("version", { ascending: false }).limit(1),
     db.from("runs").select("run_no, ok, program, diagnostics, measurements, calc_requests, series, changed_vars").eq("session_id", sessionId).order("run_no"),
-    db.from("predictions").select("target, choice, rationale, hints_used, matched, rationale_after").eq("session_id", sessionId),
+    db.from("predictions").select("target, choice, rationale, hints_used, matched, rationale_after, sketch").eq("session_id", sessionId),
     db.from("measurements").select("key, value, unit, is_correct, error_type, attempt, runs(run_no)").eq("session_id", sessionId).order("attempt"),
     db.from("reports").select("content, ai_assisted_sections, version").eq("session_id", sessionId).maybeSingle(),
     db.from("submissions").select("rubric_scores, teacher_feedback, returned_at, submitted_at, late, version").eq("session_id", sessionId).maybeSingle(),
@@ -48,7 +48,7 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
   ]);
   const runRows = (runs.data ?? []) as RunRow[];
   const runRecords = runRows.map((r, i) => toRun(r, slug, s.seed, i === runRows.length - 1));
-  const predictions: PredictionRecord[] = (preds.data ?? []).map((p) => ({ target: p.target, choice: p.choice, rationale: p.rationale, hintsUsed: p.hints_used, matched: p.matched, rationaleAfter: p.rationale_after ?? undefined }));
+  const predictions: PredictionRecord[] = (preds.data ?? []).map((p) => ({ target: p.target, choice: p.choice, rationale: p.rationale, hintsUsed: p.hints_used, matched: p.matched, rationaleAfter: p.rationale_after ?? undefined, ...(Array.isArray(p.sketch) ? { sketch: p.sketch as (number | null)[] } : {}) }));
   const latest = prog.data?.[0];
   const inquiry = s.inquiry as { problem?: string; hypothesis?: string };
   return {

@@ -112,6 +112,7 @@ const predictionTargets: PredictionTarget[] = [
       { id: "steady_rise", label: "멈추지 않고 꾸준히 올라간다" },
       { id: "flat_at_100", label: "100 ℃가 될 때까지 오른 뒤 100 ℃에서만 일정하다" },
     ],
+    sketch: { xMax: 900, yMin: 20, yMax: 120, points: 10 },
     hints: [
       "순수한 물을 끓일 때 끓는 동안 온도가 어떻게 되었는지 떠올려 보세요.",
       "물과 에탄올은 끓는점이 서로 달라요. 온도가 오르면서 어느 쪽의 끓는점에 먼저 도달할까요?",

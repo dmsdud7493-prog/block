@@ -41,7 +41,7 @@ export default function ResultsSection({ catalog, ctl }: { catalog: AnyCatalog; 
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
       {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u) => ctl.check(req, okRun.runNo, v, u)} /> : null}
       {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}
-      {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} /> : null}
+      {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
       {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
       <RunHistory runs={state.runs} />
       {state.graphOpened ? <ToReport ctl={ctl} /> : null}

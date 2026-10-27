@@ -4,10 +4,14 @@
  * 자동으로 바뀌는 화면이라 일시정지 버튼과 텍스트 기록(aria-live)을 제공한다 (KWCAG).
  */
 import type { Diagnostic, Frame, SimEvent } from "@/lib/engine/types";
-import type { DensityState } from "@/lib/engine/experiments/density/reducer";
 import { useFramePlayer } from "./useFramePlayer";
 import DensityScene from "./scenes/DensityScene";
 import GenericScene from "./scenes/GenericScene";
+import MeltingScene from "./scenes/MeltingScene";
+import BoilingScene from "./scenes/BoilingScene";
+import SolubilityScene from "./scenes/SolubilityScene";
+import Separation1Scene from "./scenes/Separation1Scene";
+import Separation2Scene from "./scenes/Separation2Scene";
 import { useEffect } from "react";
 
 interface Props {
@@ -19,10 +23,21 @@ interface Props {
   onFinish: () => void;
 }
 
+type SceneProps = { state: never; event: SimEvent | null };
+const SCENES: Record<string, (p: SceneProps) => React.ReactNode> = {
+  density: DensityScene as (p: SceneProps) => React.ReactNode,
+  melting: MeltingScene as (p: SceneProps) => React.ReactNode,
+  boiling: BoilingScene as (p: SceneProps) => React.ReactNode,
+  solubility: SolubilityScene as (p: SceneProps) => React.ReactNode,
+  separation1: Separation1Scene as (p: SceneProps) => React.ReactNode,
+  separation2: Separation2Scene as (p: SceneProps) => React.ReactNode,
+};
+
 function Scene({ slug, frame }: { slug: string; frame: Frame | null }) {
   const event: SimEvent | null = frame?.event ?? null;
-  if (slug === "density") return <DensityScene state={(frame?.state as DensityState) ?? null} event={event} />;
-  return <GenericScene state={frame?.state ?? null} event={event} />;
+  const Specific = SCENES[slug];
+  if (!Specific) return <GenericScene state={frame?.state ?? null} event={event} />;
+  return <Specific state={(frame?.state ?? null) as never} event={event} />;
 }
 
 const SPEEDS = [0.5, 1, 2];

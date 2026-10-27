@@ -68,12 +68,12 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     backend.logEvent(record.ok ? "run_completed" : "sim_error_flagged", { runNo, codes: record.diagnostics.map((d) => d.code), message: firstError?.message ?? null, guideline: "3.2" });
   }, [backend, catalog, state, targets]);
 
-  const predict = useCallback(async (target: string, choice: string, rationale: string) => {
+  const predict = useCallback(async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
     const prev = state.predictions.find((p) => p.target === target);
-    const record: PredictionRecord = { target, choice, rationale, hintsUsed: prev?.hintsUsed ?? 0 };
+    const record: PredictionRecord = { target, choice, rationale, hintsUsed: prev?.hintsUsed ?? 0, ...(sketch ? { sketch } : {}) };
     dispatch({ type: "predicted", record });
     await backend.savePrediction(record, latestRun(state)?.runNo ?? null);
-    backend.logEvent("prediction_made", { target, hintsUsed: record.hintsUsed, guideline: "3.1" });
+    backend.logEvent("prediction_made", { target, hintsUsed: record.hintsUsed, sketched: Boolean(sketch), guideline: "3.1" });
     return record;
   }, [backend, state]);
 
