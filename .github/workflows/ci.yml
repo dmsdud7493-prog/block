@@ -46,4 +46,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+        env: { NEXT_PUBLIC_E2E: "1" }
       - run: npm run test:e2e

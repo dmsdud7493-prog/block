@@ -39,6 +39,7 @@ export default function Home() {
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {EXPERIMENT_ORDER.map((slug) => <ExperimentLink key={slug} slug={slug} />)}
       </ul>
+      <footer className="mt-10 flex gap-4 border-t border-line pt-3 text-sm"><Link className="underline" href="/privacy">개인정보 처리방침</Link><Link className="underline" href="/netcheck">학교 망 점검</Link></footer>
     </main>
   );
 }

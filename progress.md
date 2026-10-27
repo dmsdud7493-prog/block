@@ -10,9 +10,10 @@
 | 필드 | 내용 |
 |---|---|
 | intent | docs/plan.md Sprint 0~9 순서대로 구현 |
-| changes_made | S0: 하네스 템플릿 적용, CLAUDE.md·architecture.md 프로젝트화, 읽기 전용 에이전트 tools, Stop hook·권한 규칙, verify.sh 프로젝트 검사(P1~P8)·xargs 버그 수정, vercel.json(icn1), CI, 테스트 러너 |
-| decisions_taken | ADR-P01~P06 (docs/decision-log.md) |
-| next_steps | S1 공통 엔진 |
+| changes_made | S0~S9 전부 구현 (각 스프린트 요약: `_workspace/S1~S9/summary.md`) |
+| decisions_taken | ADR-P01~P10 (docs/decision-log.md) |
+| next_steps | 사용자 계정으로 DEPLOY.md 실행(GitHub·Supabase·Vercel·Claude 키) → 스테이징 점검(교사 E2E·Realtime 10초·부하 30명) → 파일럿(docs/pilot-checklist.md) |
+| test_status | unit 436 passed(실 API 회귀 25 skipped), DB 46 passed, E2E 28 passed(+axe 10페이지), verify SCORE=100 APPROVED |
 
 ---
 
@@ -29,7 +30,7 @@
 | 6 | 보고서·성찰·제출 | ✅ |
 | 7 | 교사 대시보드 | ✅ (Auth·Realtime 연결 E2E는 스테이징 점검표) |
 | 8 | 실험 5종 확장 | ✅ |
-| 9 | 컴플라이언스·접근성·성능·배포 준비 | ⬜ |
+| 9 | 컴플라이언스·접근성·성능·배포 준비 | ✅ (스테이징 부하·비용 실측은 배포 후) |
 
 ---
 
@@ -39,3 +40,7 @@
 |---|---|---|
 | E1 | GitHub 리포 생성·푸시, Supabase 프로젝트(서울), Vercel 연결, Anthropic API 키는 사용자 계정 인증 필요 | `DEPLOY.md` 단계별 실행 |
 | E2 | plan.md §8.2 미확인 사항(고시문 원문 대조, 교과서 수치, 루브릭 문구) | 교사 검토 |
+| E3 | 실제 Supabase Auth·Realtime이 필요한 교사 흐름 E2E(제출→카드→채점→반환→재제출, 플래그 10초) | DEPLOY.md §5 스테이징 점검 (로컬은 DB 테스트로 같은 규칙 검증) |
+| E4 | 실 Claude 응답 회귀 25건(nightly), 첫 토큰 p95·학급당 비용 | API 키 연결 후 `npm test`(키 있으면 실행)·`docs/perf-load.md` 측정 2 |
+| E5 | 처리방침·보호자 동의서 문구 | 학교 개인정보 보호책임자 검토 후 확정 |
+| E6 | KWCAG 수동 항목(키보드 전 과정·200% 확대·스크린리더) | 파일럿 1주 전 (`docs/kwcag-checklist.md`) |

@@ -71,3 +71,29 @@ describe("실험 장면", () => {
     expect((await axe(container)).violations.map((v) => v.id)).toEqual([]);
   });
 });
+
+import Modal from "@/components/ui/Modal";
+
+describe("Modal 포커스 (KWCAG 2.4.3)", () => {
+  it("Tab은 모달 안에서 돌고, 닫히면 연 버튼으로 포커스가 돌아간다", () => {
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div>
+          <button type="button" onClick={() => setOpen(true)}>열기</button>
+          {open ? <Modal labelledBy="t" onClose={() => setOpen(false)}><h2 id="t">제목</h2><input aria-label="첫 칸" /><button type="button" onClick={() => setOpen(false)}>닫기</button></Modal> : null}
+        </div>
+      );
+    }
+    render(<Host />);
+    const opener = screen.getByRole("button", { name: "열기" });
+    opener.focus();
+    fireEvent.click(opener);
+    expect(document.activeElement).toBe(screen.getByLabelText("첫 칸"));
+    screen.getByRole("button", { name: "닫기" }).focus();
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(document.activeElement).toBe(screen.getByLabelText("첫 칸"));
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(document.activeElement).toBe(opener);
+  });
+});

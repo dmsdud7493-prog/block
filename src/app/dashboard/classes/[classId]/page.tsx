@@ -6,6 +6,7 @@ import { classDetail } from "@/lib/server/teacher";
 import StudentManager from "@/components/teacher/StudentManager";
 import AssignForm from "@/components/teacher/AssignForm";
 import ClassSettingsForm from "@/components/teacher/ClassSettingsForm";
+import ClassDangerZone from "@/components/teacher/ClassDangerZone";
 
 export const metadata: Metadata = { title: "반 상세" };
 
@@ -27,6 +28,7 @@ export default async function ClassPage({ params }: { params: Promise<{ classId:
       <StudentManager classId={cls.id} joinCode={cls.joinCode} students={cls.students} />
       <AssignForm classId={cls.id} assignments={cls.assignments} />
       <ClassSettingsForm classId={cls.id} settings={cls.settings} />
+      <ClassDangerZone classId={cls.id} name={cls.name} />
     </main>
   );
 }

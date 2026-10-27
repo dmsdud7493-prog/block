@@ -85,3 +85,24 @@ describe("S7 채점·이벤트 경계", () => {
     expect(res.status).toBe(422);
   });
 });
+
+import { POST as deleteStudent } from "@/app/api/class/student-delete/route";
+import { POST as deleteClass } from "@/app/api/class/delete/route";
+
+describe("S9 삭제 경계 (R10)", () => {
+  it("학생은 삭제 API를 부를 수 없다", async () => {
+    expect((await deleteStudent(req({ studentId: SID }))).status).toBe(403);
+    expect((await deleteClass(req({ classId: SID }))).status).toBe(403);
+  });
+  it("다른 교사 반 학생이면 DB forbidden → 403", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: null, error: { message: "forbidden", details: null } });
+    expect((await deleteStudent(req({ studentId: SID }))).status).toBe(403);
+  });
+  it("성공하면 지운 세션 수를 돌려준다", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: 3, error: null });
+    expect((await (await deleteStudent(req({ studentId: SID }))).json()).data).toEqual({ sessions: 3 });
+    expect(rpcMock.mock.calls[0][0]).toBe("app_delete_student");
+  });
+});

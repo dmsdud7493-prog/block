@@ -6,6 +6,7 @@
 import { useState } from "react";
 import type { StudentRow } from "@/lib/teacherTypes";
 import { useAction } from "./useAction";
+import DangerButton from "./DangerButton";
 
 interface Created { studentNo: string; pin: string | null; error?: string }
 
@@ -28,6 +29,7 @@ function StudentLine({ s }: { s: StudentRow }) {
   const consent = useAction("/api/class/consent");
   const pin = useAction<{ pin: string }>("/api/class/pin");
   const [newPin, setNewPin] = useState<string | null>(null);
+  const remove = useAction<{ sessions: number }>("/api/class/student-delete");
   const reissue = async () => {
     try {
       const r = await pin.run({ studentId: s.id });
@@ -41,6 +43,7 @@ function StudentLine({ s }: { s: StudentRow }) {
       <th scope="row" className="p-2 text-left">{s.studentNo}</th>
       <td className="p-2"><label className="tap flex items-center gap-2"><input type="checkbox" checked={s.consentOnFile} disabled={consent.busy} onChange={(e) => void consent.run({ studentId: s.id, onFile: e.target.checked })} />{s.consentOnFile ? `수령 (${s.consentDate ?? ""})` : "미수령"}</label></td>
       <td className="p-2"><button type="button" className="tap rounded border border-line px-2 text-sm" onClick={() => void reissue()}>PIN 재발급</button>{newPin ? <span className="ml-2 font-mono" aria-live="polite">새 PIN {newPin}</span> : null}</td>
+      <td className="p-2"><DangerButton label="계정·기록 삭제" warning={`${s.studentNo}의 계정과 실험·대화·보고서 기록이 모두 지워지고 되돌릴 수 없어요.`} confirmLabel="영구 삭제" busy={remove.busy} onConfirm={() => void remove.run({ studentId: s.id })} />{remove.error ? <span role="alert" className="ml-2 text-err">{remove.error}</span> : null}</td>
     </tr>
   );
 }
@@ -74,7 +77,7 @@ export default function StudentManager({ classId, joinCode, students }: { classI
       <PinSheet joinCode={joinCode} rows={created} />
       <table className="mt-3 w-full text-sm">
         <caption className="sr-only">학생 목록과 보호자 동의 상태</caption>
-        <thead><tr className="bg-slate-100"><th scope="col" className="p-2 text-left">번호</th><th scope="col" className="p-2 text-left">보호자 동의서</th><th scope="col" className="p-2 text-left">PIN</th></tr></thead>
+        <thead><tr className="bg-slate-100"><th scope="col" className="p-2 text-left">번호</th><th scope="col" className="p-2 text-left">보호자 동의서</th><th scope="col" className="p-2 text-left">PIN</th><th scope="col" className="p-2 text-left">삭제</th></tr></thead>
         <tbody>{students.map((s) => <StudentLine key={s.id} s={s} />)}</tbody>
       </table>
     </section>

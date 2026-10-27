@@ -12,7 +12,7 @@ import { hintLevelMax, isAttempt } from "./ladder";
 import { detectRisk, redactPII } from "./safety";
 import { buildState } from "./stateInjection";
 import { respond, type ChatTurn } from "./respond";
-import { tutorModel } from "./model";
+import { tutorModel, tutorModelId } from "./model";
 import type { TutorResponse } from "./schemas";
 
 interface Ctx { tone: "haeyo" | "banmal"; scaffold: number; lastHint: number; nudges: number; seed: string | null }
@@ -63,6 +63,6 @@ export async function tutorTurn(input: TutorInput, userId: string | null): Promi
 async function persist(userId: string, input: TutorInput, lastUser: string, result: Awaited<ReturnType<typeof respond>>, flagged: boolean, risk: string | null) {
   const sid = input.sessionId as string;
   if (!input.nudge) await rpc("app_add_chat", { p_student: userId, p_session: sid, p_role: "user", p_content: redactPII(lastUser).text, p_meta: { risk }, p_flagged: Boolean(risk) });
-  const meta = { hint_level: result.reply.hint_level, source: result.source, usage: result.usage, violations: result.violations, nudge: Boolean(input.nudge), risk, next_action: result.reply.next_action };
+  const meta = { hint_level: result.reply.hint_level, source: result.source, model: result.source === "claude" ? tutorModelId() : "local", usage: result.usage, violations: result.violations, nudge: Boolean(input.nudge), risk, next_action: result.reply.next_action };
   await rpc("app_add_chat", { p_student: userId, p_session: sid, p_role: "assistant", p_content: result.reply.reply, p_meta: meta, p_flagged: flagged && !risk });
 }

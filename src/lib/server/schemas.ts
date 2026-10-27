@@ -77,6 +77,7 @@ export const classCreateSchema = z.object({ name: z.string().trim().min(1).max(6
 export const studentsSchema = z.object({ classId: uuid, studentNos: z.array(z.string().trim().min(1).max(20)).min(1).max(60) });
 export const consentSchema = z.object({ studentId: uuid, onFile: z.boolean(), date: z.string().date().nullable().optional() });
 export const pinSchema = z.object({ studentId: uuid });
+export const classIdSchema = z.object({ classId: uuid });
 export const assignSchema = z.object({
   classId: uuid,
   slug: slugSchema,
