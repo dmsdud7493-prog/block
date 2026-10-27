@@ -36,3 +36,8 @@
 - 직접 편집하거나 삭제해도 됩니다
 - 규칙이 쌓일수록 이 파일이 **하네스의 성장 연대기**가 됩니다
 - 다음 프로젝트 시작 시 이 파일을 보면 어떤 패턴이 반복됐는지 알 수 있습니다
+
+## 2026-10-27 — verify.sh 프로젝트 검사 (plan S0 승인 범위)
+- P1~P8 추가 (Claude 호출 위치, 클라이언트의 서버 전용 정답 모듈 참조, 대신 작성 패턴, 튜터 aria-live, getSession 금지, Realtime 위치, runs 테이블, 설계원리.md 등록)
+- 템플릿 버그 수정: 빈 입력에서 `xargs grep -L`이 stdin을 검사해 거짓 실패 → `xargs -r`
+- P1 정밀화(S4): plan 기준대로 `api.anthropic.com` 문자열은 src/app/api 밖 0건, `@ai-sdk/anthropic`은 `server-only` 모듈에서만 허용

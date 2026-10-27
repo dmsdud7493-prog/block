@@ -37,13 +37,14 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
   const { data: s } = await db.from("sessions").select("id, seed, status, inquiry, current_step, classes(settings), experiments(slug)").eq("id", sessionId).single();
   if (!s) return null;
   const slug = (s.experiments as unknown as { slug: string }).slug;
-  const [prog, runs, preds, meas, report, sub] = await Promise.all([
+  const [prog, runs, preds, meas, report, sub, chat] = await Promise.all([
     db.from("block_programs").select("program, blockly, version").eq("session_id", sessionId).order("version", { ascending: false }).limit(1),
     db.from("runs").select("run_no, ok, program, diagnostics, measurements, calc_requests, series, changed_vars").eq("session_id", sessionId).order("run_no"),
     db.from("predictions").select("target, choice, rationale, hints_used, matched, rationale_after").eq("session_id", sessionId),
     db.from("measurements").select("key, value, unit, is_correct, error_type, attempt, runs(run_no)").eq("session_id", sessionId).order("attempt"),
     db.from("reports").select("content, ai_assisted_sections, version").eq("session_id", sessionId).maybeSingle(),
     db.from("submissions").select("rubric_scores, teacher_feedback, returned_at, submitted_at, late, version").eq("session_id", sessionId).maybeSingle(),
+    db.from("chat_messages").select("role, content, meta").eq("session_id", sessionId).order("id", { ascending: false }).limit(40),
   ]);
   const runRows = (runs.data ?? []) as RunRow[];
   const runRecords = runRows.map((r, i) => toRun(r, slug, s.seed, i === runRows.length - 1));
@@ -58,6 +59,10 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
     blockly: (latest?.blockly as object) ?? null,
     report: report.data ? { content: report.data.content as Record<string, unknown>, aiAssisted: report.data.ai_assisted_sections, version: report.data.version } : null,
     submission: sub.data ?? null,
+    chat: (chat.data ?? []).reverse().map((m) => {
+      const meta = m.meta as { hint_level?: number; source?: string; nudge?: boolean };
+      return { role: m.role as "user" | "assistant", content: m.content, hintLevel: meta.hint_level, source: meta.source, nudge: meta.nudge };
+    }),
     hydrate: {
       program: (latest?.program as Program) ?? { experiment: slug, steps: [], variables: [] },
       runs: runRecords,

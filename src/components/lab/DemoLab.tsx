@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import LabShell from "./LabShell";
 import { demoBackend } from "./backend";
+import TutorPanel from "@/components/tutor/TutorPanel";
+import { getCatalog } from "@/lib/engine/experiments";
 
 function newSeed(slug: string): string {
   const key = `demo-seed:${slug}`;
@@ -20,5 +22,13 @@ function newSeed(slug: string): string {
 export default function DemoLab({ slug }: { slug: string }) {
   const [seed] = useState(() => (typeof window === "undefined" ? "demo-ssr" : newSeed(slug)));
   const backend = useMemo(() => demoBackend(slug, seed), [slug, seed]);
-  return <LabShell slug={slug} backend={backend} badge="체험 모드 · 저장되지 않아요" />;
+  const catalog = getCatalog(slug);
+  return (
+    <LabShell
+      slug={slug}
+      backend={backend}
+      badge="체험 모드 · 저장되지 않아요"
+      tutor={(ctl) => (catalog ? <TutorPanel ctl={ctl} catalog={catalog} mode="demo" seed={seed} /> : null)}
+    />
+  );
 }

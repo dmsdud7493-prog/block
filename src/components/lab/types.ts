@@ -74,5 +74,6 @@ export interface SessionView {
   hydrate: Partial<LabState>;
   blockly: object | null;
   report: { content: Record<string, unknown>; aiAssisted: string[]; version: number } | null;
+  chat: { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean }[];
   submission: { rubric_scores: unknown; teacher_feedback: string | null; returned_at: string | null; submitted_at: string; late: boolean; version: number } | null;
 }

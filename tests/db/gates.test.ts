@@ -122,6 +122,21 @@ describe("RLS — 읽기 격리", () => {
   });
 });
 
+describe("튜터 대화 (R6·R8)", () => {
+  it("위험 신호로 플래그된 대화는 교사 이벤트 ai_flagged를 남기고, 마지막 힌트 레벨을 기억한다", async () => {
+    await asService((q) => q("select public.app_add_chat($1, $2, 'user', '죽고 싶어', '{\"risk\":\"self_harm\"}', true)", [A, sessA]));
+    await asService((q) => q("select public.app_add_chat($1, $2, 'assistant', '선생님께 말해 주세요', '{\"hint_level\":0,\"source\":\"local\"}', false)", [A, sessA]));
+    const flagged = (await pool.query("select count(*)::int n from public.events where session_id = $1 and event_type = 'ai_flagged'", [sessA])).rows[0].n;
+    expect(flagged).toBe(1);
+    const ctx = (await asService((q) => q("select * from public.app_tutor_context($1, $2)", [A, sessA]))).rows[0];
+    expect(ctx.last_hint_level).toBe(0);
+    expect(ctx.tone).toBe("haeyo");
+  });
+  it("학생은 남의 세션에 대화를 저장할 수 없다", async () => {
+    expect(await errorOf(asService((q) => q("select public.app_add_chat($1, $2, 'user', 'x', '{}', false)", [B, sessA])))).toContain("forbidden");
+  });
+});
+
 describe("제출 잠금", () => {
   it("제출된 세션은 편집할 수 없다 (session_locked)", async () => {
     await pool.query("update public.sessions set status = 'submitted' where id = $1", [sessB]);

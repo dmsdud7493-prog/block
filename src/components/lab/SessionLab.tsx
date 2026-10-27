@@ -4,8 +4,19 @@ import { useMemo } from "react";
 import LabShell from "./LabShell";
 import { sessionBackend } from "./backend";
 import type { SessionView } from "./types";
+import TutorPanel from "@/components/tutor/TutorPanel";
+import { getCatalog } from "@/lib/engine/experiments";
 
 export default function SessionLab({ view }: { view: SessionView }) {
   const backend = useMemo(() => sessionBackend(view.sessionId), [view.sessionId]);
-  return <LabShell slug={view.slug} backend={backend} hydrate={view.hydrate} initialBlockly={view.blockly} />;
+  const catalog = getCatalog(view.slug);
+  return (
+    <LabShell
+      slug={view.slug}
+      backend={backend}
+      hydrate={view.hydrate}
+      initialBlockly={view.blockly}
+      tutor={(ctl) => (catalog ? <TutorPanel ctl={ctl} catalog={catalog} mode="session" sessionId={view.sessionId} initial={view.chat} /> : null)}
+    />
+  );
 }

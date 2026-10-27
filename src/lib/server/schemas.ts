@@ -1,5 +1,6 @@
 /** 요청 검증 스키마 (zod) — 클라이언트가 보낸 블록 프로그램은 신뢰하지 않고 형태를 강제한다 */
 import { z } from "zod";
+import { tutorContextSchema } from "@/lib/tutor/stateInjection";
 
 const slot = z.union([
   z.object({ kind: z.literal("equip"), id: z.string().max(40) }),
@@ -88,3 +89,16 @@ export const classSettingsSchema = z.object({
     rationale_gate: z.boolean().optional(),
   }),
 });
+
+export const tutorSchema = z.object({
+  mode: z.enum(["demo", "session"]),
+  slug: slugSchema,
+  sessionId: uuid.optional(),
+  seed: z.string().min(4).max(80).optional(),
+  runNo: z.number().int().min(1).nullable(),
+  program: programSchema,
+  messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(1000) })).min(1).max(30),
+  context: tutorContextSchema,
+  nudge: z.boolean().optional(),
+});
+export type TutorInput = z.infer<typeof tutorSchema>;

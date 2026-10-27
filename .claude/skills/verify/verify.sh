@@ -287,7 +287,10 @@ _why() { $EXPLAIN && echo "  ✗ $1" >&2; }
 if $HAS_SRC && [ -n "$ALL_FILES" ]; then
   # P1 CRITICAL: 브라우저에서 Claude 직접 호출 금지 (CLAUDE.md 규칙 6)
   P1=$(echo "$ALL_FILES" | xargs -r grep -l "dangerouslyAllowBrowser" 2>/dev/null)
-  P1b=$(echo "$ALL_FILES" | grep -v "^$SRC/app/api/" | xargs -r grep -l "api\.anthropic\.com\|@ai-sdk/anthropic" 2>/dev/null)
+  # plan S0: api.anthropic.com 문자열은 src/app/api 밖 0건. SDK(@ai-sdk/anthropic)는 server-only 모듈에서만 허용
+  P1b=$(echo "$ALL_FILES" | grep -v "^$SRC/app/api/" | xargs -r grep -l "api\.anthropic\.com" 2>/dev/null)
+  P1c=$(echo "$ALL_FILES" | grep -v "^$SRC/app/api/" | xargs -r grep -l "@ai-sdk/anthropic" 2>/dev/null | xargs -r grep -L "server-only" 2>/dev/null)
+  P1b="$P1b$P1c"
   if [ -n "$P1$P1b" ]; then C_FAIL=$((C_FAIL + 1)); _why "P1 Claude 호출이 src/app/api 밖에 있음: $P1 $P1b"; fi
 
   # P2 CRITICAL: 클라이언트 코드가 서버 전용 정답·물성 모듈을 import 금지 (평가 무결성)
