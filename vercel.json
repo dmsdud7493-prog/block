@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["icn1"],
+  "functions": {
+    "src/app/api/tutor/route.ts": { "maxDuration": 120 },
+    "src/app/api/report/feedback/route.ts": { "maxDuration": 120 }
+  }
+}

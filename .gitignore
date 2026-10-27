@@ -1,0 +1,139 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+# ────────────────────────────────────────
+# EduHarness Foundation .gitignore
+# ────────────────────────────────────────
+
+# 환경 변수 (절대 커밋하지 말 것!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# 의존성
+node_modules/
+.pnp
+.pnp.js
+
+# 빌드 결과물
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# 캐시
+.cache/
+.eslintcache
+.stylelintcache
+
+# 테스트 결과
+coverage/
+*.lcov
+.nyc_output
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE / 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 로그
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 임시 파일
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Vercel
+.vercel
+
+# Prisma (생성된 클라이언트)
+# prisma/generated/   ← 필요에 따라 주석 해제
+
+# objective-loop 측정 파일 (팀원마다 달라지므로 커밋 불필요)
+.objective-baseline
+objective-loop-log.md
+
+# Claude Code / 플러그인 자동 생성 상태 파일 (로컬 전용)
+.claude/settings.local.json
+.bkit/
+docs/.pdca-status.json
+docs/.pdca-snapshots/
+
+# OMC PRD 파일 (로컬 작업 전용 — 커밋 불필요)
+.omc/
+
+# ────────────────────────────────────────
+# 주의: 다음은 절대 .gitignore에 추가하지 말 것
+# - CLAUDE.md (AI 하네스 핵심 파일)
+# - AGENTS.md
+# - architecture.md
+# - progress.md
+# - .claude/ 폴더
+# ────────────────────────────────────────
+
+!.env.example
+# local test artifacts
+test-results/
+playwright-report/
+coverage/
