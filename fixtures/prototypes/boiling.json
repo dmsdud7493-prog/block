@@ -1,0 +1,95 @@
+{
+  "experiment": "boiling",
+  "source": "boiling_point_lab.html (프로토타입) — LIQ: 물 100 ℃(직접 가열), 에탄올 78 ℃(물중탕), ROOM 20 ℃, tBoil = min(1500, (물중탕 200 | 직접 240) + 6×부피) 초",
+  "scenarios": [
+    {
+      "name": "정상: 물 10 mL 직접 가열 (10초 간격, 끓은 뒤 1분 더)",
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a10","Q:1:min"],["a11","E:water"]],
+      "expect": { "ok": true, "measurements": { "volume.water.t1": 10, "boil_start.water.t1": 300 }, "calcKeys": ["bp.water.t1"], "codes": [], "series": { "temp.water.t1": 100 } }
+    },
+    {
+      "name": "정상: 에탄올 10 mL 물중탕 가열 (마개·고무관·유리관·찬물 속 빈 시험관)",
+      "steps": [["a1","E:beaker","E:water","Q:150:mL"],["a2","E:beaker","E:hot_plate"],["a1","E:side_arm_tube","E:ethanol","Q:10:mL"],
+                ["a3","E:side_arm_tube"],["a4","E:side_arm_tube","E:stopper_thermometer"],["a5","E:ethanol"],
+                ["a6","E:side_arm_tube","E:rubber_tube"],["a6","E:rubber_tube","E:glass_tube"],["a7","E:empty_tube","E:cold_water_beaker"],
+                ["a7","E:glass_tube","E:empty_tube"],["a8"],["a9","E:ethanol","Q:10:s"],["a10","Q:1:min"],["a11","E:ethanol"]],
+      "expect": { "ok": true, "measurements": { "volume.ethanol.t1": 10, "boil_start.ethanol.t1": 260 }, "calcKeys": ["bp.ethanol.t1"], "codes": [], "series": { "temp.ethanol.t1": 78 } }
+    },
+    {
+      "name": "정상: 물 10 mL와 20 mL 비교 — 변인 선언 포함",
+      "variables": [["independent","liquid_amount"],["dependent","boiling_point"],["controlled","liquid_type"],["controlled","heat_method"],["controlled","heat_strength"],
+                    ["experimental_group","g_water_20"],["comparison_group","g_water_10"],["method","m_time_temp_graph"]],
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a10","Q:1:min"],["a11","E:water"],
+                ["a1","E:beaker","E:water","Q:20:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a10","Q:1:min"],["a11","E:water"]],
+      "expect": { "ok": true, "measurements": { "volume.water.t1": 10, "volume.water.t2": 20, "boil_start.water.t1": 300, "boil_start.water.t2": 360 }, "calcKeys": ["bp.water.t1","bp.water.t2"], "codes": [], "series": { "temp.water.t1": 100, "temp.water.t2": 100 } }
+    },
+    {
+      "name": "정상: 물과 에탄올 비교 — 액체의 종류가 조작 변인",
+      "variables": [["independent","liquid_type"],["dependent","boiling_point"],["controlled","liquid_amount"],["experimental_group","g_water"],["comparison_group","g_ethanol"],["method","m_time_temp_graph"]],
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a10","Q:1:min"],["a11","E:water"],
+                ["a1","E:beaker","E:water","Q:150:mL"],["a2","E:beaker","E:hot_plate"],["a1","E:side_arm_tube","E:ethanol","Q:10:mL"],
+                ["a3","E:side_arm_tube"],["a4","E:side_arm_tube","E:stopper_thermometer"],["a5","E:ethanol"],
+                ["a6","E:side_arm_tube","E:rubber_tube"],["a6","E:rubber_tube","E:glass_tube"],["a7","E:empty_tube","E:cold_water_beaker"],
+                ["a7","E:glass_tube","E:empty_tube"],["a8"],["a9","E:ethanol","Q:10:s"],["a10","Q:1:min"],["a11","E:ethanol"]],
+      "expect": { "ok": true, "calcKeys": ["bp.water.t1","bp.ethanol.t2"], "codes": [] }
+    },
+    {
+      "name": "오류: 장치 준비 전에 가열",
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a8"]],
+      "expect": { "ok": false, "codes": ["heat_before_setup"] }
+    },
+    {
+      "name": "오류: 에탄올을 비커에 넣어 직접 가열",
+      "steps": [["a1","E:beaker","E:ethanol","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a8"]],
+      "expect": { "ok": false, "codes": ["ethanol_direct_heat"] }
+    },
+    {
+      "name": "오류: 가지 달린 시험관을 핫플레이트에 직접 올림",
+      "steps": [["a1","E:side_arm_tube","E:ethanol","Q:10:mL"],["a2","E:side_arm_tube","E:hot_plate"]],
+      "expect": { "ok": false, "codes": ["ethanol_direct_heat"] }
+    },
+    {
+      "name": "오류: 증기를 모을 찬물 속 빈 시험관 없이 에탄올 가열",
+      "steps": [["a1","E:beaker","E:water","Q:150:mL"],["a2","E:beaker","E:hot_plate"],["a1","E:side_arm_tube","E:ethanol","Q:10:mL"],
+                ["a3","E:side_arm_tube"],["a4","E:side_arm_tube","E:stopper_thermometer"],["a5","E:ethanol"],
+                ["a6","E:side_arm_tube","E:rubber_tube"],["a6","E:rubber_tube","E:glass_tube"],["a8"]],
+      "expect": { "ok": false, "codes": ["vapour_no_cold_trap"] }
+    },
+    {
+      "name": "오류: 온도계 높이를 물이 아닌 에탄올에 맞춤",
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:ethanol"]],
+      "expect": { "ok": false, "codes": ["thermo_position_wrong"] }
+    },
+    {
+      "name": "오류: 가열 중에 장치를 추가",
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],["a3","E:thermometer"]],
+      "expect": { "ok": false, "codes": ["setup_while_heating"] }
+    },
+    {
+      "name": "오류: 빈 구멍과 단위 불일치",
+      "steps": [["a1","E:beaker","E:water","Q:10:g"],["a9","_","Q:10:s"]],
+      "expect": { "ok": false, "codes": ["slot_invalid","slot_invalid"] }
+    },
+    {
+      "name": "오류: 통제변인(물의 양) 불일치",
+      "variables": [["independent","liquid_type"],["controlled","liquid_amount"]],
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a10","Q:1:min"],["a11","E:water"],
+                ["a1","E:beaker","E:water","Q:150:mL"],["a2","E:beaker","E:hot_plate"],["a1","E:side_arm_tube","E:ethanol","Q:20:mL"],
+                ["a3","E:side_arm_tube"],["a4","E:side_arm_tube","E:stopper_thermometer"],["a5","E:ethanol"],
+                ["a6","E:side_arm_tube","E:rubber_tube"],["a6","E:rubber_tube","E:glass_tube"],["a7","E:empty_tube","E:cold_water_beaker"],
+                ["a7","E:glass_tube","E:empty_tube"],["a8"],["a9","E:ethanol","Q:10:s"],["a10","Q:1:min"],["a11","E:ethanol"]],
+      "expect": { "ok": true, "codes": ["controlled_var_mismatch"] }
+    },
+    {
+      "name": "오류: 끓은 뒤 더 측정하지 않고 그래프",
+      "steps": [["a1","E:beaker","E:water","Q:10:mL"],["a2","E:beaker","E:hot_plate"],["a3","E:thermometer"],["a5","E:water"],["a8"],
+                ["a9","E:water","Q:10:s"],["a11","E:water"]],
+      "expect": { "ok": false, "codes": ["graph_no_extra"] }
+    }
+  ]
+}

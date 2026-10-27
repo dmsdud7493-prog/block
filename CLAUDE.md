@@ -135,6 +135,13 @@ bash .claude/hooks/harness-checkpoint.sh checkpoint "[기능명] 구현 전"
 - Claude 호출은 `src/app/api/**` Route Handler에서만. `dangerouslyAllowBrowser`·브라우저 직접 호출 금지
 - (규칙 5 연장) 학생 데이터 제3자 제공 코드 작성 시 → 즉시 중단, 사용자 확인
 
+### 규칙 7 — 엔진·화면 작성 패턴 (S1에서 학습)
+
+- 리듀서는 숫자를 `ctx.param()`·`ctx.noise()`로만 얻고, **NaN 비교로 오류를 만들지 않는다** — dryRun(물성 없음)과 simulate의 진단이 같아야 한다 (지침 2.3)
+- 프로토타입이 비교 시도로 허용한 행동은 오류가 아니라 `warnings`로 알린다 (지침 3.3)
+- 학생이 계산에 쓰는 교과서 표는 `catalog.reference`(공개), 정답 공식·물성은 `physics.ts`(server-only)
+- JSX 목록은 `items.map((x) => <Row key=… x={x} />)` 한 줄로 — 중첩 5단계(10칸 들여쓰기) 금지 규칙을 지키는 기본 패턴
+
 ---
 
 ## 단일 기능 세션 경계

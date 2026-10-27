@@ -56,3 +56,22 @@ export function checkVariables(
     : [];
   return [...perDecl, ...missing];
 }
+
+/**
+ * 직전 실행 대비 바뀐 변인 라벨 (지침 3.3·3.4). 두 개 이상이면 튜터가
+ * "어느 변인 때문인지 알 수 있을까?"를 먼저 묻는다.
+ */
+export function changedVariables(
+  prev: Program | null,
+  next: Program,
+  options: VariableOption[],
+  isTrialEnd: (s: Step) => boolean,
+): string[] {
+  if (!prev) return [];
+  const sig = (p: Program, o: VariableOption) =>
+    splitTrials(p.steps, isTrialEnd).map((t) => String(o.extract?.(t) ?? "")).join("|");
+  return options
+    .filter((o) => o.extract && o.roles.some((r) => r === "independent" || r === "controlled"))
+    .filter((o) => sig(prev, o) !== sig(next, o))
+    .map((o) => o.label);
+}

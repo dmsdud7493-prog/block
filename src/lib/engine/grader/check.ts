@@ -50,7 +50,7 @@ function alternatives(rule: AnswerRule, inputs: number[], expected: number): [Er
     return [["swapped", b / a], ...decimals, ...men];
   }
   if (rule.family === "per100") return [["solvent_basis", inputs[0]], ...decimals];
-  if (rule.family === "plateau") return [["unit", expected + 273.15], ["unit", expected + 273]];
+  if (rule.family === "plateau") return [["unit", expected + 273.15], ["unit", expected + 273], ["unit", (expected * 9) / 5 + 32]];
   return decimals;
 }
 

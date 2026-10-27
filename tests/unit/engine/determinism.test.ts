@@ -33,3 +33,13 @@ describe("변인 설계 블록 (지침 2.1)", () => {
     );
   });
 });
+
+import { changedVariables } from "@/lib/engine/rules/variables";
+
+describe("바뀐 변인 추적 (지침 3.3)", () => {
+  it("물의 양만 바꾸면 그 변인만 보고한다", () => {
+    const sc = loadScenarios("density").find((s) => s.name.includes("통제변인"))!;
+    const prev = { ...sc.program, steps: sc.program.steps.map((s) => s.action === "a2" ? { ...s, slots: [s.slots[0], { kind: "quant" as const, value: 50, unit: "mL" as const }] } : s) };
+    expect(changedVariables(prev, sc.program, densityCatalog.variableOptions, densityCatalog.isTrialEnd)).toEqual(["붓는 액체(물)의 양"]);
+  });
+});

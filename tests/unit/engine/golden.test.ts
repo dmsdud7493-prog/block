@@ -31,6 +31,8 @@ for (const slug of Object.keys(CATALOGS)) {
         Object.entries(sc.expect.series ?? {}).forEach(([key, plateau]) => {
           const s = result.series.find((x) => x.key === key);
           expect(s, `series ${key}`).toBeDefined();
+          // 평탄 구간: 기대 온도 ±0.5 ℃ 안의 측정점이 3개 이상
+          expect(s!.points.filter((p) => Math.abs(p.temp - plateau) <= 0.5).length).toBeGreaterThanOrEqual(3);
         });
       });
       it(`${sc.name} — dryRun 진단 = simulate 진단`, () => {

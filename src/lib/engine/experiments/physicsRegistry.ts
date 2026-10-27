@@ -2,10 +2,20 @@
 import "server-only";
 import type { PhysicsModule } from "./physicsTypes";
 import { densityPhysics } from "./density/physics";
+import { meltingPhysics } from "./melting/physics";
+import { boilingPhysics } from "./boiling/physics";
+import { solubilityPhysics } from "./solubility/physics";
+import { separation1Physics } from "./separation1/physics";
 import { createRng } from "../rng";
+import { separation2Physics } from "./separation2/physics";
 
 export const PHYSICS: Record<string, PhysicsModule> = {
   density: densityPhysics,
+  melting: meltingPhysics,
+  boiling: boilingPhysics,
+  solubility: solubilityPhysics,
+  separation1: separation1Physics,
+  separation2: separation2Physics,
 };
 
 export function getPhysics(slug: string): PhysicsModule | null {

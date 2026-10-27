@@ -3,7 +3,7 @@
  * 리듀서는 숫자를 ctx.param()/ctx.noise()로만 얻으므로, dryRun에서는 NaN 스텁으로 같은 규칙을 돌린다.
  */
 import type {
-  ActionBlockDef, ItemDef, PosDef, QuantDef, Step, StepOutcome, VariableRole,
+  ActionBlockDef, ItemDef, PosDef, QuantDef, ReferenceTable, Step, StepOutcome, VariableRole,
 } from "../types";
 
 export interface NoiseSpec {
@@ -38,6 +38,11 @@ export interface PredictionChoice {
   label: string;
 }
 
+/**
+ * 예측(POE)은 형성평가다: 점수 없음, 재시도·수정 가능, 정답 비공개(결과를 보고 스스로 비교) — CLAUDE.md 규칙 1, 지침 3.1·3.3.
+ */
+export const PREDICTION_ASSESSMENT = { type: "FORMATIVE", maxAttempts: null, showAnswerAfter: "NEVER" } as const;
+
 export interface PredictionTarget {
   id: string;
   question: string;
@@ -59,6 +64,8 @@ export interface ExperimentCatalog<S> {
   variableOptions: VariableOption[];
   exampleSteps: string[];
   predictionTargets: PredictionTarget[];
+  /** 학생이 계산에 쓰는 공개 참고 자료(교과서 표) */
+  reference?: ReferenceTable[];
   /** 이 목록의 대상(subject)을 모두 측정하면 실험 완료 */
   requiredSubjects: string[];
   initialState: () => S;

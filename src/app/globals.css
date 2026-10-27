@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
+/* 색 토큰 — 본문 대비 4.5:1 이상 (KWCAG 2.2) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #cbd5e1;
+  --brand: #1d4ed8;
+  --brand-ink: #ffffff;
+  --ok: #047857;
+  --warn: #b45309;
+  --err: #b91c1c;
+  --focus: #f59e0b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-err: var(--err);
+  --font-sans: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 터치 대상 44px (KWCAG) */
+.tap { min-height: 44px; min-width: 44px; }
+
+/* Blockly 블록 상태 — 색만이 아니라 테두리 굵기·점선으로도 구분 */
+.lab-block-warn > .blocklyPath { stroke: var(--warn) !important; stroke-width: 3px !important; stroke-dasharray: 6 3; }
+.lab-block-active > .blocklyPath { stroke: var(--brand) !important; stroke-width: 4px !important; }
+.lab-block-error > .blocklyPath { stroke: var(--err) !important; stroke-width: 4px !important; animation: lab-flash 0.8s ease-in-out 3; }
+@keyframes lab-flash { 50% { stroke-opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) {
+  .lab-block-error > .blocklyPath { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.sr-only-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

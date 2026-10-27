@@ -45,11 +45,21 @@ interface Acc {
   calcRequests: CalcRequest[];
   series: Series[];
   error: Diagnostic | null;
+  warnings: Diagnostic[];
   stoppedAt: number | null;
 }
 
+/** 같은 key의 시계열 조각(예: 끓을 때까지 + 끓은 뒤 더 측정)을 하나로 잇는다 */
+export function mergeSeries(list: Series[], add: Series[]): Series[] {
+  return add.reduce((acc, piece) => {
+    const i = acc.findIndex((x) => x.key === piece.key);
+    if (i < 0) return [...acc, piece];
+    return acc.map((x, j) => (j === i ? { ...x, points: [...x.points, ...piece.points] } : x));
+  }, list);
+}
+
 function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | null): Acc {
-  const init: Acc = { state: catalog.initialState(), trial: 1, frames: [], measurements: [], calcRequests: [], series: [], error: null, stoppedAt: null };
+  const init: Acc = { state: catalog.initialState(), trial: 1, frames: [], measurements: [], calcRequests: [], series: [], error: null, warnings: [], stoppedAt: null };
   return program.steps.reduce<Acc>((acc, step, i) => {
     if (acc.error) return acc;
     const out = catalog.reduce(acc.state, step, makeContext(src, acc.trial, i));
@@ -57,6 +67,7 @@ function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | nu
       const d: Diagnostic = { blockId: step.blockId, severity: "error", code: out.error.code, message: out.error.message, guideline: out.error.guideline ?? "2.3" };
       return { ...acc, error: d, stoppedAt: i };
     }
+    const warns: Diagnostic[] = (out.warnings ?? []).map((w) => ({ blockId: step.blockId, severity: "warn", code: w.code, message: w.message, guideline: w.guideline ?? "3.3" }));
     const frame: Frame = { stepIndex: i, blockId: step.blockId, event: out.event ?? { type: "noop", note: "" }, state: out.state };
     return {
       ...acc,
@@ -65,7 +76,8 @@ function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | nu
       frames: [...acc.frames, frame],
       measurements: [...acc.measurements, ...(out.measurements ?? [])],
       calcRequests: [...acc.calcRequests, ...(out.calcRequests ?? [])],
-      series: [...acc.series, ...(out.series ?? [])],
+      series: mergeSeries(acc.series, out.series ?? []),
+      warnings: [...acc.warnings, ...warns],
     };
   }, init);
 }
@@ -77,7 +89,7 @@ export function simulate(program: Program, catalog: AnyCatalog, src: PhysicsSour
     return { ok: false, frames: [], diagnostics: [...slotDiags, ...varDiags], measurements: [], calcRequests: [], series: [], stoppedAt: null };
   }
   const acc = runSteps(program, catalog, src);
-  const diagnostics = acc.error ? [acc.error, ...varDiags] : varDiags;
+  const diagnostics = [...(acc.error ? [acc.error] : []), ...acc.warnings, ...varDiags];
   return {
     ok: acc.error === null,
     frames: acc.frames,

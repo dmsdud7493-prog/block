@@ -1,0 +1,56 @@
+{
+  "experiment": "solubility",
+  "source": "solubility-lab.html (프로토타입) — SOLUTES: 질산 칼륨 0 °C 13.3 · 20 °C 31.6 · 60 °C 109, 황산 구리(II) 0 °C 14.3 · 20 °C 20.7 · 60 °C 40 (g/물 100 g), 실온 20 °C, 뜨거운 물 60 °C, 얼음물 0 °C, 시약포지 0.45 g, 시험관 물 20 g까지",
+  "scenarios": [
+    {
+      "name": "정상: 시험관 A 물 10 g에 질산 칼륨 1 g씩 (반복 블록)",
+      "steps": [["a1","E:tube_a","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:kno3","Q:1:g","E:spatula"],["a4","E:kno3","E:tube_a"],["a5","E:kno3","Q:1:g"],["a6","E:kno3"]],
+      "expect": { "ok": true, "measurements": { "water.kno3.t1": 10, "added.kno3.t1": 4, "dissolved.kno3.t1": 3.16, "temp.kno3.t1": 20 }, "calcKeys": ["sol.kno3.t1"], "codes": [] }
+    },
+    {
+      "name": "정상: 시험관 B 물 10 g에 황산 구리(II) 1 g씩 (반복 블록)",
+      "steps": [["a1","E:tube_b","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:cuso4","Q:1:g","E:spatula"],["a4","E:cuso4","E:tube_b"],["a5","E:cuso4","Q:1:g"],["a6","E:cuso4"]],
+      "expect": { "ok": true, "measurements": { "water.cuso4.t1": 10, "added.cuso4.t1": 3, "dissolved.cuso4.t1": 2.07 }, "calcKeys": ["sol.cuso4.t1"], "codes": [] }
+    },
+    {
+      "name": "정상: 실험1 전체 — 시험관 A 질산 칼륨, 시험관 B 황산 구리(II) (변인 선언 포함)",
+      "variables": [["independent","solute_type"],["dependent","dissolved_amount"],["controlled","water_amount"],["controlled","temperature"],["experimental_group","g_kno3"],["comparison_group","g_cuso4"],["method","m_saturate"]],
+      "steps": [["a1","E:tube_a","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:kno3","Q:1:g","E:spatula"],["a4","E:kno3","E:tube_a"],["a5","E:kno3","Q:1:g"],["a6","E:kno3"],
+                ["a1","E:tube_b","E:water","Q:10:mL"],["a3","E:cuso4","Q:1:g","E:spatula"],["a4","E:cuso4","E:tube_b"],["a5","E:cuso4","Q:1:g"],["a6","E:cuso4"]],
+      "expect": { "ok": true, "measurements": { "dissolved.kno3.t1": 3.16, "dissolved.cuso4.t2": 2.07, "water.cuso4.t2": 10 }, "calcKeys": ["sol.kno3.t1","sol.cuso4.t2"], "codes": [] }
+    },
+    {
+      "name": "정상: 실험2 — 시험관 C 물 10 g + 질산 칼륨 6 g → 뜨거운 물 → 얼음물",
+      "variables": [["independent","temperature"],["dependent","undissolved"],["controlled","water_amount"],["experimental_group","g_hot"],["comparison_group","g_ice"],["method","m_bath"]],
+      "steps": [["a1","E:tube_c","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:kno3","Q:6:g","E:spatula"],["a4","E:kno3","E:tube_c"],["a7","E:tube_c","E:hot_water"],["a7","E:tube_c","E:ice_water"]],
+      "expect": { "ok": true, "measurements": { "dissolved.kno3.tube_c.20c.t1": 3.16, "solid.kno3.tube_c.20c.t1": 2.84, "dissolved.kno3.tube_c.60c.t1": 6, "solid.kno3.tube_c.60c.t1": 0, "dissolved.kno3.tube_c.0c.t2": 1.33, "solid.kno3.tube_c.0c.t2": 4.67 }, "calcKeys": [], "codes": [] }
+    },
+    {
+      "name": "오류: 시약포지 영점 조정 없이 용질 뜨기",
+      "steps": [["a1","E:tube_a","E:water","Q:10:g"],["a3","E:kno3","Q:1:g","E:spatula"]],
+      "expect": { "ok": false, "codes": ["weigh_no_tare"] }
+    },
+    {
+      "name": "오류: 한 시험관에 두 용질",
+      "steps": [["a1","E:tube_a","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:kno3","Q:1:g","E:spatula"],["a4","E:kno3","E:tube_a"],["a3","E:cuso4","Q:1:g","E:spatula"],["a4","E:cuso4","E:tube_a"]],
+      "expect": { "ok": false, "codes": ["two_solutes_one_tube"] }
+    },
+    {
+      "name": "오류: 빈 구멍과 단위 불일치",
+      "steps": [["a1","E:tube_a","_","Q:10:g"],["a3","E:kno3","Q:1:mL","E:spatula"]],
+      "expect": { "ok": false, "codes": ["slot_invalid","slot_invalid"] }
+    },
+    {
+      "name": "오류: 시험관 용량 초과",
+      "steps": [["a1","E:tube_a","E:water","Q:25:g"]],
+      "expect": { "ok": false, "codes": ["over_capacity"] }
+    },
+    {
+      "name": "오류: 통제변인(물의 양) 불일치",
+      "variables": [["independent","solute_type"],["controlled","water_amount"]],
+      "steps": [["a1","E:tube_a","E:water","Q:10:g"],["a2","E:scale","E:weighing_paper"],["a3","E:kno3","Q:1:g","E:spatula"],["a4","E:kno3","E:tube_a"],["a5","E:kno3","Q:1:g"],["a6","E:kno3"],
+                ["a1","E:tube_b","E:water","Q:15:g"],["a3","E:cuso4","Q:1:g","E:spatula"],["a4","E:cuso4","E:tube_b"],["a5","E:cuso4","Q:1:g"],["a6","E:cuso4"]],
+      "expect": { "ok": true, "codes": ["controlled_var_mismatch"] }
+    }
+  ]
+}

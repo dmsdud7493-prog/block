@@ -1,0 +1,111 @@
+{
+  "experiment": "separation2",
+  "source": "mixture_separation_lab2.html (프로토타입) — SOL 표(물 100 g 기준): 붕산 10 °C 3.5 g, 20 °C 4.7 g, 40 °C 8.1 g, 60 °C 13 g, 80 °C 19.1 g / 황산 구리(II) 10 °C 17.4 g, 20 °C 20.7 g, 40 °C 28.5 g, 80 °C 55 g; 뜨거운 물 80 °C, 얼음물로 식히면 10 °C",
+  "scenarios": [
+    {
+      "name": "정상: 프로토타입 순서 (뜨거운 물 100 g + 붕산 10 g + 황산 구리(II) 1 g → 녹이기 → 식히기 → 거르기 → 확인 → 말린 결정 질량)",
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a2","E:glass_rod"],
+                ["a4","E:thermometer"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a5"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"],
+                ["a8"],
+                ["a9","E:filter_paper","E:scale"]],
+      "expect": {"ok": true, "measurements": {"water.t1": 100, "added.boric_acid.t1": 10, "added.cuso4.t1": 1, "temp.hot.t1": 80, "temp.cold.t1": 10, "crystal_mass.t1": 6.5}, "calcKeys": ["precip.boric_acid.t1"], "codes": []}
+    },
+    {
+      "name": "정상: 황산 구리(II) 1 g vs 30 g 비교 — 변인 선언 포함",
+      "variables": [["independent","cuso4_amount"],["dependent","crystal_kind"],["controlled","boric_amount"],["controlled","hot_water_amount"],["controlled","cool_temp"],["experimental_group","g_cuso4_large"],["comparison_group","g_cuso4_small"],["method","m_recrystallize"]],
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a2","E:glass_rod"],
+                ["a4","E:thermometer"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a5"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"],
+                ["a8"],
+                ["a9","E:filter_paper","E:scale"],
+                ["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:30:g"],
+                ["a2","E:glass_rod"],
+                ["a4","E:thermometer"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a5"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"],
+                ["a8"]],
+      "expect": {"ok": true, "measurements": {"added.cuso4.t1": 1, "crystal_mass.t1": 6.5, "added.cuso4.t2": 30, "water.t2": 100, "temp.cold.t2": 10}, "calcKeys": ["precip.boric_acid.t1", "precip.boric_acid.t2"], "codes": []}
+    },
+    {
+      "name": "오류: 거름 장치 없이 붓기",
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a2","E:glass_rod"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a7","E:beaker","E:glass_rod"]],
+      "expect": {"ok": false, "codes": ["filter_not_ready"]}
+    },
+    {
+      "name": "경고: 식히지 않고 거르기 (비교 시도로 허용)",
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a2","E:glass_rod"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"]],
+      "expect": {"ok": true, "codes": ["filter_before_cool"]}
+    },
+    {
+      "name": "오류: 녹이기 전에 식히기",
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"]],
+      "expect": {"ok": false, "codes": ["cool_before_dissolve"]}
+    },
+    {
+      "name": "오류: 혼합물을 큰 비커에 넣기",
+      "steps": [["a1","E:large_beaker","E:boric_acid","Q:10:g"]],
+      "expect": {"ok": false, "codes": ["wrong_container"]}
+    },
+    {
+      "name": "오류: 빈 구멍과 단위 불일치",
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:°C"],
+                ["a2","_"]],
+      "expect": {"ok": false, "codes": ["slot_invalid", "slot_invalid"]}
+    },
+    {
+      "name": "오류: 통제변인(뜨거운 물의 양) 불일치",
+      "variables": [["independent","cuso4_amount"],["controlled","hot_water_amount"]],
+      "steps": [["a1","E:beaker","E:hot_water","Q:100:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:1:g"],
+                ["a2","E:glass_rod"],
+                ["a4","E:thermometer"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a5"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"],
+                ["a8"],
+                ["a1","E:beaker","E:hot_water","Q:150:g"],
+                ["a1","E:beaker","E:boric_acid","Q:10:g"],
+                ["a1","E:beaker","E:cuso4","Q:30:g"],
+                ["a2","E:glass_rod"],
+                ["a4","E:thermometer"],
+                ["a3","E:beaker","E:ice_water","E:large_beaker"],
+                ["a5"],
+                ["a6","E:stand","E:funnel","E:filter_paper"],
+                ["a7","E:beaker","E:glass_rod"],
+                ["a8"]],
+      "expect": {"ok": true, "codes": ["controlled_var_mismatch"]}
+    }
+  ]
+}

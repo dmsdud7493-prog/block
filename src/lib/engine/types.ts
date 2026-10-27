@@ -137,6 +137,16 @@ export interface StepOutcome<S> {
   calcRequests?: CalcRequest[];
   series?: Series[];
   error?: { code: string; message: string; guideline?: GuidelineId };
+  /** 실행은 계속하되 학생이 알아야 할 점 (예: 식히지 않고 거르기 비교 시도) */
+  warnings?: { code: string; message: string; guideline?: GuidelineId }[];
+}
+
+/** 학생에게 보여 주는 참고 자료 표(교과서 자료 — 정답 아님). 예: 온도별 용해도 표 */
+export interface ReferenceTable {
+  title: string;
+  caption: string;
+  columns: string[];
+  rows: (string | number)[][];
 }
 
 export interface SimulationResult<S = unknown> {

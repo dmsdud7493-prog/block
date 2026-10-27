@@ -7,8 +7,13 @@ export function fmtNum(v: number): string {
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
 
+/** "황산 구리(II)"처럼 끝 괄호 표기는 괄호 앞 글자로 받침을 판단한다 */
+function stripTrailingParen(word: string): string {
+  return word.trim().replace(/\([^()]*\)$/, "");
+}
+
 function hasFinalConsonant(word: string): boolean | null {
-  const last = word.trim().slice(-1);
+  const last = stripTrailingParen(word).slice(-1);
   if (!last) return null;
   const code = last.charCodeAt(0);
   if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 !== 0;
@@ -18,7 +23,7 @@ function hasFinalConsonant(word: string): boolean | null {
 }
 
 function hasRieulFinal(word: string): boolean {
-  const code = word.trim().slice(-1).charCodeAt(0);
+  const code = stripTrailingParen(word).slice(-1).charCodeAt(0);
   return code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 === 8;
 }
 

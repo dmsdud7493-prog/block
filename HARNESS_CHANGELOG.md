@@ -26,6 +26,7 @@
 | 2026-02-08 | CLAUDE.md | 형성평가 재시도 버튼 필수 규칙 추가 | 교육학 검토에서 학생 좌절 패턴 발견 |
 | 2026-03-01 | verification-rubric.md | GradeAuditLog 감사 로그 MEDIUM 항목 추가 | 성적 변경 버그 발생 후 추적 필요성 확인 |
 | 2026-10-27 | .claude/hooks/stop-verify.sh | MODE="quick" | pre-commit harness-evolve |
+| 2026-10-27 | CLAUDE.md | - 리듀서는 숫자를 `ctx.param()`·`ctx.noise()`로만 얻고, **NaN 비교 | pre-commit harness-evolve |
 
 ---
 
