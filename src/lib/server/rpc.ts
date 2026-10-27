@@ -2,7 +2,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const GATES = /\b(forbidden|not_found|invalid_input|prediction_required|consent_required|reflection_required|late_not_allowed|session_locked|invalid_join_code|upstream_unavailable)\b/;
+const GATES = /\b(forbidden|not_found|invalid_input|prediction_required|consent_required|reflection_required|late_not_allowed|session_locked|invalid_rubric|not_submitted|invalid_join_code|upstream_unavailable)\b/;
 
 /** 알려진 게이트 오류는 그대로, 그 밖의 내부 오류는 메시지를 숨긴다 */
 export function normalizeError(e: unknown): Error {

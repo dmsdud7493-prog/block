@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { tutorContextSchema } from "@/lib/tutor/stateInjection";
 import { reportContentSchema } from "@/lib/report/template";
+import { CLIENT_EVENTS } from "@/lib/events/types";
 
 const slot = z.union([
   z.object({ kind: z.literal("equip"), id: z.string().max(40) }),
@@ -65,9 +66,10 @@ export const predictSchema = z.object({
   matched: z.boolean().nullable().optional(),
   rationaleAfter: z.string().max(500).optional(),
 });
+/** 학생 브라우저가 보낼 수 있는 이벤트만 (제출·반환·플래그는 서버 함수가 남긴다 — DB에서도 같은 목록으로 거른다) */
 export const eventsSchema = z.object({
   sessionId: uuid,
-  events: z.array(z.object({ type: z.string().max(40), payload: z.record(z.string(), z.unknown()) })).max(50),
+  events: z.array(z.object({ type: z.enum(CLIENT_EVENTS), payload: z.record(z.string(), z.unknown()) })).max(50),
 });
 
 export const classCreateSchema = z.object({ name: z.string().trim().min(1).max(60) });
@@ -89,6 +91,26 @@ export const classSettingsSchema = z.object({
     max_runs: z.number().int().min(1).max(100).nullable().optional(),
     rationale_gate: z.boolean().optional(),
   }),
+});
+
+const level = z.enum(["high", "mid", "low"]);
+export const rubricSchema = z.object({
+  hypothesis_variables: level.optional(),
+  data: level.optional(),
+  interpretation: level.optional(),
+  reflection: level.optional(),
+});
+export const gradeSchema = z.object({
+  submissionId: uuid,
+  action: z.enum(["draft", "return"]),
+  rubric: rubricSchema,
+  feedback: z.string().max(2000),
+  reason: z.string().max(200).optional(),
+});
+export const assignmentUpdateSchema = z.object({
+  assignmentId: uuid,
+  dueAt: z.string().datetime({ offset: true }).nullable(),
+  allowLate: z.boolean(),
 });
 
 export const tutorSchema = z.object({

@@ -15,3 +15,11 @@ export const RUBRIC: RubricItem[] = [
 ];
 
 export const LEVEL_LABEL: Record<RubricLevel, string> = { high: "상", mid: "중", low: "하" };
+
+/** 코멘트 뱅크 (plan §8.1 교사 업무 경감) — 교사가 골라 넣고 고쳐 쓴다. 행동을 짚는 격려형 문장만 */
+export const COMMENT_BANK: { id: RubricItem["id"]; phrases: string[] }[] = [
+  { id: "hypothesis_variables", phrases: ["가설에 ‘왜 그렇게 생각했는지’ 까닭을 한 줄 더 써 보자.", "통제 변인을 하나 더 찾아 적어 보면 실험이 더 공정해져요."] },
+  { id: "data", phrases: ["계산값 옆에 단위를 꼭 붙여 보자.", "표의 값과 그래프의 점이 같은지 한 번 더 확인해 보자."] },
+  { id: "interpretation", phrases: ["결론의 근거가 되는 값을 표에서 골라 직접 적어 보자.", "오차가 생긴 까닭을 실험 과정의 한 단계와 연결해 보자."] },
+  { id: "reflection", phrases: ["예상과 결과가 달랐던 까닭을 구체적으로 적은 점이 좋아요.", "다음에 바꿔 보고 싶은 변인을 하나 정해 보자."] },
+];

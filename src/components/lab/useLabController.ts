@@ -64,7 +64,8 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const changed = changedVariables(prev, state.program, catalog.variableOptions, catalog.isTrialEnd);
     const record: RunRecord = { ...res.data, runNo, program: state.program, changedVars: changed };
     dispatch({ type: "runDone", run: record });
-    backend.logEvent(record.ok ? "run_completed" : "sim_error_flagged", { runNo, codes: record.diagnostics.map((d) => d.code), guideline: "3.2" });
+    const firstError = record.diagnostics.find((d) => d.severity === "error");
+    backend.logEvent(record.ok ? "run_completed" : "sim_error_flagged", { runNo, codes: record.diagnostics.map((d) => d.code), message: firstError?.message ?? null, guideline: "3.2" });
   }, [backend, catalog, state, targets]);
 
   const predict = useCallback(async (target: string, choice: string, rationale: string) => {

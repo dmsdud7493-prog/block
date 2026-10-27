@@ -186,3 +186,14 @@ Supabase 공개 키는 브라우저에 있으므로 학생이 개발자 도구�
 **날짜**: 2026-10-27 · **상태**: ACTIVE
 ### 결정
 교사가 번호 목록을 넣으면 서버가 `s-<uuid>@STUDENT_EMAIL_DOMAIN` 형식의 내부 ID와 `sha256(STUDENT_PIN_PEPPER:반코드:PIN)` 비밀번호로 계정을 만든다. 실명·이메일·전화번호는 받지 않는다(R2). PIN은 생성 직후 한 번만 보여 주고 재발급할 수 있다. 공개 회원가입은 끄고(교사도 서버 액션으로 학교 도메인 확인 후 생성) 역할은 `app_metadata.role`로 지정한다.
+
+## ADR-P09: 채점 초안은 별도 테이블, 학생 화면에는 반환된 루브릭만
+
+**날짜**: 2026-10-27 · **상태**: ACTIVE
+### 맥락
+`submissions`는 학생도 RLS로 읽는다. 교사가 채점하는 도중의 점수를 같은 행에 쓰면, 학생이 개발자 도구로 반환 전 점수(SUMMATIVE)를 볼 수 있다.
+### 결정
+채점 중 값은 교사만 읽는 `grade_drafts`에 둔다(`app_save_grade_draft`). "확정하고 돌려주기"(`app_return_submission`)에서만 `submissions.rubric_scores·teacher_feedback·returned_at`을 쓰고, 이전·이후 값을 `grade_audit_log`에 남긴 뒤(처음=first_return, 이후=regrade) 세션을 `returned`로 바꾼다. 학생 브라우저가 보낼 수 있는 이벤트 종류는 zod와 DB 양쪽에서 8종으로 제한해, 제출·반환·AI 플래그 이벤트를 위조할 수 없게 했다.
+### 결과
+- 긍정: 반환 전 점수 비노출, 모든 성적 변경 이력, 대시보드 원천(events) 무결성.
+- 부정: 채점 초안은 반환 시 지워진다(이력은 감사 로그에 남음).

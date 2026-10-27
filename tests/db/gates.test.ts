@@ -118,7 +118,8 @@ describe("RLS — 읽기 격리", () => {
   it("학생은 이벤트 로그를 읽지 않는다(교사 전용)", async () => {
     await asService((q) => q(`select public.app_log_events($1, $2, '[{"type":"block_edit","payload":{}}]')`, [A, sessA]));
     expect(await count(A, "select * from public.events")).toBe(0);
-    expect(await count(T1, "select * from public.events")).toBe(1);
+    expect(await count(T1, "select * from public.events where event_type = 'block_edit'")).toBe(1);
+    expect(await count(T1, "select * from public.events where event_type = 'session_started'")).toBe(2);
   });
 });
 

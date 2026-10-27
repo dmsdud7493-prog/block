@@ -6,6 +6,7 @@ import type { ErrorType } from "@/lib/engine/grader/errorTypes";
 import type { Frame, Measurement, CalcRequest, Series, Diagnostic } from "@/lib/engine/types";
 import type { InquiryText, PredictionRecord } from "./types";
 import { postJson, type ApiResult } from "./api";
+import type { ClientEventType } from "@/lib/events/types";
 
 export interface RunPayload {
   runNo: number;
@@ -30,7 +31,7 @@ export interface LabBackend {
   check(program: Program, runNo: number, key: string, value: number, unit: string): Promise<ApiResult<CheckPayload>>;
   savePrediction(p: PredictionRecord, runNo: number | null): Promise<ApiResult<unknown>>;
   saveProgram(program: Program, blockly: object | null, inquiry: InquiryText): Promise<void>;
-  logEvent(type: string, payload: Record<string, unknown>): void;
+  logEvent(type: ClientEventType, payload: Record<string, unknown>): void;
 }
 
 export function demoBackend(slug: string, seed: string): LabBackend {

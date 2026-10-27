@@ -53,3 +53,35 @@ describe("route 경계", () => {
     expect(JSON.stringify(json)).not.toContain("secret");
   });
 });
+
+import { POST as grade } from "@/app/api/grade/route";
+import { POST as events } from "@/app/api/events/route";
+
+describe("S7 채점·이벤트 경계", () => {
+  const body = { submissionId: SID, action: "return", rubric: { data: "mid" }, feedback: "좋아요" };
+  it("학생은 채점 API를 부를 수 없다 (403)", async () => {
+    expect((await grade(req(body))).status).toBe(403);
+  });
+  it("루브릭 값이 상/중/하가 아니면 422", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    expect((await grade(req({ ...body, rubric: { data: "A+" } }))).status).toBe(422);
+  });
+  it("DB가 invalid_rubric을 던지면 422와 안내 문구", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: null, error: { message: "invalid_rubric", details: null } });
+    const json = await (await grade(req(body))).json();
+    expect(json.error.code).toBe("invalid_rubric");
+    expect(json.error.message).toContain("4항목");
+  });
+  it("draft는 app_save_grade_draft, return은 app_return_submission을 부른다", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: "2026-10-27T00:00:00Z", error: null });
+    await grade(req({ ...body, action: "draft" }));
+    await grade(req(body));
+    expect(rpcMock.mock.calls.map((c) => c[0])).toEqual(["app_save_grade_draft", "app_return_submission"]);
+  });
+  it("학생 브라우저가 서버 전용 이벤트(제출·플래그)를 보내면 422", async () => {
+    const res = await events(req({ sessionId: SID, events: [{ type: "report_submitted", payload: {} }] }));
+    expect(res.status).toBe(422);
+  });
+});
