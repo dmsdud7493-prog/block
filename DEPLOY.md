@@ -103,3 +103,15 @@ git checkout -b develop && git push -u origin develop               # develop = 
 - 학년 말: 반 상세 → **반 삭제**(학생 기록·이 반에만 있던 계정 영구 삭제). 필요한 보고서는 먼저 인쇄.
 - 비용: `v_llm_usage_daily`의 `est_cost_usd`를 주 1회 확인. Console 월 한도 알림을 켜 두세요.
 - 키 교체: Vercel 환경 변수를 바꾸고 재배포. `STUDENT_PIN_PEPPER`는 바꾸지 마세요(모든 PIN 무효).
+
+## 실제 배포 기록 (2026-10-28)
+
+| 항목 | 값 |
+|---|---|
+| 운영 주소 | https://matter-lab-pi.vercel.app |
+| Vercel | 팀 `2234-9171`, 프로젝트 `matter-lab`, 리전 `icn1`, `main` 푸시 시 자동 배포 |
+| Supabase | 프로젝트 `matter-lab` (ref `tbdeayaiqjkmtkymmccv`, 서울). 무료 플랜 2개 제한으로 staging·production 단일 프로젝트 |
+| 마이그레이션 | 0001~0010 + seed 적용(SQL 편집기), 액세스 토큰 훅 켬, 공개 가입 끔 |
+| 확인 | `/api/health` → `ok, region icn1, database true, ai true`, 홈·데모·로그인 정상 |
+
+남은 일: 실제 교사 계정 가입·로그인 흐름, Realtime 10초 확인, 30명 부하 시험(`docs/perf-load.md`), `llm_prices` 단가 입력, Anthropic 사용 한도, 사용자 정의 도메인, `purge_inactive_students` pg_cron 예약.

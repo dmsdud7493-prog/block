@@ -44,3 +44,5 @@
 | E4 | 실 Claude 응답 회귀 25건(nightly), 첫 토큰 p95·학급당 비용 | API 키 연결 후 `npm test`(키 있으면 실행)·`docs/perf-load.md` 측정 2 |
 | E5 | 처리방침·보호자 동의서 문구 | 학교 개인정보 보호책임자 검토 후 확정 |
 | E6 | KWCAG 수동 항목(키보드 전 과정·200% 확대·스크린리더) | 파일럿 1주 전 (`docs/kwcag-checklist.md`) |
+
+- 2026-10-28: 운영 배포 완료 — https://matter-lab-pi.vercel.app (health OK). 상세는 DEPLOY.md "실제 배포 기록".
