@@ -101,7 +101,7 @@ export default function LabMonitor({ slug, frames, runError, focusBlockId, onAct
       {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /></div> : null}
       {runError ? <p role="alert" className="mt-2 rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">⛔ {runError.message}</p> : null}
       <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />
-      <div className={`monitor-screen mt-1 aspect-[8/5] w-full ${frames.length > 0 ? "has-scene" : ""}`}>
+      <div className={`monitor-screen mt-1 aspect-[8/5] w-full ${frames.length > 0 ? "has-scene" : ""}`} style={{ ["--lab-speed" as string]: player.speed }}>
         {frames.length > 0 ? <div className="absolute inset-0"><Scene slug={slug} frame={player.frame} /></div> : <Idle />}
       </div>
       {frames.length > 0 ? <Log frames={frames} index={player.index} /> : null}

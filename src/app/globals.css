@@ -147,6 +147,9 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 @keyframes lab-splash { 0% { transform: scale(.4); opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
 .lab-glint { animation: lab-glint 2s ease-in-out infinite; }
 @keyframes lab-glint { 0%, 100% { opacity: .75; } 50% { opacity: 1; filter: drop-shadow(0 0 2px #fff); } }
+/* 손은 재생 속도(0.5×·1×·2×)에 맞춰 한 단계 동안 들어왔다 나간다 */
+.lab-hand { animation: lab-hand calc(1.5s / var(--lab-speed, 1)) ease-out both; }
+@keyframes lab-hand { 0% { transform: translateY(-46px); opacity: 0; } 22% { transform: translateY(0); opacity: 1; } 78% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-34px); opacity: 0; } }
 .lab-shake { transform-box: fill-box; transform-origin: 50% 100%; animation: lab-shake .5s ease-in-out 3; }
 @keyframes lab-shake { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
 
