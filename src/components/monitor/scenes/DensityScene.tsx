@@ -11,7 +11,7 @@ import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from
 import { Beaker, Cylinder } from "./kit/glass";
 import { Scale } from "./kit/instruments";
 import { IronPiece, PourStream } from "./kit/effects";
-import { Hand, Tweezers } from "./kit/hand";
+import { PouringHand, PressHand, TweezerHand } from "./kit/hand";
 
 const SOLID_LABEL: Record<string, string> = { iron_big: "큰 철조각", iron_small: "작은 철조각" };
 const CYL = { w: 52, h: 150 };
@@ -65,29 +65,14 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
       {reading && level > 0 ? <EyeLine y={surface} /> : null}
       {pouringInto(ev, "cylinder") ? <PourStream x={CYL.w / 2} y1={-24} y2={surface} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
       {pouringInto(ev, "cylinder") ? <PouringHand key={ev?.note} sx={CYL.w / 2} sy={-24} liquid={s.cyl.liquid} /> : null}
-      {ev?.type === "dropSolid" ? <TweezerHand key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
+      {ev?.type === "dropSolid" ? <IronTweezers key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
     </g>
   );
 }
 
-/** 작은 비커를 기울여 붓는 손 — 주둥이가 (sx, sy)에 오도록 */
-function PouringHand({ sx, sy, liquid }: { sx: number; sy: number; liquid: string | null }) {
-  return (
-    <Hand x={sx + 22} y={sy - 10} pose="grip" rotate={-50}>
-      <Beaker x={-18} y={-10} w={36} h={40} level={0.55} liquid={liquid ?? "water"} />
-    </Hand>
-  );
-}
-
-/** 핀셋으로 집은 철조각을 그릇 입구에 넣는 손 */
-function TweezerHand({ x, y, solid }: { x: number; y: number; solid?: string | null }) {
-  const tip = solid ? <IronPiece x={-solidSize(solid) / 2} y={0} s={solidSize(solid)} /> : null;
-  return (
-    <Hand x={x} y={y - 44} pose="pinch">
-      <Tweezers len={44} tip={tip} />
-    </Hand>
-  );
-}
+/** 핀셋으로 집은 철조각(있으면)을 (x, y)에 넣는 손 */
+const IronTweezers = ({ x, y, solid }: { x: number; y: number; solid?: string | null }) =>
+  <TweezerHand x={x} y={y} tip={solid ? <IronPiece x={-solidSize(solid) / 2} y={0} s={solidSize(solid)} /> : null} />;
 
 /** 이번 단계가 이 그릇에 액체를 붓는 단계인가 */
 const pouringInto = (ev: SimEvent | null, c: "cylinder" | "beaker") => (ev?.type === "pour" && ev.container === c) || (ev?.type === "transfer" && ev.to === c);
@@ -112,8 +97,8 @@ function ScaleView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   return (
     <Scale x={SPOT.scaleX} w={170} reading={scaleText(s, ev)}>
       {s.scaleSolid ? <g className="lab-appear"><IronPiece x={-solidSize(s.scaleSolid) / 2} y={-solidSize(s.scaleSolid) * 1.3} s={solidSize(s.scaleSolid)} label={SOLID_LABEL[s.scaleSolid]} /></g> : null}
-      {ev?.type === "measureMass" && ev.solid ? <TweezerHand key={ev.note} x={0} y={-solidSize(s.scaleSolid ?? "iron_small") * 1.3 - 2} /> : null}
-      {ev?.type === "zero" ? <Hand key={ev.note} x={37} y={22} pose="point" /> : null}
+      {ev?.type === "measureMass" && ev.solid ? <IronTweezers key={ev.note} x={0} y={-solidSize(s.scaleSolid ?? "iron_small") * 1.3 - 2} /> : null}
+      {ev?.type === "zero" ? <PressHand key={ev.note} x={37} y={22} /> : null}
     </Scale>
   );
 }

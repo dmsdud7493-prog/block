@@ -10,7 +10,8 @@ import { BENCH_Y, Bench, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs"
 import { Beaker, Label, TestTube } from "./kit/glass";
 import { IceBath } from "./kit/heat";
 import { Scale } from "./kit/instruments";
-import { Crystals, Powder, Steam } from "./kit/effects";
+import { Crystals, PourStream, Powder, Steam } from "./kit/effects";
+import { GripHand, PouringHand, PressHand, SpatulaHand } from "./kit/hand";
 
 const SOLUTE_LIQ: Record<string, string> = { kno3: "kno3", cuso4: "cuso4", nacl: "nacl" };
 const POWDER: Record<string, string> = { kno3: "#f8fafc", cuso4: "#3b82f6", nacl: "#ffffff" };
@@ -67,6 +68,22 @@ function TubeInside({ solute, crystal, solidH }: { solute: string | null; crysta
   );
 }
 
+/** 이 시험관에서 일어나는 손동작 — 물 붓기·용질 넣기·중탕에 넣기 */
+function TubeHands({ id, ev, level, solute }: { id: string; ev: SimEvent | null; level: number; solute: string | null }) {
+  if (!ev || ev.tube !== id) return null;
+  if (ev.type === "pour") {
+    return (
+      <g key={ev.note}>
+        <PourStream x={TUBE.w / 2} y1={-22} y2={4 + (TUBE.h - 4) * (1 - level)} />
+        <PouringHand sx={TUBE.w / 2} sy={-22} />
+      </g>
+    );
+  }
+  if (ev.type === "add") return <SpatulaHand key={ev.note} x={TUBE.w / 2} y={-4} color={solute ? POWDER[solute] : undefined} />;
+  if (ev.type === "bath") return <GripHand key={ev.note} x={TUBE.w} y={30} />;
+  return null;
+}
+
 function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: SolubilityState; i: number; event: SimEvent | null }) {
   const t = s.tubes[id];
   if (!s.shown[id]) return null;
@@ -81,6 +98,7 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
       {t.bath ? <BathAround bath={t.bath} x={x} /> : null}
       <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
         <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={level} liquid={liquidOf(t.solute, t.water, info)} label="" inside={<TubeInside solute={t.solute} crystal={t.crystal} solidH={solidH} />} />
+        <TubeHands id={id} ev={event} level={level} solute={t.solute} />
       </g>
       <Label x={x + TUBE.w / 2} y={BENCH_Y + 16} text={`${name.slice(-1)} · ${t.temp}℃`} />
       <title>{name}</title>
@@ -88,7 +106,7 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
   );
 }
 
-function ScaleView({ s }: { s: SolubilityState }) {
+function ScaleView({ s, ev }: { s: SolubilityState; ev: SimEvent | null }) {
   if (!s.shown.scale) return null;
   const reading = s.paperOnScale ? `${s.paper.amt.toFixed(2)} g` : "0.00 g";
   const pile = Math.min(9, s.paper.amt * 1.6);
@@ -96,6 +114,8 @@ function ScaleView({ s }: { s: SolubilityState }) {
     <Scale x={262} w={160} reading={reading} label="전자저울">
       {s.paperOnScale ? <path d="M-34 0 L34 0 L26 -4 L-26 -4 Z" fill="#ffffff" stroke="#cbd5e1" data-part="시약포지" /> : null}
       {s.paperOnScale && pile > 0 ? <Powder x={-14} y={-4} w={28} h={pile} color={s.paper.sub ? POWDER[s.paper.sub] : "#e5e7eb"} /> : null}
+      {ev?.type === "zero" ? <PressHand key={ev.note} x={37} y={22} /> : null}
+      {ev?.type === "scoop" ? <SpatulaHand key={ev.note} x={0} y={-6} color={s.paper.sub ? POWDER[s.paper.sub] : undefined} /> : null}
     </Scale>
   );
 }
@@ -109,7 +129,7 @@ export default function SolubilityScene({ state, event }: { state: SolubilitySta
       <Bench />
       {state.shown.tube_a || state.shown.tube_b || state.shown.tube_c ? <Rack /> : null}
       {TUBES.map((id, i) => <TubeView key={id} id={id} s={state} i={i} event={event} />)}
-      <ScaleView s={state} />
+      <ScaleView s={state} ev={event} />
     </svg>
   );
 }

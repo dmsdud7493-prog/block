@@ -6,6 +6,9 @@
  * 손가락은 둥근 끝을 가진 곡선(마디 주름·반사광 포함)으로 그려 자연스럽게 보이게 한다.
  */
 
+import { PourStream } from "./effects";
+import { Beaker } from "./glass";
+
 const EDGE = "#a9b5c3";
 const CREASE = "#c9d2dc";
 
@@ -98,6 +101,57 @@ export function Tweezers({ len = 44, tip }: { len?: number; tip?: React.ReactNod
       <path d={`M-2.5 -14 L-1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
       <path d={`M3.5 -14 L1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
       <g transform={`translate(0,${len})`}>{tip}</g>
+    </g>
+  );
+}
+
+/* ── 자주 쓰는 손동작 (장면에서 key={event.note}로 단계마다 다시 들어오게 쓴다) ───────────── */
+
+/** 작은 비커를 기울여 붓는 손 — 주둥이가 (sx, sy)에 오도록 */
+export function PouringHand({ sx, sy, liquid = "water" }: { sx: number; sy: number; liquid?: string | null }) {
+  return (
+    <Hand x={sx + 22} y={sy - 10} pose="grip" rotate={-50}>
+      <Beaker x={-18} y={-10} w={36} h={40} level={0.55} liquid={liquid ?? "water"} />
+    </Hand>
+  );
+}
+
+/** 핀셋 끝(tip)이 (x, y)에 오도록 집은 손 */
+export function TweezerHand({ x, y, tip, len = 44 }: { x: number; y: number; tip?: React.ReactNode; len?: number }) {
+  return (
+    <Hand x={x} y={y - len} pose="pinch">
+      <Tweezers len={len} tip={tip} />
+    </Hand>
+  );
+}
+
+/** 물건의 오른쪽 옆(x, y)을 감싸 쥔 손 — 그릇을 옮기거나 고정할 때 */
+export const GripHand = ({ x, y }: { x: number; y: number }) => <Hand x={x} y={y} pose="grip" />;
+
+/** 엄지·검지로 (x, y)를 집은 손 — 온도계·마개·유리관을 끼울 때 */
+export const PinchHand = ({ x, y }: { x: number; y: number }) => <Hand x={x} y={y} pose="pinch" />;
+
+/** 검지로 (x, y)를 누르는 손 — 단추·다이얼 */
+export const PressHand = ({ x, y }: { x: number; y: number }) => <Hand x={x} y={y} pose="point" />;
+
+/** 약숟가락으로 가루를 떠서 (x, y)에 내려놓는 손 */
+export function SpatulaHand({ x, y, color = "#f8fafc" }: { x: number; y: number; color?: string }) {
+  return (
+    <Hand x={x + 46} y={y - 18} pose="grip" rotate={-12}>
+      <path d="M-46 14 L4 2" stroke="url(#lab-metal)" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="-47" cy="15" rx="7" ry="3.5" fill="url(#lab-metal)" />
+      <ellipse cx="-47" cy="13.5" rx="5" ry="2.2" fill={color} stroke="#cbd5e1" strokeWidth="0.5" />
+    </Hand>
+  );
+}
+
+
+/** 줄기와 함께 붓는 손 — 주둥이 (x, y1)에서 y2까지 따른다 */
+export function PourWithHand({ x, y1, y2, color, liquid }: { x: number; y1: number; y2: number; color?: string; liquid?: string | null }) {
+  return (
+    <g>
+      <PourStream x={x} y1={y1} y2={y2} color={color} />
+      <PouringHand sx={x} sy={y1} liquid={liquid} />
     </g>
   );
 }

@@ -8,9 +8,10 @@ import type { SimEvent } from "@/lib/engine/types";
 import type { Separation1State } from "@/lib/engine/experiments/separation1/model";
 import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
 import { Flask, Label, TestTube } from "./kit/glass";
-import { HotPlate, IceBath, Stand } from "./kit/heat";
+import { HotPlate, IceBath, Stand, knobOf } from "./kit/heat";
 import { Readout, RubberTube, Stopper, Thermometer } from "./kit/instruments";
 import { BoilingChips, Bubbles, Drips } from "./kit/effects";
+import { PinchHand, PourWithHand, PressHand, TweezerHand } from "./kit/hand";
 
 const PLATE = { x: 50, w: 150, top: BENCH_Y - 30 };
 const FL = { w: 112, h: 130, x: PLATE.x + 19 };
@@ -73,6 +74,25 @@ function Condenser({ s }: { s: Separation1State }) {
   );
 }
 
+/** 단계별 손동작 — 붓기·끓임쪽 넣기·마개·온도계 높이·가열·관 연결 */
+function Hands({ s, ev }: { s: Separation1State; ev: SimEvent | null }) {
+  if (!ev) return null;
+  const top = s.flask.onHot ? FL_Y : BENCH_Y - FL.h;
+  const k = ev.note;
+  switch (ev.type) {
+    case "pour":
+      return <PourWithHand key={k} x={NECK.x} y1={top - 22} y2={top + FL.h * 0.7} color="#c9bdf5" liquid={s.flask.ethanol > 0 ? "ethanol" : "water"} />;
+    case "chips": return <TweezerHand key={k} x={NECK.x - 2} y={top - 4} tip={<BoilingChips x={-6} y={2} w={12} />} />;
+    case "stopper": return <PinchHand key={k} x={NECK.x} y={top - 4} />;
+    case "adjust": return <PinchHand key={k} x={NECK.x} y={top - 40} />;
+    case "heat":
+    case "stopHeat": return <PressHand key={k} {...knobOf(PLATE.x, PLATE.top, PLATE.w)} />;
+    case "connect": return <PinchHand key={k} x={ARM_END.x + 4} y={ARM_END.y} />;
+    case "insertGlass": return <PinchHand key={k} x={ET.x + ET.w / 2} y={ET.y - 10} />;
+    default: return null;
+  }
+}
+
 export default function Separation1Scene({ state, event }: { state: Separation1State | null; event: SimEvent | null }) {
   if (!state) return null;
   const branch = state.thermo.position === "branch";
@@ -86,6 +106,7 @@ export default function Separation1Scene({ state, event }: { state: Separation1S
       <FlaskView s={state} />
       <ThermoView s={state} />
       <Condenser s={state} />
+      <Hands s={state} ev={event} />
       <Readout x={330} y={36} value={state.thermo.adjusted ? state.temp : null} label={branch ? "가지 부분 온도" : "온도계"} />
     </svg>
   );

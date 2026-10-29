@@ -11,6 +11,7 @@ import { Beaker, Label } from "./kit/glass";
 import { IceBath, Stand } from "./kit/heat";
 import { Readout, Scale } from "./kit/instruments";
 import { Crystals, Drips, Powder } from "./kit/effects";
+import { GripHand, PinchHand, PourWithHand, SpatulaHand } from "./kit/hand";
 
 const total = (p: Record<string, number>) => Object.values(p).reduce((a, b) => a + b, 0);
 const BK = { x: 46, w: 100, h: 100 };
@@ -30,6 +31,20 @@ function BeakerInside({ s }: { s: Separation2State }) {
   );
 }
 
+/** 유리 막대 — 젓는 단계에는 손이 막대 위쪽을 쥐고 함께 흔든다 */
+function StirRod({ stirring, k }: { stirring: boolean; k?: string }) {
+  const x = BK.x + BK.w * 0.62;
+  const top = BENCH_Y - BK.h;
+  return (
+    <g transform={`rotate(12 ${x} ${top})`}>
+      <g className={stirring ? "lab-shake" : undefined}>
+        <rect x={x} y={top - 34} width="4" height={BK.h + 24} rx="2" fill="#eef5ff" stroke="#94a3b8" data-part="유리 막대" />
+        {stirring ? <PinchHand key={k} x={x + 2} y={top - 20} /> : null}
+      </g>
+    </g>
+  );
+}
+
 function MainBeaker({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
   const b = s.bkr;
   const stirring = ev?.type === "stir";
@@ -38,7 +53,7 @@ function MainBeaker({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
       {s.inBath ? null : <FloorShadow cx={BK.x + BK.w / 2} w={BK.w + 6} />}
       <Beaker x={BK.x} y={BENCH_Y - BK.h - (s.inBath ? 4 : 0)} w={BK.w} h={BK.h} level={Math.min(1, b.water / 150)} liquid={b.dis.cuso4 > 0 ? "cuso4_light" : "water"} label="비커" marks={["30", "60", "90", "120", ""]}
         inside={<BeakerInside s={s} />} />
-      {b.stirred || stirring ? <rect className={stirring ? "lab-shake" : undefined} x={BK.x + BK.w * 0.62} y={BENCH_Y - BK.h - 34} width="4" height={BK.h + 24} rx="2" fill="#eef5ff" stroke="#94a3b8" transform={`rotate(12 ${BK.x + BK.w * 0.62} ${BENCH_Y - BK.h})`} data-part="유리 막대" /> : null}
+      {b.stirred || stirring ? <StirRod stirring={stirring} k={ev?.note} /> : null}
     </g>
   );
 }
@@ -60,6 +75,26 @@ function FilterView({ s }: { s: Separation2State }) {
   );
 }
 
+/** 단계별 손동작 — 물 붓기·고체 넣기·젓기·얼음물에 넣기·거르기·거름종이 깔기·무게 재기 */
+function Hands({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
+  if (!ev) return null;
+  const top = BENCH_Y - BK.h - (s.inBath ? 4 : 0);
+  const k = ev.note;
+  const blue = s.bkr.dis.cuso4 > 0 ? "cuso4_light" : "water";
+  switch (ev.type) {
+    case "addWater":
+      return <PourWithHand key={k} x={BK.x + BK.w / 2} y1={top - 22} y2={top + BK.h * 0.6} />;
+    case "addSolid": return <SpatulaHand key={k} x={BK.x + BK.w / 2} y={top - 2} />;
+    case "bath":
+    case "cool": return <GripHand key={k} x={BK.x + BK.w - 2} y={top + BK.h * 0.4} />;
+    case "filter":
+      return <PourWithHand key={k} x={FUN.cx - 10} y1={FUN.top - 20} y2={FUN.top + 10} color="#9fd4f7" liquid={blue} />;
+    case "setup": return <PinchHand key={k} x={FUN.cx + 14} y={FUN.top + 6} />;
+    case "weigh": return <PinchHand key={k} x={346 + 45} y={BENCH_Y - 36} />;
+    default: return null;
+  }
+}
+
 export default function Separation2Scene({ state, event }: { state: Separation2State | null; event: SimEvent | null }) {
   if (!state) return null;
   return (
@@ -72,6 +107,7 @@ export default function Separation2Scene({ state, event }: { state: Separation2S
       {state.shown.bath && state.inBath ? <Label x={BATH.x + BATH.w / 2} y={BENCH_Y + 16} text="얼음물 (식히는 중)" /> : null}
       <FilterView s={state} />
       {state.thermo ? <Readout x={20} y={30} value={state.bkr.T} label="비커 속 온도" /> : null}
+      <Hands s={state} ev={event} />
       {state.shown.scale ? <Scale x={346} w={90} reading={state.weighed !== null ? `${state.weighed.toFixed(1)} g` : "0.0 g"} /> : null}
     </svg>
   );

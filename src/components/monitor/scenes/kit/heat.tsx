@@ -3,6 +3,9 @@
 import { BENCH_Y, FloorShadow } from "./defs";
 import { Beaker, Label } from "./glass";
 
+/** 핫플레이트 다이얼 위치 — 손이 켜고 끌 때 누르는 곳 */
+export const knobOf = (x: number, top: number, w = 130) => ({ x: x + w - 18, y: top + (BENCH_Y - top) / 2 + 4 });
+
 /** 핫플레이트 — 윗면 y 기준, 높이 30 */
 export function HotPlate({ x, y, w = 130, on, label = "핫플레이트" }: { x: number; y: number; w?: number; on: boolean; label?: string }) {
   return (

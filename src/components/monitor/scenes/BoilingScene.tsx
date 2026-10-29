@@ -8,9 +8,10 @@ import type { SimEvent } from "@/lib/engine/types";
 import type { BoilingState } from "@/lib/engine/experiments/boiling/model";
 import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
 import { Beaker, Label, TestTube } from "./kit/glass";
-import { HotPlate, IceBath, Stand } from "./kit/heat";
+import { HotPlate, IceBath, Stand, knobOf } from "./kit/heat";
 import { Readout, RubberTube, Stopper, Thermometer } from "./kit/instruments";
-import { Bubbles, Drips, Steam } from "./kit/effects";
+import { Bubbles, Drips, PourStream, Steam } from "./kit/effects";
+import { GripHand, PinchHand, PouringHand, PressHand } from "./kit/hand";
 
 const PLATE = { x: 60, w: 150, top: BENCH_Y - 30 };
 const BKR = { w: 118, h: 100, x: PLATE.x + 16 };
@@ -21,7 +22,9 @@ const ETUBE = { x: COLD.x + 42, w: 20, h: 92 };
 
 const LABEL: Record<string, string> = { water: "물", ethanol: "에탄올" };
 
-function BeakerView({ s }: { s: BoilingState }) {
+const isThermo = (ev: SimEvent | null) => ev?.type === "fixThermo" || ev?.type === "adjust";
+
+function BeakerView({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
   if (!s.shown.bkr) return null;
   const bk = s.bkr;
   const direct = !s.tube.liquid;
@@ -39,11 +42,15 @@ function BeakerView({ s }: { s: BoilingState }) {
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * level * 0.85} strength={strength} />} />
       {direct && s.heating ? <Steam cx={BKR.w / 2} y={-8} w={BKR.w} strength={s.bubbles} /> : null}
       {direct && s.thermo.where === "bkr" ? <Thermometer x={BKR.w * 0.7} top={-70} len={BKR.h + 56} temp={s.temp} min={0} max={110} /> : null}
+      {ev?.type === "pour" && ev.container === "beaker" ? <PourStream x={BKR.w / 2} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
+      {ev?.type === "pour" && ev.container === "beaker" ? <PouringHand key={ev.note} sx={BKR.w / 2} sy={-22} /> : null}
+      {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
+      {direct && isThermo(ev) ? <PinchHand key={ev?.note} x={BKR.w * 0.7} y={-58} /> : null}
     </g>
   );
 }
 
-function SideTube({ s }: { s: BoilingState }) {
+function SideTube({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
   if (!s.shown.tube || !s.tube.liquid) return null;
   const y = s.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held;
   const level = Math.min(0.5, s.tube.volume / 40);
@@ -56,11 +63,16 @@ function SideTube({ s }: { s: BoilingState }) {
       {s.tube.stopper ? <Stopper x={TUBE.w / 2} y={-6} w={TUBE.w} /> : null}
       {s.thermo.where === "tube" ? <Thermometer x={TUBE.w / 2} top={-54} len={TUBE.h + 40} temp={s.temp} min={0} max={110} /> : null}
       <Label x={-28} y={TUBE.h - 16} text={LABEL[s.tube.liquid] ?? s.tube.liquid} />
+      {ev?.type === "pour" && ev.container !== "beaker" ? <PourStream x={TUBE.w / 2} y1={-22} y2={TUBE.h * (1 - level)} color="#c9bdf5" /> : null}
+      {ev?.type === "pour" && ev.container !== "beaker" ? <PouringHand key={ev.note} sx={TUBE.w / 2} sy={-22} liquid={s.tube.liquid} /> : null}
+      {ev?.type === "fixTube" ? <GripHand key={ev.note} x={TUBE.w} y={48} /> : null}
+      {ev?.type === "stopper" ? <PinchHand key={ev.note} x={TUBE.w / 2} y={-4} /> : null}
+      {isThermo(ev) ? <PinchHand key={ev?.note} x={TUBE.w / 2} y={-42} /> : null}
     </g>
   );
 }
 
-function Collector({ s }: { s: BoilingState }) {
+function Collector({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
   if (!s.shown.cold && !s.shown.etube) return null;
   const etubeY = BENCH_Y - COLD.h - 26;
   const tubeTop = (s.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held) + 38;
@@ -73,6 +85,8 @@ function Collector({ s }: { s: BoilingState }) {
       {s.tube.glassIn ? <rect x={ETUBE.x + ETUBE.w / 2 - 2} y={etubeY - 16} width="4" height="40" rx="2" fill="#e6f0ff" stroke="#94a3b8" /> : null}
       {dripping ? <Drips x={ETUBE.x + ETUBE.w / 2} y={etubeY + 22} fall={ETUBE.h * 0.5} /> : null}
       {s.shown.etube ? <Label x={ETUBE.x + ETUBE.w / 2} y={BENCH_Y + 16} text={`모인 액체 ${s.etube.collected.toFixed(1)} mL`} /> : null}
+      {ev?.type === "insertEtube" ? <GripHand key={ev.note} x={ETUBE.x + ETUBE.w} y={etubeY + 24} /> : null}
+      {ev?.type === "insertGlass" ? <PinchHand key={ev.note} x={ETUBE.x + ETUBE.w / 2} y={etubeY - 12} /> : null}
     </g>
   );
 }
@@ -88,9 +102,10 @@ export default function BoilingScene({ state, event }: { state: BoilingState | n
       <Bench />
       {state.shown.stand ? <Stand x={30} top={10} armX={TUBE.x + TUBE.w / 2} armY={armY} /> : null}
       {state.shown.hot ? <HotPlate x={PLATE.x} y={PLATE.top} w={PLATE.w} on={state.heating} /> : null}
-      <BeakerView s={state} />
-      <SideTube s={state} />
-      <Collector s={state} />
+      <BeakerView s={state} ev={event} />
+      <SideTube s={state} ev={event} />
+      <Collector s={state} ev={event} />
+      {event?.type === "heat" ? <PressHand key={event.note} {...knobOf(PLATE.x, PLATE.top, PLATE.w)} /> : null}
       <Readout x={330} y={40} value={temp} label={state.thermo.where === "tube" ? "시험관 속 온도" : "온도계"} />
     </svg>
   );

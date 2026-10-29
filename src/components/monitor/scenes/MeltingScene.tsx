@@ -8,9 +8,10 @@ import type { SimEvent } from "@/lib/engine/types";
 import type { MeltingState } from "@/lib/engine/experiments/melting/model";
 import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
 import { Beaker, Label, TestTube } from "./kit/glass";
-import { HotPlate, Stand } from "./kit/heat";
+import { HotPlate, Stand, knobOf } from "./kit/heat";
 import { Readout, Thermometer } from "./kit/instruments";
-import { Bubbles } from "./kit/effects";
+import { Bubbles, PourStream } from "./kit/effects";
+import { GripHand, PinchHand, PouringHand, PressHand } from "./kit/hand";
 
 const SUB_LABEL: Record<string, string> = { lauric_acid: "로르산", palmitic_acid: "팔미트산" };
 const PLATE = { x: 110, w: 150, top: BENCH_Y - 30 };
@@ -33,7 +34,7 @@ function TubeContents({ solid }: { solid: number }) {
   );
 }
 
-function TubeAssembly({ s }: { s: MeltingState }) {
+function TubeAssembly({ s, ev }: { s: MeltingState; ev: SimEvent | null }) {
   if (!s.shown.tube || !s.tube.sub) return null;
   const y = s.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held;
   const melting = s.solid > 0 && s.solid < 1;
@@ -43,11 +44,13 @@ function TubeAssembly({ s }: { s: MeltingState }) {
       {s.thermo.in ? <Thermometer x={TUBE.w / 2} top={-46} len={TUBE.h + 40} temp={s.temp} min={0} max={100} /> : null}
       <Label x={TUBE.w / 2 - 46} y={TUBE.h - 30} text={SUB_LABEL[s.tube.sub] ?? s.tube.sub} />
       {melting ? <Label x={TUBE.w / 2 + 52} y={TUBE.h - 30} text="녹는 중…" /> : null}
+      {ev?.type === "fixTube" ? <GripHand key={ev.note} x={TUBE.w} y={34} /> : null}
+      {ev?.type === "insertThermo" ? <PinchHand key={ev.note} x={TUBE.w / 2} y={-24} /> : null}
     </g>
   );
 }
 
-function BathBeaker({ s }: { s: MeltingState }) {
+function BathBeaker({ s, ev }: { s: MeltingState; ev: SimEvent | null }) {
   if (!s.shown.bkr) return null;
   const onHot = s.bkr.onHot || s.shown.hot;
   const y = (onHot ? PLATE.top : BENCH_Y) - BKR.h;
@@ -58,6 +61,9 @@ function BathBeaker({ s }: { s: MeltingState }) {
       {onHot ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 6} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={level} liquid="hot_water" label="물중탕 비커" labelLeft={onHot} marks={["50", "100", "150", "200", ""]}
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * 0.6 * level} strength={strength} />} />
+      {ev?.type === "pour" ? <PourStream x={BKR.w * 0.78} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
+      {ev?.type === "pour" ? <PouringHand key={ev.note} sx={BKR.w * 0.78} sy={-22} /> : null}
+      {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
     </g>
   );
 }
@@ -71,8 +77,9 @@ export default function MeltingScene({ state, event }: { state: MeltingState | n
       <Bench />
       {state.shown.stand ? <Stand x={56} top={20} armX={TUBE.x + TUBE.w / 2} armY={(state.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held) + 14} /> : null}
       {state.shown.hot ? <HotPlate x={PLATE.x} y={PLATE.top} w={PLATE.w} on={state.heating} /> : null}
-      <BathBeaker s={state} />
-      <TubeAssembly s={state} />
+      <BathBeaker s={state} ev={event} />
+      <TubeAssembly s={state} ev={event} />
+      {event?.type === "heat" ? <PressHand key={event.note} {...knobOf(PLATE.x, PLATE.top, PLATE.w)} /> : null}
       <Readout x={320} y={44} value={state.thermo.in ? state.temp : null} label="시험관 속 온도" />
     </svg>
   );
