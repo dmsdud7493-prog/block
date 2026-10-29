@@ -71,8 +71,8 @@ export default function InquiryCards({ catalog, program, inquiry, predictions, o
       <Card title="② 가설" icon="💭" tone="border-[#7c3aed]" filled={Boolean(inquiry.hypothesis.trim())}>
         <TextField label="가설" value={inquiry.hypothesis} onChange={(v) => onInquiry("hypothesis", v)} placeholder="~하면 ~할 것이다. 왜냐하면 ~" readOnly={readOnly} />
       </Card>
-      <Card title="③ 변인" icon="🎛️" tone="border-pink" filled={vars.length > 0}>
-        <List items={vars} empty="변인 설계 블록을 놓아 보세요." />
+      <Card title="③ 실험 계획" icon="🎛️" tone="border-pink" filled={vars.length > 0}>
+        <List items={vars} empty="무엇을 바꿔 보고, 재고, 똑같이 맞출지 블록으로 정해요." />
       </Card>
       <Card title="④ 절차" icon="🪜" tone="border-sun" filled={stepCount > 0}>
         <p className="mt-1 text-sm">{stepCount > 0 ? `행동 블록 ${stepCount}개` : "실험 절차 아래에 블록을 이어 보세요."}</p>

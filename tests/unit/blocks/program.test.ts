@@ -51,6 +51,6 @@ describe("Blockly → Program (지침 2.2)", () => {
 
   it("도구 상자에 변인 설계 카테고리가 있다 (지침 2.1)", () => {
     const names = toolbox(densityCatalog).contents.map((c) => c.name);
-    expect(names).toEqual(["변인 설계", "준비물", "용량/수치", "행동"]);
+    expect(names).toEqual(["실험 계획", "준비물", "용량/수치", "행동"]);
   });
 });

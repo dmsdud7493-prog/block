@@ -26,7 +26,7 @@ export type BlockJson = Record<string, unknown>;
 
 export function hatBlocks(): BlockJson[] {
   return [
-    { type: T.designStart, message0: "🔬 변인 설계", nextStatement: "design", style: STYLE.hat, tooltip: "무엇을 바꾸고, 무엇을 재고, 무엇을 같게 할지 정해요", deletable: false },
+    { type: T.designStart, message0: "🔬 실험 계획 세우기", nextStatement: "design", style: STYLE.hat, tooltip: "무엇을 바꿔 보고, 무엇을 재고, 무엇을 똑같이 맞출지 아래에 블록으로 정해요", deletable: false },
     { type: T.procStart, message0: "🧪 실험 절차", nextStatement: "proc", style: STYLE.hat, tooltip: "실험 순서대로 행동 블록을 아래에 이어 붙여요", deletable: false },
   ];
 }
@@ -73,7 +73,7 @@ export function variableBlocks(catalog: AnyCatalog): BlockJson[] {
     const options = [["골라 주세요", "__none"], ...opts.map((o) => [o.label, o.id])];
     return {
       type: T.variable(catalog.slug, vb.role),
-      message0: `${vb.label} %1 %2 이유: %3`,
+      message0: `${vb.icon} ${vb.easy} (${vb.term}) %1 %2 왜? %3`,
       args0: [
         { type: "input_dummy" },
         { type: "field_dropdown", name: "OPTION", options },
@@ -101,7 +101,7 @@ export function allBlockJson(catalog: AnyCatalog): BlockJson[] {
 export function toolbox(catalog: AnyCatalog) {
   const blocks = (types: string[]) => types.map((type) => ({ kind: "block", type }));
   const cats = [
-    { name: "변인 설계", key: "design", types: VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
+    { name: "실험 계획", key: "design", types: VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
     { name: "준비물", key: "equip", types: catalog.items.map((i: ItemDef) => T.item(catalog.slug, i.id)) },
     { name: "용량/수치", key: "quant", types: catalog.quants.map((q: QuantDef) => T.quant(q.unit)) },
     { name: "위치", key: "pos", types: catalog.positions.map((p: PosDef) => T.pos(catalog.slug, p.id)) },

@@ -23,19 +23,19 @@ function distinctValues(opt: VariableOption, trials: Step[][]): unknown[] {
 }
 
 function checkDecl(decl: VariableDecl, opt: VariableOption | undefined, trials: Step[][]): Diagnostic | null {
-  if (!decl.optionId) return warn(decl.blockId, "variable_unset", "변인 블록의 선택지를 골라 주세요.");
+  if (!decl.optionId) return warn(decl.blockId, "variable_unset", "실험 계획 블록에서 '골라 주세요'를 눌러 하나를 골라 주세요.");
   if (!opt) return warn(decl.blockId, "variable_unknown", "이 실험에 없는 변인이에요.");
   if (!opt.roles.includes(decl.role as VariableOption["roles"][number])
     && !(decl.role.endsWith("_group") && opt.roles.includes("group"))) {
-    return warn(decl.blockId, "variable_role_mismatch", `'${opt.label}'은(는) 이 칸에 어울리지 않아요. 무엇을 바꾸고 무엇을 같게 할지 다시 생각해 볼까요?`);
+    return warn(decl.blockId, "variable_role_mismatch", `'${opt.label}'은(는) 이 블록에 어울리지 않아요. 무엇을 바꿔 보고 무엇을 똑같이 맞출지 다시 생각해 볼까요?`);
   }
   if (!opt.extract || trials.length < 2) return null;
   const distinct = distinctValues(opt, trials);
   if (decl.role === "controlled" && distinct.length > 1) {
-    return warn(decl.blockId, "controlled_var_mismatch", `통제변인 '${opt.label}'이(가) 시도마다 달라요 (${distinct.join(", ")}). 같게 맞춰야 비교할 수 있어요.`);
+    return warn(decl.blockId, "controlled_var_mismatch", `똑같이 맞출 것(통제 변인) '${opt.label}'이(가) 시도마다 달라요 (${distinct.join(", ")}). 같게 맞춰야 비교할 수 있어요.`);
   }
   if (decl.role === "independent" && distinct.length < 2) {
-    return warn(decl.blockId, "independent_not_varied", `조작 변인 '${opt.label}'이(가) 모든 시도에서 같아요. 무엇을 다르게 해서 비교할까요?`);
+    return warn(decl.blockId, "independent_not_varied", `바꿔 볼 것(조작 변인) '${opt.label}'이(가) 모든 시도에서 같아요. 무엇을 다르게 해서 비교할까요?`);
   }
   return null;
 }
@@ -52,7 +52,7 @@ export function checkVariables(
     .filter((d): d is Diagnostic => d !== null);
   const roles = new Set(program.variables.map((d) => d.role));
   const missing = program.variables.length > 0 && !roles.has("independent")
-    ? [warn(program.variables[0].blockId, "independent_missing", "무엇을 바꿔 볼지(조작 변인) 블록이 아직 없어요.")]
+    ? [warn(program.variables[0].blockId, "independent_missing", "'🔄 바꿔 볼 것(조작 변인)' 블록이 아직 없어요. 무엇을 바꿔 볼지 정해 볼까요?")]
     : [];
   return [...perDecl, ...missing];
 }
