@@ -16,7 +16,7 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
-import { isNested, removeNested, tapInsert, type TapResult } from "./slotTools";
+import { tapInsert, type TapResult } from "./slotTools";
 
 const defined = new Set<string>();
 
@@ -107,43 +107,6 @@ function listenFlyoutTaps(ws: Blockly.WorkspaceSvg, selected: () => string | nul
   });
 }
 
-interface ChipAt { id: string; x: number; y: number }
-
-/** 빈칸에 끼워진 블록을 고르면 그 블록 오른쪽 위에 "✕ 빼기" 단추를 띄운다 */
-function useRemoveChip(ws: Blockly.WorkspaceSvg | null, selId: string | null, hostRef: React.RefObject<HTMLDivElement | null>): ChipAt | null {
-  const [chip, setChip] = useState<ChipAt | null>(null);
-  useEffect(() => {
-    if (!ws) return undefined;
-    const place = () => {
-      const b = selId ? ws.getBlockById(selId) : null;
-      const host = hostRef.current;
-      if (!b || !host || !isNested(b)) return setChip(null);
-      const r = b.getSvgRoot().getBoundingClientRect();
-      const h = host.getBoundingClientRect();
-      setChip({ id: b.id, x: r.left - h.left + r.width / 2 - 36, y: Math.max(0, r.top - h.top - 46) });
-    };
-    const raf = requestAnimationFrame(place);
-    const onEvent = (e: Blockly.Events.Abstract) => {
-      if (e.type === Blockly.Events.VIEWPORT_CHANGE || e.type === Blockly.Events.BLOCK_MOVE || e.type === Blockly.Events.BLOCK_DELETE) requestAnimationFrame(place);
-    };
-    ws.addChangeListener(onEvent);
-    return () => {
-      cancelAnimationFrame(raf);
-      ws.removeChangeListener(onEvent);
-    };
-  }, [ws, selId, hostRef]);
-  return chip;
-}
-
-function RemoveChip({ at, onRemove }: { at: ChipAt; onRemove: () => void }) {
-  return (
-    <button type="button" onClick={onRemove} style={{ left: at.x, top: at.y }} aria-label="빈칸에서 이 블록 빼기"
-      className="tap absolute z-20 flex items-center gap-1 rounded-full border-2 border-white bg-err px-2 text-xs font-bold text-white shadow-md hover:brightness-110">
-      ✕ 빼기
-    </button>
-  );
-}
-
 /** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
 function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   if (process.env.NEXT_PUBLIC_E2E !== "1") return;
@@ -200,15 +163,6 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       document.removeEventListener("keyup", read, true);
     };
   }, [setSelId]);
-  const chip = useRemoveChip(wsState, selId, hostRef);
-  const removeChipBlock = () => {
-    const b = chip && wsState ? (wsState.getBlockById(chip.id) as Blockly.BlockSvg | null) : null;
-    const parent = b?.getParent() as Blockly.BlockSvg | null;
-    if (b) removeNested(b);
-    parent?.select();
-    setSelId(parent?.id ?? null);
-    setMsg("빈칸에서 뺐어요. 꾸러미에서 다른 블록을 누르면 그 빈칸에 들어가요.");
-  };
 
   useEffect(() => {
     cbRef.current = props.onProgramChange;
@@ -286,7 +240,6 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       {readOnly ? null : <BlockToolbar ws={wsState} selId={selId} onSelect={setSelId} msg={msg} setMsg={setMsg} />}
       <div className="relative min-h-[380px] flex-1">
         <div ref={hostRef} className="absolute inset-0" role="application" aria-label="블록 실험 설계 작업 공간. 키보드로 블록을 고르고 옮길 수 있어요." />
-        {chip ? <RemoveChip at={chip} onRemove={removeChipBlock} /> : null}
       </div>
     </div>
   );

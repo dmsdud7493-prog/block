@@ -81,7 +81,7 @@ export function actionBlock(slug: string, def: ActionBlockDef): BlockJson {
 }
 
 export function itemBlock(slug: string, item: ItemDef): BlockJson {
-  return { type: T.item(slug, item.id), message0: `${item.icon} ${item.label}`, output: "equip", style: STYLE.equip, tooltip: item.label };
+  return { type: T.item(slug, item.id), message0: `${item.icon} ${item.label}`, output: "equip", style: STYLE.equip, tooltip: item.label, extensions: ["lab_removable"] };
 }
 
 export function quantBlock(q: QuantDef): BlockJson {
@@ -91,12 +91,13 @@ export function quantBlock(q: QuantDef): BlockJson {
     args0: [{ type: "field_number", name: "VALUE", value: 0, min: 0, precision: 0.1 }],
     output: "quant",
     style: STYLE.quant,
+    extensions: ["lab_removable"],
     tooltip: q.label,
   };
 }
 
 export function posBlock(slug: string, pos: PosDef): BlockJson {
-  return { type: T.pos(slug, pos.id), message0: `📍 ${pos.label}`, output: "pos", style: STYLE.pos };
+  return { type: T.pos(slug, pos.id), message0: `📍 ${pos.label}`, output: "pos", style: STYLE.pos, extensions: ["lab_removable"] };
 }
 
 export function variableBlocks(catalog: AnyCatalog): BlockJson[] {

@@ -58,7 +58,7 @@ const boxOf = (page: import("@playwright/test").Page, sel: string, inFlyout = fa
 
 const kids = (page: import("@playwright/test").Page) => page.evaluate(() => [...document.querySelectorAll('g[data-id="ac1"] g[class*="item_density"]')].map((k) => k.getAttribute("class")!.split(" ")[0]));
 
-test("빈칸 속 준비물만 ✕로 빼고, 다른 준비물을 끌어 넣거나 눌러서 넣는다", async ({ page }) => {
+test("빈칸 속 준비물 옆 ⊗로 그 블록만 빼고, 다른 준비물을 끌어 넣거나 눌러서 넣는다", async ({ page }) => {
   await page.goto("/demo/density");
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate(() => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
@@ -67,9 +67,9 @@ test("빈칸 속 준비물만 ✕로 빼고, 다른 준비물을 끌어 넣거�
     ] },
   }));
   await page.locator(".cat-equip .blocklyToolboxCategory").click();
-  const it = await boxOf(page, 'g[data-id="it1"]');
-  await page.mouse.click(it.x + 6, it.y + it.h / 2);
-  await page.getByRole("button", { name: "빈칸에서 이 블록 빼기" }).click();
+  await expect(page.locator(".blocklyFlyout g.item_density_iron_big image")).toHaveCount(0);
+  const x = await boxOf(page, 'g[data-id="it1"] image');
+  await page.mouse.click(x.x + x.w / 2, x.y + x.h / 2);
   await expect.poll(() => kids(page)).toEqual([]);
 
   // 끌어 넣기: 빈칸 근처에만 놓아도 들어간다

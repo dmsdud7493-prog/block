@@ -59,17 +59,37 @@ export function layoutAction(block: Blockly.Block, measure = false): boolean {
   return changed;
 }
 
+/** 준비물·수치·위치 블록 옆의 ⊗ 단추 (원래 프로토타입) — 회색 동그라미에 흰 ✕ */
+const REMOVE_ICON = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#ffffff" fill-opacity="0.85"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#6b7785" stroke-width="2" stroke-linecap="round"/></svg>',
+);
+
+/** 누르면 그 블록만 빼낸다(행동 블록과 나머지 순서는 그대로). 꾸러미 안의 블록에는 달지 않는다 */
+function addRemoveButton(block: Blockly.Block) {
+  if (block.isInFlyout || block.workspace.isFlyout) return;
+  const last = block.inputList[block.inputList.length - 1];
+  const field = new Blockly.FieldImage(REMOVE_ICON, 18, 18, "빼기", (f) => {
+    const b = f.getSourceBlock();
+    if (b && b.isDeletable() && !b.isInFlyout) (b as Blockly.BlockSvg).dispose(false, true);
+  });
+  last?.appendField(field, "REMOVE");
+}
+
 let registered = false;
 
 /** 블록 정의에 쓰는 확장 — 새 블록이 만들어질 때 글자 수로 먼저 한 번 접는다 */
 export function registerAutoWrap() {
-  if (registered || Blockly.Extensions.isRegistered("lab_autowrap")) {
-    registered = true;
-    return;
+  if (registered) return;
+  if (!Blockly.Extensions.isRegistered("lab_autowrap")) {
+    Blockly.Extensions.register("lab_autowrap", function (this: Blockly.Block) {
+      layoutAction(this);
+    });
   }
-  Blockly.Extensions.register("lab_autowrap", function (this: Blockly.Block) {
-    layoutAction(this);
-  });
+  if (!Blockly.Extensions.isRegistered("lab_removable")) {
+    Blockly.Extensions.register("lab_removable", function (this: Blockly.Block) {
+      addRemoveButton(this);
+    });
+  }
   registered = true;
 }
 
