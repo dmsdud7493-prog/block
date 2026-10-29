@@ -8,7 +8,7 @@ function Field({ label, name, type = "text", auto, inputMode, maxLength }: { lab
   return (
     <label className="block text-sm font-semibold">
       {label}
-      <input name={name} type={type} required autoComplete={auto} inputMode={inputMode} maxLength={maxLength} className="tap mt-1 w-full rounded border border-line px-2 font-normal" />
+      <input name={name} type={type} required autoComplete={auto} inputMode={inputMode} maxLength={maxLength} className="tap mt-1 w-full rounded-xl border-2 border-line px-3 font-normal focus:border-brand" />
     </label>
   );
 }
@@ -26,14 +26,14 @@ function StudentForm() {
       <Field label="PIN (6자리 숫자)" name="pin" type="password" auto="current-password" inputMode="numeric" maxLength={6} />
       <AiNotice />
       <ErrorText state={state} />
-      <button type="submit" disabled={pending} className="tap w-full rounded-lg bg-brand font-bold text-white disabled:opacity-60">{pending ? "들어가는 중…" : "학생으로 입장"}</button>
+      <button type="submit" disabled={pending} className="tap btn-sun w-full text-lg">{pending ? "들어가는 중…" : "🎒 학생으로 입장"}</button>
     </form>
   );
 }
 
 function AiNotice() {
   return (
-    <div className="rounded border border-line bg-panel p-3 text-sm">
+    <div className="rounded-xl bg-[#eef7fc] p-3 text-sm">
       <p className="font-semibold">🤖 알아 두세요</p>
       <ul className="mt-1 list-inside list-disc text-muted">
         <li>실험 도우미는 사람이 아닌 AI(Claude)예요. 틀린 말을 할 수도 있어요.</li>
@@ -56,7 +56,7 @@ function TeacherForm() {
         <Field label="학교 이메일" name="email" type="email" auto="email" inputMode="email" />
         <Field label="비밀번호 (10자 이상)" name="password" type="password" auto="new-password" />
         <ErrorText state={signupState} />
-        <button type="submit" disabled={p2} className="tap w-full rounded-lg bg-brand font-bold text-white">교사 가입</button>
+        <button type="submit" disabled={p2} className="tap w-full rounded-full bg-brand font-bold text-white">교사 가입</button>
         <button type="button" className="tap w-full text-sm underline" onClick={() => setMode("login")}>이미 가입했어요</button>
       </form>
     );
@@ -66,7 +66,7 @@ function TeacherForm() {
       <Field label="학교 이메일" name="email" type="email" auto="email" inputMode="email" />
       <Field label="비밀번호" name="password" type="password" auto="current-password" />
       <ErrorText state={loginState} />
-      <button type="submit" disabled={p1} className="tap w-full rounded-lg bg-brand font-bold text-white">교사로 입장</button>
+      <button type="submit" disabled={p1} className="tap w-full rounded-full bg-brand font-bold text-white">교사로 입장</button>
       <button type="button" className="tap w-full text-sm underline" onClick={() => setMode("signup")}>처음이에요 · 교사 가입</button>
     </form>
   );
@@ -75,10 +75,10 @@ function TeacherForm() {
 export default function LoginForms({ initialRole }: { initialRole: "student" | "teacher" }) {
   const [role, setRole] = useState(initialRole);
   return (
-    <div className="mt-4 rounded-xl border border-line bg-panel p-4">
-      <div role="tablist" aria-label="입장 방법" className="mb-4 flex gap-2">
-        <button role="tab" type="button" aria-selected={role === "student"} className={`tap flex-1 rounded ${role === "student" ? "bg-brand text-white" : "border border-line"}`} onClick={() => setRole("student")}>학생</button>
-        <button role="tab" type="button" aria-selected={role === "teacher"} className={`tap flex-1 rounded ${role === "teacher" ? "bg-brand text-white" : "border border-line"}`} onClick={() => setRole("teacher")}>교사</button>
+    <div className="mt-5 rounded-2xl bg-panel p-5 shadow-xl">
+      <div role="tablist" aria-label="입장 방법" className="mb-4 flex gap-1 rounded-full bg-[#eef1f5] p-1">
+        <button role="tab" type="button" aria-selected={role === "student"} className={`tap flex-1 rounded-full font-bold ${role === "student" ? "bg-nav text-white shadow" : "text-muted"}`} onClick={() => setRole("student")}>🎒 학생</button>
+        <button role="tab" type="button" aria-selected={role === "teacher"} className={`tap flex-1 rounded-full font-bold ${role === "teacher" ? "bg-nav text-white shadow" : "text-muted"}`} onClick={() => setRole("teacher")}>🧑‍🏫 교사</button>
       </div>
       <div role="tabpanel">{role === "student" ? <StudentForm /> : <TeacherForm />}</div>
     </div>

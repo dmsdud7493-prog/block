@@ -63,6 +63,23 @@ function markBlock(ws: Blockly.WorkspaceSvg, id: string | null | undefined, cls:
   ws.getAllBlocks(false).forEach((b) => b.getSvgRoot().classList.toggle(cls, b.id === id));
 }
 
+/**
+ * 프로토타입처럼 블록 꾸러미를 늘 펼쳐 둔다: 첫 카테고리를 열고, 블록을 끌어 놓거나 같은 카테고리를 다시 눌러도 닫히지 않게.
+ */
+function keepPaletteOpen(ws: Blockly.WorkspaceSvg) {
+  const tb = ws.getToolbox() as Blockly.Toolbox | null;
+  if (!tb) return;
+  const flyout = tb.getFlyout();
+  if (flyout) flyout.autoClose = false;
+  tb.selectItemByPosition(0);
+  ws.addChangeListener((e: Blockly.Events.Abstract) => {
+    if (e.type !== Blockly.Events.TOOLBOX_ITEM_SELECT) return;
+    const ev = e as Blockly.Events.ToolboxItemSelect;
+    const prev = ev.oldItem ? tb.getToolboxItemById(ev.oldItem) : null;
+    if (!ev.newItem && prev) tb.setSelectedItem(prev);
+  });
+}
+
 /** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
 function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   if (process.env.NEXT_PUBLIC_E2E !== "1") return;
@@ -96,13 +113,14 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       trashcan: !readOnly,
       zoom: { controls: true, wheel: false, startScale: 0.8, maxScale: 1.6, minScale: 0.5 },
       move: { scrollbars: true, drag: true, wheel: true },
-      grid: { spacing: 24, length: 2, colour: "#e2e8f0", snap: true },
+      grid: { spacing: 20, length: 1, colour: "#c9ced6", snap: true },
       sounds: false,
       // 학교 망에서 외부 CDN이 막혀도 아이콘이 보이도록 자체 호스팅 (R13)
       media: "/blockly-media/",
     });
     Blockly.serialization.workspaces.load(initialState ?? EMPTY_WORKSPACE, ws);
     wsRef.current = ws;
+    if (!readOnly) keepPaletteOpen(ws);
     exposeForE2E(ws);
     let timer: ReturnType<typeof setTimeout> | null = null;
     const emit = () => cbRef.current(workspaceToProgram(ws, slug), Blockly.serialization.workspaces.save(ws));
@@ -116,7 +134,11 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       timer = setTimeout(emit, 200);
     });
     emit();
+    // 화면 칸 크기가 바뀌면(창 크기·결과 영역 열림) 작업 공간도 다시 맞춘다
+    const resize = new ResizeObserver(() => Blockly.svgResize(ws));
+    resize.observe(host);
     return () => {
+      resize.disconnect();
       if (timer) clearTimeout(timer);
       ws.dispose();
       wsRef.current = null;
@@ -146,7 +168,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
   return (
     <div
       ref={hostRef}
-      className="h-full min-h-[420px] w-full"
+      className="absolute inset-0 min-h-[420px]"
       role="application"
       aria-label="블록 실험 설계 작업 공간. 키보드로 블록을 고르고 옮길 수 있어요."
     />

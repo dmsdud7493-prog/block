@@ -34,7 +34,7 @@ const GREETING: ChatMsg = { role: "assistant", content: "안녕하세요! 저는
 function Bubble({ m }: { m: ChatMsg }) {
   const mine = m.role === "user";
   return (
-    <li className={`max-w-[90%] rounded-lg px-3 py-2 text-sm ${mine ? "self-end bg-brand text-white" : "self-start bg-slate-100"}`}>
+    <li className={`max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm ${mine ? "self-end rounded-br-sm bg-nav-2 text-white" : "self-start rounded-bl-sm border border-black/5 bg-white text-ink"}`}>
       <span className="sr-only">{mine ? "나: " : "AI 도우미: "}</span>{m.content}
       {!mine && m.source === "local" ? <span className="mt-1 block text-[11px] text-muted">기본 도우미 응답</span> : null}
     </li>
@@ -78,7 +78,9 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
   });
 
   useEffect(() => {
-    listRef.current?.lastElementChild?.scrollIntoView({ block: "nearest" });
+    // 페이지 전체가 아니라 대화 목록만 맨 아래로 (태블릿에서 화면이 튀지 않게)
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
   }, [msgs.length]);
 
   const submit = (e: React.FormEvent) => {
@@ -90,22 +92,24 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
   };
 
   return (
-    <section aria-labelledby="tutor-title" className="flex h-full max-h-[760px] flex-col rounded-lg border border-line bg-panel p-2">
-      <h2 id="tutor-title" className="font-bold">🤖 AI 실험 도우미</h2>
-      <p className="text-xs text-muted">AI 튜터예요 · 틀린 말을 할 수도 있어요 · {mode === "session" ? "선생님이 대화를 볼 수 있어요" : "체험 모드 대화는 저장되지 않아요"}</p>
-      <HintLadderBadge level={lastHint} />
-      <ol ref={listRef} className="mt-2 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto" aria-live="polite" aria-label="대화">{msgs.map((m, i) => <Bubble key={i} m={m} />)}</ol>
-      {busy ? <p className="text-xs text-muted" role="status">도우미가 생각하는 중…</p> : null}
+    <section aria-labelledby="tutor-title" className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl bg-sky shadow-sm xl:rounded-none xl:shadow-none">
+      <div className="bg-nav-2 px-4 py-3 text-white">
+        <h2 id="tutor-title" className="flex items-center gap-2 font-bold"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#2ecc71]" />🤖 AI 실험 도우미</h2>
+        <p className="mt-0.5 text-xs text-[#d6e4f0]">AI 튜터예요 · 틀린 말을 할 수도 있어요 · {mode === "session" ? "선생님이 대화를 볼 수 있어요" : "체험 모드 대화는 저장되지 않아요"}</p>
+      </div>
+      <div className="px-3 pt-2"><HintLadderBadge level={lastHint} /></div>
+      <ol ref={listRef} className="flex min-h-[200px] flex-1 flex-col gap-2.5 overflow-y-auto p-3" aria-live="polite" aria-label="대화">{msgs.map((m, i) => <Bubble key={i} m={m} />)}</ol>
+      {busy ? <p className="mx-3 mb-1 self-start rounded-full bg-white px-3 py-1 text-xs text-ink" role="status">도우미가 생각하는 중… 💭</p> : null}
       <Chips chips={SUGGESTION_CHIPS[catalog.slug] ?? []} disabled={busy} onPick={(c) => void ask(c)} />
-      <form onSubmit={submit} className="mt-2 flex gap-1">
+      <form onSubmit={submit} className="flex gap-2 border-t border-white/60 bg-sky-deep p-3">
         <label htmlFor="tutor-input" className="sr-only">도우미에게 물어보기</label>
-        <input id="tutor-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="궁금한 점이나 내 생각을 적어 보세요" className="tap min-w-0 flex-1 rounded border border-line px-2 text-sm" />
-        <button type="submit" disabled={busy || !text.trim()} className="tap rounded bg-brand px-3 font-bold text-white disabled:opacity-50" aria-label="보내기">➤</button>
+        <input id="tutor-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="실험에 대해 물어보세요…" className="tap min-w-0 flex-1 rounded-full border border-[#d5dae1] bg-white px-4 text-sm" />
+        <button type="submit" disabled={busy || !text.trim()} className="tap rounded-full bg-brand font-bold text-white disabled:bg-[#9aa5b1]" aria-label="보내기">➤</button>
       </form>
     </section>
   );
 }
 
 function Chips({ chips, disabled, onPick }: { chips: string[]; disabled: boolean; onPick: (c: string) => void }) {
-  return <div className="mt-2 flex flex-wrap gap-1">{chips.map((c) => <button key={c} type="button" disabled={disabled} className="tap rounded-full border border-brand px-2 text-xs text-brand" onClick={() => onPick(c)}>{c}</button>)}</div>;
+  return <div className="flex flex-wrap gap-1.5 px-3 pb-2">{chips.map((c) => <button key={c} type="button" disabled={disabled} className="tap rounded-full border border-[#d7e3fb] bg-[#eef3ff] px-3 text-xs font-semibold text-brand hover:bg-[#dfe9ff]" onClick={() => onPick(c)}>{c}</button>)}</div>;
 }

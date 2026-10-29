@@ -15,7 +15,7 @@ function summary(diags: Diagnostic[]): string {
 function DiagItem({ d, onFocusBlock }: { d: Diagnostic; onFocusBlock?: (id: string) => void }) {
   return (
     <li>
-      <button type="button" className="w-full rounded px-1 text-left hover:bg-slate-100" onClick={() => d.blockId && onFocusBlock?.(d.blockId)}>
+      <button type="button" className="w-full rounded px-1 text-left hover:bg-white" onClick={() => d.blockId && onFocusBlock?.(d.blockId)}>
         <span aria-hidden="true">{ICON[d.severity]} </span><span className="sr-only">{WORD[d.severity]}: </span>{d.message}
       </button>
     </li>
@@ -24,9 +24,9 @@ function DiagItem({ d, onFocusBlock }: { d: Diagnostic; onFocusBlock?: (id: stri
 
 export default function CheckPanel({ diagnostics, onFocusBlock }: { diagnostics: Diagnostic[]; onFocusBlock?: (id: string) => void }) {
   return (
-    <section aria-labelledby="check-title" className="rounded-lg border border-line bg-panel p-2">
-      <h3 id="check-title" className="text-sm font-bold">🔎 실험 점검</h3>
-      <p className="text-sm text-muted" aria-live="polite">{summary(diagnostics)}</p>
+    <section aria-labelledby="check-title" className={`rounded-xl border-2 p-2.5 ${diagnostics.length ? "border-[#ffd27a] bg-[#fffaf0]" : "border-[#bfead9] bg-[#f1fbf6]"}`}>
+      <h3 id="check-title" className="text-sm font-extrabold text-ink">🔎 실험 점검 {diagnostics.length === 0 ? <span aria-hidden="true">👍</span> : null}</h3>
+      <p className="text-sm font-semibold text-muted" aria-live="polite">{summary(diagnostics)}</p>
       <ul className="mt-1 max-h-40 space-y-1 overflow-y-auto text-sm">
         {diagnostics.map((d, i) => <DiagItem key={`${d.code}-${d.blockId}-${i}`} d={d} onFocusBlock={onFocusBlock} />)}
       </ul>

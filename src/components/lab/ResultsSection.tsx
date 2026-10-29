@@ -14,9 +14,9 @@ const ResultChart = dynamic(() => import("@/components/data/ResultChart"), { ssr
 function GraphGate({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }) {
   const missing = missingPrediction(ctl.state, catalog.predictionTargets.map((t) => t.id));
   return (
-    <div className="rounded-lg border border-dashed border-brand bg-blue-50 p-3 text-sm">
+    <div className="rounded-xl border-2 border-dashed border-[#4c97ff] bg-[#f4f8ff] p-3 text-sm font-semibold">
       <p>{missing ? "그래프를 보기 전에 결과를 먼저 예상해요." : "예상을 모두 적었어요. 이제 그래프로 확인해 볼까요?"}</p>
-      <button type="button" className="tap mt-2 rounded bg-brand px-4 font-bold text-white" onClick={() => ctl.openGraph()}>📈 그래프 그리기</button>
+      <button type="button" className="tap btn-sun mt-2 px-5" onClick={() => ctl.openGraph()}>📈 그래프 그리기</button>
     </div>
   );
 }
@@ -25,7 +25,7 @@ function ToReport({ ctl }: { ctl: LabController }) {
   const ready = afterExplained(ctl.state);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" className="tap rounded-lg bg-ok px-4 py-2 font-bold text-white disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
+      <button type="button" className="tap rounded-full bg-ok px-5 py-2 font-bold text-white shadow-[0_3px_0_#05613f] disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
       {!ready ? <span className="text-sm text-muted">예상과 결과를 비교해 적으면 열려요.</span> : null}
     </div>
   );

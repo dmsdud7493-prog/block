@@ -9,6 +9,9 @@ import { VARIABLE_BLOCKS } from "@/lib/engine/dsl/variableBlocks";
 
 export const HUE = { design: 270, equip: 25, quant: 160, pos: 195, action: 215, hat: 330 } as const;
 
+/** 블록 스타일 이름 — 색은 테마(`components/blocks/theme.ts`)가 정한다. 원래 프로토타입 색: 준비물 하늘·수치 분홍·행동 노랑 */
+export const STYLE = { hat: "hat_blocks", equip: "equip_blocks", quant: "quant_blocks", pos: "pos_blocks", action: "action_blocks" } as const;
+
 export const T = {
   procStart: "proc_start",
   designStart: "design_start",
@@ -23,8 +26,8 @@ export type BlockJson = Record<string, unknown>;
 
 export function hatBlocks(): BlockJson[] {
   return [
-    { type: T.designStart, message0: "🔬 변인 설계", nextStatement: "design", colour: HUE.hat, tooltip: "무엇을 바꾸고, 무엇을 재고, 무엇을 같게 할지 정해요", deletable: false },
-    { type: T.procStart, message0: "🧪 실험 절차", nextStatement: "proc", colour: HUE.hat, tooltip: "실험 순서대로 행동 블록을 아래에 이어 붙여요", deletable: false },
+    { type: T.designStart, message0: "🔬 변인 설계", nextStatement: "design", style: STYLE.hat, tooltip: "무엇을 바꾸고, 무엇을 재고, 무엇을 같게 할지 정해요", deletable: false },
+    { type: T.procStart, message0: "🧪 실험 절차", nextStatement: "proc", style: STYLE.hat, tooltip: "실험 순서대로 행동 블록을 아래에 이어 붙여요", deletable: false },
   ];
 }
 
@@ -39,13 +42,13 @@ export function actionBlock(slug: string, def: ActionBlockDef): BlockJson {
     inputsInline: true,
     previousStatement: "proc",
     nextStatement: "proc",
-    colour: HUE.action,
+    style: STYLE.action,
     tooltip: def.text.replace(/\(\s+\)/g, "□"),
   };
 }
 
 export function itemBlock(slug: string, item: ItemDef): BlockJson {
-  return { type: T.item(slug, item.id), message0: `${item.icon} ${item.label}`, output: "equip", colour: HUE.equip, tooltip: item.label };
+  return { type: T.item(slug, item.id), message0: `${item.icon} ${item.label}`, output: "equip", style: STYLE.equip, tooltip: item.label };
 }
 
 export function quantBlock(q: QuantDef): BlockJson {
@@ -54,13 +57,13 @@ export function quantBlock(q: QuantDef): BlockJson {
     message0: `%1 ${q.unit}`,
     args0: [{ type: "field_number", name: "VALUE", value: 0, min: 0, precision: 0.1 }],
     output: "quant",
-    colour: HUE.quant,
+    style: STYLE.quant,
     tooltip: q.label,
   };
 }
 
 export function posBlock(slug: string, pos: PosDef): BlockJson {
-  return { type: T.pos(slug, pos.id), message0: `📍 ${pos.label}`, output: "pos", colour: HUE.pos };
+  return { type: T.pos(slug, pos.id), message0: `📍 ${pos.label}`, output: "pos", style: STYLE.pos };
 }
 
 export function variableBlocks(catalog: AnyCatalog): BlockJson[] {
@@ -98,14 +101,18 @@ export function allBlockJson(catalog: AnyCatalog): BlockJson[] {
 export function toolbox(catalog: AnyCatalog) {
   const blocks = (types: string[]) => types.map((type) => ({ kind: "block", type }));
   const cats = [
-    { name: "변인 설계", colour: String(HUE.design), types: VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
-    { name: "준비물", colour: String(HUE.equip), types: catalog.items.map((i: ItemDef) => T.item(catalog.slug, i.id)) },
-    { name: "용량/수치", colour: String(HUE.quant), types: catalog.quants.map((q: QuantDef) => T.quant(q.unit)) },
-    { name: "위치", colour: String(HUE.pos), types: catalog.positions.map((p: PosDef) => T.pos(catalog.slug, p.id)) },
-    { name: "행동", colour: String(HUE.action), types: catalog.actions.map((a: ActionBlockDef) => T.action(catalog.slug, a.id)) },
+    { name: "변인 설계", key: "design", types: VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
+    { name: "준비물", key: "equip", types: catalog.items.map((i: ItemDef) => T.item(catalog.slug, i.id)) },
+    { name: "용량/수치", key: "quant", types: catalog.quants.map((q: QuantDef) => T.quant(q.unit)) },
+    { name: "위치", key: "pos", types: catalog.positions.map((p: PosDef) => T.pos(catalog.slug, p.id)) },
+    { name: "행동", key: "action", types: catalog.actions.map((a: ActionBlockDef) => T.action(catalog.slug, a.id)) },
   ].filter((c) => c.types.length > 0);
   return {
     kind: "categoryToolbox",
-    contents: cats.map((c) => ({ kind: "category", name: c.name, colour: c.colour, contents: blocks(c.types) })),
+        // cssConfig: 카테고리마다 색 동그라미를 그리기 위한 클래스 (globals.css .cat-*)
+    contents: cats.map((c) => ({
+      kind: "category", name: c.name, contents: blocks(c.types),
+      cssConfig: { container: `blocklyToolboxCategoryContainer cat-${c.key}`, row: "blocklyToolboxCategory", icon: "blocklyToolboxCategoryIcon", label: "blocklyToolboxCategoryLabel" },
+    })),
   };
 }

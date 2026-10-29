@@ -47,10 +47,10 @@ function Controls({ playing, speed, onSpeed, onPause, onResume, onReplay }: {
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <button type="button" className="tap rounded border border-line px-2" onClick={playing ? onPause : onResume}>{playing ? "⏸ 일시정지" : "▶ 이어 보기"}</button>
-      <button type="button" className="tap rounded border border-line px-2" onClick={onReplay}>⟲ 처음부터</button>
-      <span className="text-muted" id="speed-label">재생 속도</span>
-      {SPEEDS.map((s) => <button key={s} type="button" aria-describedby="speed-label" aria-pressed={speed === s} className={`tap rounded px-2 ${speed === s ? "bg-brand text-white" : "border border-line"}`} onClick={() => onSpeed(s)}>{s}×</button>)}
+      <button type="button" className="tap btn-pill px-3" onClick={playing ? onPause : onResume}>{playing ? "⏸ 일시정지" : "▶ 이어 보기"}</button>
+      <button type="button" className="tap btn-pill px-3" onClick={onReplay}>⟲ 처음부터</button>
+      <span className="ml-auto font-bold text-muted" id="speed-label">재생 속도</span>
+      {SPEEDS.map((s) => <button key={s} type="button" aria-describedby="speed-label" aria-pressed={speed === s} className="tap btn-pill px-2" onClick={() => onSpeed(s)}>{s}×</button>)}
     </div>
   );
 }
@@ -61,9 +61,24 @@ function Log({ frames, index }: { frames: Frame[]; index: number }) {
   return (
     <div className="mt-2">
       <p className="sr-only-live" aria-live="polite">{last?.event.note ?? ""}</p>
-      <ol className="max-h-28 overflow-y-auto rounded border border-line bg-white p-2 text-sm" aria-label="실험 기록">
+      <ol className="max-h-28 overflow-y-auto rounded-xl border-2 border-[#e0e6ef] bg-white p-2 text-sm" aria-label="실험 기록">
         {shown.map((f, i) => <li key={`${f.blockId}-${i}`} className={i === index ? "font-semibold" : "text-muted"}>{i + 1}. {f.event.note}</li>)}
       </ol>
+    </div>
+  );
+}
+
+/** 화면 위 상태 말풍선 (프로토타입의 status banner) — 같은 문장은 기록 목록과 aria-live로도 전달된다 */
+function Status({ text }: { text: string }) {
+  if (!text) return null;
+  return <p aria-hidden="true" className="mx-auto mt-2 w-fit max-w-[94%] rounded-full bg-white/95 px-4 py-1.5 text-center text-sm font-bold text-nav shadow">{text}</p>;
+}
+
+function Idle() {
+  return (
+    <div className="flex h-[calc(100%-44px)] flex-col items-center justify-center text-center font-bold text-[#3d5f9e]">
+      <span aria-hidden="true" className="float-y text-4xl">🧪</span>
+      <p className="mt-2">실험 블록을 조립하고<br />[▶ 실험 실행하기]를 눌러 보세요</p>
     </div>
   );
 }
@@ -82,14 +97,13 @@ export default function LabMonitor({ slug, frames, runError, focusBlockId, onAct
   }, [focusBlockId, showBlock]);
 
   return (
-    <section aria-labelledby="monitor-title" className="flex h-full flex-col rounded-lg border border-line bg-panel p-2">
-      <h2 id="monitor-title" className="font-bold">💻 가상 실험 모니터</h2>
-      <div className="mt-1">
-        {frames.length > 0 ? <Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /> : null}
-      </div>
-      {runError ? <p role="alert" className="mt-2 rounded border-2 border-err bg-red-50 p-2 text-sm text-err">⛔ {runError.message}</p> : null}
-      <div className="mt-2 min-h-[240px] flex-1 rounded bg-slate-50">
-        {frames.length > 0 ? <Scene slug={slug} frame={player.frame} /> : <p className="p-6 text-center text-muted">블록을 조립하고 [▶ 실험 실행하기]를 눌러 보세요.</p>}
+    <section aria-labelledby="monitor-title" className="flex flex-col">
+      <h2 id="monitor-title" className="text-lg font-extrabold text-nav">💻 가상 실험 모니터</h2>
+      {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /></div> : null}
+      {runError ? <p role="alert" className="mt-2 rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">⛔ {runError.message}</p> : null}
+      <div className="monitor-screen mt-2 h-[300px] pb-7 sm:h-[340px]">
+        <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />
+        {frames.length > 0 ? <div className="h-[calc(100%-44px)]"><Scene slug={slug} frame={player.frame} /></div> : <Idle />}
       </div>
       {frames.length > 0 ? <Log frames={frames} index={player.index} /> : null}
     </section>

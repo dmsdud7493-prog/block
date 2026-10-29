@@ -29,19 +29,29 @@ async function queryAssignments(studentId: string): Promise<AssignmentItem[]> {
   });
 }
 
+function StudentHeader({ name }: { name: string }) {
+  return (
+    <header className="bg-nav text-white">
+      <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
+        <h1 className="font-display text-2xl">🧪 {name}번의 실험 미션</h1>
+        <form action={logout}><button type="submit" className="tap rounded-full border-2 border-white/60 px-4 text-sm font-bold text-white hover:bg-white/10">나가기</button></form>
+      </div>
+    </header>
+  );
+}
+
 export default async function LabHome() {
   const user = await currentUser();
   if (!user) redirect("/login");
   if (user.role !== "student") redirect("/dashboard");
   const items = await loadAssignments(user.id);
   return (
-    <main id="main" className="mx-auto max-w-4xl p-4 sm:p-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">🧪 {user.displayName}번의 실험</h1>
-        <form action={logout}><button type="submit" className="tap rounded border border-line px-3 text-sm">나가기</button></form>
-      </header>
-      {!user.consentOnFile ? <p role="status" className="mt-3 rounded border border-amber-600 bg-amber-50 p-3 text-sm">보호자 동의서가 확인되면 실험을 시작할 수 있어요. 동의서를 선생님께 내 주세요.</p> : null}
-      <AssignmentList items={items} canStart={user.consentOnFile} />
-    </main>
+    <>
+      <StudentHeader name={user.displayName} />
+      <main id="main" className="mx-auto max-w-4xl p-4 sm:p-8">
+        {!user.consentOnFile ? <p role="status" className="rounded-xl border-2 border-amber-600 bg-amber-50 p-3 text-sm">보호자 동의서가 확인되면 실험을 시작할 수 있어요. 동의서를 선생님께 내 주세요.</p> : null}
+        <AssignmentList items={items} canStart={user.consentOnFile} />
+      </main>
+    </>
   );
 }
