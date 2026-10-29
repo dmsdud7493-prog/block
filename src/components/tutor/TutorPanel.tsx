@@ -15,7 +15,7 @@ import HintLadderBadge from "./HintLadderBadge";
 import { editorDiagnostics } from "@/components/lab/editorDiagnostics";
 import { useIdle } from "./useIdle";
 
-export interface ChatMsg { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean }
+export interface ChatMsg { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean; notice?: boolean }
 
 interface Props {
   ctl: LabController;
@@ -27,11 +27,16 @@ interface Props {
   reportSection?: string | null;
   /** 교사 설정: 편집 중 점검을 숨긴 수업이면 튜터에게도 숨긴다 */
   hintLevelEditing?: "none" | "slots" | "all";
+  /** 대화 맨 앞에 보이는 안내 말풍선(대화 기록·Claude 요청에는 넣지 않는다) — 예: 체험 모드는 기본 도우미만 */
+  notice?: string;
 }
 
 const GREETING: ChatMsg = { role: "assistant", content: "안녕하세요! 저는 실험을 함께 생각하는 AI 도우미예요. 답을 대신 알려 주기보다 질문으로 도와줄게요. 막히면 언제든 물어보세요.", hintLevel: -1 };
 
 function Bubble({ m }: { m: ChatMsg }) {
+  if (m.notice) {
+    return <li className="self-stretch rounded-2xl border-2 border-dashed border-white bg-[#fff8dc] px-3 py-2 text-sm font-semibold leading-relaxed text-[#5c4700] shadow-sm"><span className="sr-only">안내: </span>{m.content}</li>;
+  }
   const mine = m.role === "user";
   return (
     <li className={`max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm ${mine ? "self-end rounded-br-sm bg-nav-2 text-white" : "self-start rounded-bl-sm border border-black/5 bg-white text-ink"}`}>
@@ -41,8 +46,8 @@ function Bubble({ m }: { m: ChatMsg }) {
   );
 }
 
-export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null, hintLevelEditing = "all" }: Props) {
-  const [msgs, setMsgs] = useState<ChatMsg[]>(initial?.length ? initial : [GREETING]);
+export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null, hintLevelEditing = "all", notice }: Props) {
+  const [msgs, setMsgs] = useState<ChatMsg[]>(() => [...(notice ? [{ role: "assistant" as const, content: notice, notice: true }] : []), ...(initial?.length ? initial : [GREETING])]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [nudged, setNudged] = useState(Boolean(initial?.some((m) => m.nudge)));
@@ -52,7 +57,7 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
 
   const ask = async (content: string, nudge = false) => {
     const outgoing: ChatMsg = { role: "user", content };
-    const history = [...msgs.filter((m) => m !== GREETING), outgoing].slice(-24).map(({ role, content: c }) => ({ role, content: c }));
+    const history = [...msgs.filter((m) => m !== GREETING && !m.notice), outgoing].slice(-24).map(({ role, content: c }) => ({ role, content: c }));
     if (!nudge) setMsgs((prev) => [...prev, outgoing]);
     setBusy(true);
     try {

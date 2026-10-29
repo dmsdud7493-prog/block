@@ -19,5 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function DemoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!getCatalog(slug)) notFound();
-  return <DemoLab slug={slug} />;
+  // 체험 모드 Claude 튜터 사용 여부(서버 설정) — 꺼져 있으면 "기본 도우미만" 안내 말풍선을 띄운다
+  const aiTutor = process.env.DEMO_TUTOR_ENABLED === "true" && Boolean(process.env.ANTHROPIC_API_KEY);
+  return <DemoLab slug={slug} aiTutor={aiTutor} />;
 }
