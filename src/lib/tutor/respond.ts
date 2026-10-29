@@ -75,8 +75,12 @@ export async function respond(args: RespondArgs): Promise<RespondResult> {
     if (v1.length === 0) return { reply: first.reply, source: "claude", usage: first.usage, violations: [] };
     const second = await callOnce(args, `직전 응답이 규칙을 어겼어요: ${v1.join(", ")}. hint_level은 ${args.state.hint_level_max} 이하, 정답 숫자 없이 다시 답해요.`);
     const v2 = violationsOf(second.reply, args.state, args.expected);
+    if (v2.length > 0) console.warn("[tutor] rule_violations", [...v1, ...v2].join(","));
     return v2.length === 0 ? { reply: second.reply, source: "claude", usage: second.usage, violations: v1 } : local([...v1, ...v2]);
-  } catch {
+  } catch (err) {
+    // 원인 파악용 서버 로그(Vercel Logs) — 키·학생 내용은 남기지 않고 오류 종류와 앞부분만
+    const e = err as { name?: string; message?: string; statusCode?: number };
+    console.warn("[tutor] claude_unavailable", e.name ?? "Error", e.statusCode ?? "", (e.message ?? "").slice(0, 160));
     return local(["claude_unavailable"]);
   }
 }
