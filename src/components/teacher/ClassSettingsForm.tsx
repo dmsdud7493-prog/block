@@ -26,7 +26,6 @@ export default function ClassSettingsForm({ classId, settings }: { classId: stri
         <Radio name="tone" value="banmal" current={s.tone} label="다정한 반말" onPick={(v) => set("tone", v)} />
       </fieldset>
       <label className="mt-2 block text-sm font-semibold">실행 횟수 제한 (비우면 무제한)<input type="number" min={1} max={100} value={s.max_runs ?? ""} onChange={(e) => set("max_runs", e.target.value ? Number(e.target.value) : null)} className="tap ml-2 w-20 rounded border border-line px-2 font-normal" /></label>
-      <label className="tap mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={s.rationale_gate} onChange={(e) => set("rationale_gate", e.target.checked)} />실행 전에 변인 블록의 &apos;이유&apos;를 꼭 쓰게 하기 (지침 2.4)</label>
       <button type="button" disabled={act.busy} className="tap mt-2 rounded bg-brand px-4 font-bold text-white" onClick={() => void act.run({ classId, settings: s })}>저장</button>
       {act.error ? <p role="alert" className="text-sm text-err">{act.error}</p> : null}
     </section>

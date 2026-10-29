@@ -5,7 +5,7 @@
  */
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { ActionBlockDef, ItemDef, PosDef, QuantDef, Unit } from "@/lib/engine/types";
-import { VARIABLE_BLOCKS } from "@/lib/engine/dsl/variableBlocks";
+import { TOOLBOX_VARIABLE_BLOCKS, VARIABLE_BLOCKS } from "@/lib/engine/dsl/variableBlocks";
 
 export const HUE = { design: 270, equip: 25, quant: 160, pos: 195, action: 215, hat: 330 } as const;
 
@@ -73,11 +73,11 @@ export function variableBlocks(catalog: AnyCatalog): BlockJson[] {
     const options = [["골라 주세요", "__none"], ...opts.map((o) => [o.label, o.id])];
     return {
       type: T.variable(catalog.slug, vb.role),
-      message0: `${vb.icon} ${vb.easy} (${vb.term}) %1 %2 왜? %3`,
+      // '왜?' 칸은 없앴다(사용자 결정 2026-10-29, ADR-P13) — 고른 까닭은 튜터 대화·보고서에서 설명한다
+      message0: `${vb.icon} ${vb.easy} (${vb.term}) %1 %2`,
       args0: [
         { type: "input_dummy" },
         { type: "field_dropdown", name: "OPTION", options },
-        { type: "field_input", name: "WHY", text: "" },
       ],
       previousStatement: "design",
       nextStatement: "design",
@@ -101,7 +101,7 @@ export function allBlockJson(catalog: AnyCatalog): BlockJson[] {
 export function toolbox(catalog: AnyCatalog) {
   const blocks = (types: string[]) => types.map((type) => ({ kind: "block", type }));
   const cats = [
-    { name: "실험 계획", key: "design", types: VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
+    { name: "실험 계획", key: "design", types: TOOLBOX_VARIABLE_BLOCKS.map((v) => T.variable(catalog.slug, v.role)) },
     { name: "준비물", key: "equip", types: catalog.items.map((i: ItemDef) => T.item(catalog.slug, i.id)) },
     { name: "용량/수치", key: "quant", types: catalog.quants.map((q: QuantDef) => T.quant(q.unit)) },
     { name: "위치", key: "pos", types: catalog.positions.map((p: PosDef) => T.pos(catalog.slug, p.id)) },

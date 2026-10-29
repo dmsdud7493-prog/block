@@ -10,10 +10,10 @@
 | 1.2 요소 간 관계 표현 | 변인 블록 ↔ 절차 수치 일관성 진단 `engine/rules/variables.ts` | 실험별 단위 테스트, `editor-settings.test.ts` | 진단 후 수정률(`block_edit`) | ✅ |
 | 1.3 입력 변경 시 함께 갱신 | `useLabController.onProgram` → `dryRun` → 블록 경고·CheckPanel·카드 동시 갱신, 그래프 평탄 구간은 학생이 켬 | E2E `density.spec.ts` "점검 결과", 5종 E2E | — | ✅ |
 | 1.4 전체 흐름 + 현재 단계 | 학생 `StepStepper`(`aria-current`) / 교사 `LiveBoard` 단계 열 | jest-axe, `fold.test.ts` | 단계별 체류 시간(fold) | ✅ |
-| 2.1 변인·집단·측정 블록 | `engine/dsl/variableBlocks.ts` 6종, 두 집단 실행 겹쳐 그리기 | `variable-blocks.test.ts`, 3 g vs 6 g 단위 테스트 | 변인 블록 사용률 | ✅ |
+| 2.1 변인·집단·측정 블록 | 도구 상자는 조작·종속·통제 변인 3종(ADR-P13, 집단·측정 방법은 정의만 남김), 두 집단 실행 겹쳐 그리기 | `variable-blocks.test.ts`, 3 g vs 6 g 단위 테스트 | 변인 블록 사용률 | 🟡 축소(사용자 결정) |
 | 2.2 배치로 순서·조건 명시 | 순차 절차 스택 + 반복 블록, 결정론적 리듀서 | `golden.test.ts`, 실험별 순서 오류 테스트 | — | ✅ |
 | 2.3 누락·모순 시각 표시 | 2계층: 블록 경고 아이콘·테두리 + `CheckPanel`(aria-live) + 실행 시 오류 블록 깜빡임 | `determinism.test.ts`(dryRun=simulate 진단), E2E 실행 오류 | `g32_failed_run_share` | ✅ |
-| 2.4 자동 완성 대신 근거 설명 | 예시 3단계만, 변인 근거 입력·게이트(교사 설정 `rationale_gate`), 자동 완성 없음 | verify P3, `editor-settings.test.ts` | `g24_rationale_rate` | ✅ |
+| 2.4 자동 완성 대신 근거 설명 | 예시 3단계만, 자동 완성 없음. 블록의 '왜?' 칸·`rationale_gate`는 없앰(ADR-P13) — 근거는 튜터 되묻기·보고서 성찰에서 | verify P3, `editor-settings.test.ts` | 튜터 대화 중 근거 설명 비율 | 🟡 축소(사용자 결정) |
 | 3.1 실행 전 예상·이유 기록 | `PredictionGate`(+곡선 그리기 `SketchPad`) + DB `prediction_required` | `gates.test.ts`, 라우트 403, E2E | `g31_sketch_rate`, `prediction_made` | ✅ |
 | 3.2 학생 설계를 반영한 실행 | `simulate(program)` 서버 실행, 모니터 장면 6종(서버 프레임 값만) | 골든 + 5종 E2E(표 = simulate 응답) | `g32_failed_run_share` | ✅ |
 | 3.3 차이 원인 확인 | `AfterExplain`(matched·rationale_after), 그래프에 "내 예상(그림)" 겹치기, 미작성 시 보고서 잠금 | E2E | `g33_explained_rate`, `g33_matched_rate` | ✅ |

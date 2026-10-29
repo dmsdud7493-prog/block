@@ -3,10 +3,9 @@ import type { Diagnostic } from "@/lib/engine/types";
 
 export interface LabSettings {
   hintLevelEditing: "none" | "slots" | "all";
-  rationaleGate: boolean;
 }
 
-export const DEFAULT_SETTINGS: LabSettings = { hintLevelEditing: "all", rationaleGate: false };
+export const DEFAULT_SETTINGS: LabSettings = { hintLevelEditing: "all" };
 
 /** 편집 중 보여 줄 진단: none=실행 때만, slots=빈 칸·단위·변인 설계만, all=순서 오류까지 */
 export function editorDiagnostics(diags: Diagnostic[], level: LabSettings["hintLevelEditing"]): Diagnostic[] {

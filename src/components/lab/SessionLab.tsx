@@ -28,7 +28,7 @@ export default function SessionLab({ view }: { view: SessionView }) {
       backend={backend}
       hydrate={{ ...view.hydrate, ...(atReport ? { phase: "report" as const } : {}) }}
       initialBlockly={view.blockly}
-      settings={{ hintLevelEditing: editing, rationaleGate: Boolean(view.classSettings.rationale_gate) }}
+      settings={{ hintLevelEditing: editing }}
       tutor={(ctl) => tutor(ctl, null)}
       report={report}
     />

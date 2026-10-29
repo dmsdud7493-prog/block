@@ -64,13 +64,11 @@ function RunButton({ running, onRun, errors }: { running: boolean; onRun: () => 
   );
 }
 
-/** 실행 버튼 동작 — 교사가 "변인 이유" 칸을 요구하면 비어 있을 때 실행하지 않고 안내 (지침 2.4) */
+/** 실행 버튼 동작 — 고칠 곳 수를 실행 버튼 설명에 알린다 */
 function useRun(ctl: LabController, settings: LabSettings) {
-  const { state } = ctl;
-  const shown = editorDiagnostics(state.diagnostics, settings.hintLevelEditing);
+  const shown = editorDiagnostics(ctl.state.diagnostics, settings.hintLevelEditing);
   const errors = shown.filter((d) => d.severity === "error").length;
-  const missingWhy = settings.rationaleGate && state.program.variables.some((v) => !(v.rationale ?? "").trim());
-  const onRun = () => (missingWhy ? ctl.dispatch({ type: "runFail", message: "실행 전에 변인 블록마다 '이유' 칸을 채워 주세요. 왜 그렇게 정했는지 적어 봐요." }) : void ctl.run());
+  const onRun = () => void ctl.run();
   return { shown, errors, onRun };
 }
 

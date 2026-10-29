@@ -28,7 +28,7 @@ describe("Blockly → Program (지침 2.2)", () => {
           },
           {
             type: T.designStart, x: 0, y: 200,
-            next: { block: { type: T.variable("density", "controlled"), id: "v", fields: { OPTION: "liquid_volume", WHY: "공정하게" } } },
+            next: { block: { type: T.variable("density", "controlled"), id: "v", fields: { OPTION: "liquid_volume" } } },
           },
         ],
       },
@@ -38,7 +38,7 @@ describe("Blockly → Program (지침 2.2)", () => {
       { blockId: "z", action: "a1", slots: [{ kind: "equip", id: "cylinder" }, { kind: "equip", id: "scale" }] },
       { blockId: "p", action: "a2", slots: [{ kind: "equip", id: "water" }, { kind: "quant", value: 50, unit: "mL" }] },
     ]);
-    expect(program.variables).toEqual([{ blockId: "v", role: "controlled", optionId: "liquid_volume", rationale: "공정하게" }]);
+    expect(program.variables).toEqual([{ blockId: "v", role: "controlled", optionId: "liquid_volume" }]);
     // 통제변인만 있고 조작 변인이 없으면 안내가 나온다 (지침 2.3)
     expect(dryRun(program, densityCatalog).map((d) => d.code)).toEqual(["independent_missing"]);
   });

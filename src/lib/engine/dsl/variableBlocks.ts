@@ -31,6 +31,13 @@ export const VARIABLE_BLOCKS: VariableBlockDef[] = [
   def("measure_method", "method", "🔍", "어떻게 잴지", "측정 방법", "재서 비교할 값을 어떤 도구로 어떻게 잴지 정해요.", "#475569"),
 ];
 
+/**
+ * 도구 상자에 보이는 블록 — 조작·종속·통제 변인 3종만 (사용자 결정 2026-10-29, ADR-P13).
+ * 실험 집단·비교 집단·측정 방법 블록은 예전에 저장된 작업 공간을 열 수 있도록 정의만 남긴다.
+ */
+export const TOOLBOX_VARIABLE_ROLES: VariableDecl["role"][] = ["independent", "dependent", "controlled"];
+export const TOOLBOX_VARIABLE_BLOCKS = VARIABLE_BLOCKS.filter((b) => TOOLBOX_VARIABLE_ROLES.includes(b.role));
+
 export function variableBlockByRole(role: VariableDecl["role"]): VariableBlockDef | undefined {
   return VARIABLE_BLOCKS.find((b) => b.role === role);
 }
