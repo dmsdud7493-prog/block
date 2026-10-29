@@ -6,7 +6,7 @@
  * - activeBlockId → 재생 중인 블록 강조, errorBlockId → 실행 오류 블록 깜빡임
  * 자동 완성 기능은 두지 않는다 (지침 2.4).
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly/core";
 import * as Ko from "blockly/msg/ko";
 import { getCatalog } from "@/lib/engine/experiments";
@@ -14,12 +14,15 @@ import type { Diagnostic, Program } from "@/lib/engine/types";
 import { allBlockJson, T, toolbox } from "@/lib/blocks/blockTypes";
 import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
+import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
+import BlockToolbar, { selectedIn } from "./BlockToolbar";
 
 const defined = new Set<string>();
 
 function ensureBlocks(slug: string) {
   const catalog = getCatalog(slug);
   if (!catalog || defined.has(slug)) return;
+  registerAutoWrap();
   Blockly.common.defineBlocksWithJsonArray(allBlockJson(catalog));
   defined.add(slug);
 }
@@ -95,12 +98,45 @@ function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   w.__labLoad = (state: object) => Blockly.serialization.workspaces.load(state, ws);
 }
 
+function injectOptions(catalog: NonNullable<ReturnType<typeof getCatalog>>, readOnly: boolean): Blockly.BlocklyOptions {
+  return {
+    toolbox: readOnly ? undefined : toolbox(catalog),
+    readOnly,
+    renderer: "zelos",
+    theme: labTheme,
+    trashcan: !readOnly,
+    zoom: { controls: true, wheel: false, startScale: 0.8, maxScale: 1.6, minScale: 0.5 },
+    move: { scrollbars: true, drag: true, wheel: true },
+    grid: { spacing: 20, length: 1, colour: "#c9ced6", snap: true },
+    sounds: false,
+    // 학교 망에서 외부 CDN이 막혀도 아이콘이 보이도록 자체 호스팅 (R13)
+    media: "/blockly-media/",
+  };
+}
+
 export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
   const { slug, initialState, readOnly } = props;
   const hostRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const cbRef = useRef(props.onProgramChange);
   const clickRef = useRef(props.onBlockClick);
+  const [wsState, setWsState] = useState<Blockly.WorkspaceSvg | null>(null);
+  // 조립판에서 블록을 누르거나 키를 누를 때마다 "고른 블록"을 다시 읽는다(도구 막대 단추 누름은 제외)
+  const [selId, setSelId] = useState<string | null>(null);
+  useEffect(() => {
+    // Blockly가 포인터 이벤트 전파를 멈추므로 문서 단계(capture)에서 듣는다. 고른 블록 표시(.blocklySelected)를 읽는다
+    const read = (e: Event) => {
+      const host = hostRef.current;
+      if (!host || !(e.target instanceof Node) || !host.contains(e.target)) return;
+      setTimeout(() => setSelId(selectedIn(wsRef.current)?.id ?? host.querySelector(".blocklySelected")?.getAttribute("data-id") ?? null), 0);
+    };
+    document.addEventListener("pointerup", read, true);
+    document.addEventListener("keyup", read, true);
+    return () => {
+      document.removeEventListener("pointerup", read, true);
+      document.removeEventListener("keyup", read, true);
+    };
+  }, []);
 
   useEffect(() => {
     cbRef.current = props.onProgramChange;
@@ -113,23 +149,14 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     if (!host || !catalog) return undefined;
     Blockly.setLocale(Ko as unknown as Record<string, string>);
     ensureBlocks(slug);
-    const ws = Blockly.inject(host, {
-      toolbox: readOnly ? undefined : toolbox(catalog),
-      readOnly: Boolean(readOnly),
-      renderer: "zelos",
-      theme: labTheme,
-      trashcan: !readOnly,
-      zoom: { controls: true, wheel: false, startScale: 0.8, maxScale: 1.6, minScale: 0.5 },
-      move: { scrollbars: true, drag: true, wheel: true },
-      grid: { spacing: 20, length: 1, colour: "#c9ced6", snap: true },
-      sounds: false,
-      // 학교 망에서 외부 CDN이 막혀도 아이콘이 보이도록 자체 호스팅 (R13)
-      media: "/blockly-media/",
-    });
+    const ws = Blockly.inject(host, injectOptions(catalog, Boolean(readOnly)));
     Blockly.serialization.workspaces.load(initialState ?? EMPTY_WORKSPACE, ws);
     wsRef.current = ws;
+    setWsState(ws);
+    relayoutWorkspace(ws);
     if (!readOnly) setupPalette(ws);
     exposeForE2E(ws);
+
     let timer: ReturnType<typeof setTimeout> | null = null;
     const emit = () => cbRef.current(workspaceToProgram(ws, slug), Blockly.serialization.workspaces.save(ws));
     ws.addChangeListener((e: Blockly.Events.Abstract) => {
@@ -138,6 +165,8 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
         if (id) clickRef.current?.(id);
       }
       if (e.isUiEvent) return;
+      // 빈칸에 블록을 끼우거나 빼면 행동 블록 줄바꿈을 다시 정한다
+      requestAnimationFrame(() => relayoutWorkspace(ws));
       if (timer) clearTimeout(timer);
       timer = setTimeout(emit, 200);
     });
@@ -150,6 +179,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       if (timer) clearTimeout(timer);
       ws.dispose();
       wsRef.current = null;
+      setWsState(null);
     };
   }, [slug, initialState, readOnly]);
 
@@ -174,11 +204,11 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
   }, [props.selectBlockId]);
 
   return (
-    <div
-      ref={hostRef}
-      className="absolute inset-0 min-h-[420px]"
-      role="application"
-      aria-label="블록 실험 설계 작업 공간. 키보드로 블록을 고르고 옮길 수 있어요."
-    />
+    <div className="absolute inset-0 flex flex-col">
+      {readOnly ? null : <BlockToolbar ws={wsState} selId={selId} onSelect={setSelId} />}
+      <div className="relative min-h-[380px] flex-1">
+        <div ref={hostRef} className="absolute inset-0" role="application" aria-label="블록 실험 설계 작업 공간. 키보드로 블록을 고르고 옮길 수 있어요." />
+      </div>
+    </div>
   );
 }

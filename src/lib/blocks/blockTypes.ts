@@ -31,54 +31,52 @@ export function hatBlocks(): BlockJson[] {
   ];
 }
 
-/** 이 글자 수보다 긴 행동 문장은 두 줄로 접어 블록 폭을 줄인다 (긴 블록이 조립 화면을 덮지 않게) */
-const WRAP_AT = 24;
+/**
+ * 행동 블록 줄바꿈 후보 — 빈칸 뒤와 긴 글귀의 가운데 띄어쓰기에 숨은 줄바꿈 입력(BRn)을 넣어 둔다.
+ * 실제로 어디서 접을지는 `autoWrap.ts`가 끼운 블록 폭을 재서 정한다(블록 폭이 고르게 유지되도록).
+ * 줄바꿈 입력에는 글자를 붙이지 않는다(숨겨도 글자가 사라지지 않게) — 글귀를 나눌 때는 앞부분을 빈 입력(TXn)에 단다.
+ */
+const SPLIT_TEXT_AT = 10;
 
-type Token = { kind: "text"; text: string } | { kind: "slot"; index: number } | { kind: "row" };
+type Token = { kind: "text"; text: string } | { kind: "slot"; index: number } | { kind: "dummy" } | { kind: "br" };
 
-function tokensOf(def: ActionBlockDef): Token[] {
-  return def.text.split("(  )").flatMap((p, i): Token[] => (i === 0 ? [{ kind: "text", text: p }] : [{ kind: "slot", index: i - 1 }, { kind: "text", text: p }]));
+function midSpace(text: string): number {
+  const half = text.length / 2;
+  return [...text].reduce((best, ch, j) => (ch === " " && j > 0 && j < text.length - 1 && (best < 0 || Math.abs(j - half) < Math.abs(best - half)) ? j : best), -1);
 }
 
-/** 전체 길이의 절반쯤에 있는 띄어쓰기 또는 빈칸 뒤에 줄바꿈을 넣는다 (빈칸은 글자 4개 폭으로 친다) */
-function wrapTokens(tokens: Token[]): Token[] {
-  const len = (t: Token) => (t.kind === "text" ? t.text.length : t.kind === "slot" ? 4 : 0);
-  const total = tokens.reduce((n, t) => n + len(t), 0);
-  if (total <= WRAP_AT) return tokens;
-  const half = total / 2;
-  let pos = 0;
-  let best: { at: number; split?: number; dist: number } | null = null;
-  tokens.forEach((t, i) => {
-    if (t.kind === "text") {
-      [...t.text].forEach((ch, j) => {
-        const d = Math.abs(pos + j - half);
-        if (ch === " " && j > 0 && j < t.text.length - 1 && (!best || d < best.dist)) best = { at: i, split: j, dist: d };
-      });
-    }
-    pos += len(t);
-    if (t.kind === "slot" && i < tokens.length - 2 && (!best || Math.abs(pos - half) < best.dist)) best = { at: i, dist: Math.abs(pos - half) };
+function textTokens(text: string): Token[] {
+  const at = text.trim().length > SPLIT_TEXT_AT ? midSpace(text) : -1;
+  if (at < 0) return text ? [{ kind: "text", text }] : [];
+  return [{ kind: "text", text: text.slice(0, at) }, { kind: "dummy" }, { kind: "br" }, { kind: "text", text: text.slice(at + 1) }];
+}
+
+export function actionTokens(def: ActionBlockDef): Token[] {
+  const parts = def.text.split("(  )");
+  return parts.flatMap((p, i): Token[] => {
+    const lead: Token[] = i === 0 ? [] : [{ kind: "slot", index: i - 1 }, ...(p.trim() ? [{ kind: "br" } as Token] : [])];
+    return [...lead, ...textTokens(p)];
   });
-  const b = best as { at: number; split?: number; dist: number } | null;
-  if (!b) return tokens;
-  if (b.split === undefined) return [...tokens.slice(0, b.at + 1), { kind: "row" }, ...tokens.slice(b.at + 1)];
-  const t = tokens[b.at] as { kind: "text"; text: string };
-  return [...tokens.slice(0, b.at), { kind: "text", text: t.text.slice(0, b.split) }, { kind: "row" }, { kind: "text", text: t.text.slice(b.split + 1) }, ...tokens.slice(b.at + 1)];
 }
 
 export function actionBlock(slug: string, def: ActionBlockDef): BlockJson {
-  const tokens = wrapTokens(tokensOf(def));
+  const tokens = actionTokens(def);
   const inputs = tokens.filter((t) => t.kind !== "text");
-  const args: BlockJson[] = inputs.map((t, i) => (t.kind === "slot" ? { type: "input_value", name: `S${t.index}`, check: def.slots[t.index].accepts } : { type: "input_end_row", name: `ROW${i + 1}` }));
+  const argOf = (t: Token, i: number): BlockJson =>
+    t.kind === "slot" ? { type: "input_value", name: `S${t.index}`, check: def.slots[t.index].accepts }
+      : t.kind === "br" ? { type: "input_end_row", name: `BR${i + 1}` }
+        : { type: "input_dummy", name: `TX${i + 1}` };
   const message = tokens.map((t) => (t.kind === "text" ? t.text : `%${inputs.indexOf(t) + 1}`)).join("");
   return {
     type: T.action(slug, def.id),
     message0: message.trim() || def.text,
-    args0: args,
+    args0: inputs.map(argOf),
     inputsInline: true,
     previousStatement: "proc",
     nextStatement: "proc",
     style: STYLE.action,
     tooltip: def.text.replace(/\(\s+\)/g, "□"),
+    extensions: ["lab_autowrap"],
   };
 }
 

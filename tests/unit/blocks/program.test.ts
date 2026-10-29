@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import * as Blockly from "blockly/core";
 import { allBlockJson, T, toolbox } from "@/lib/blocks/blockTypes";
+import { registerAutoWrap } from "@/lib/blocks/autoWrap";
 import { workspaceToProgram } from "@/lib/blocks/program";
 import { densityCatalog } from "@/lib/engine/experiments/density/catalog";
 import { dryRun } from "@/lib/engine/simulator/run";
 
+registerAutoWrap();
 Blockly.common.defineBlocksWithJsonArray(allBlockJson(densityCatalog));
 
 function build(state: object) {
