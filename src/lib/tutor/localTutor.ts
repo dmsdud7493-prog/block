@@ -23,13 +23,9 @@ const reply = (text: string, level: 0 | 1 | 2 | 3, action: TutorReply["next_acti
 
 export function localTutor(state: TutorState, lastUser: string, risk: string | null): TutorReply {
   if (risk) return { ...reply(SAFETY_REPLY, 0, "none"), flag_teacher: true };
-  // "밀도가 뭐야?" 같은 개념 질문 — 뜻만 알려 주고 다시 질문으로 돌려준다(결과·결론은 말하지 않음)
+  // "밀도가 뭐야?" 같은 개념 질문 — 낱말 뜻은 탐구 답이 아니므로 바로 알려 주고, 되묻기로 학생에게 돌려준다(결과·결론은 말하지 않음, 지침 5.4)
   const concept = conceptOf(lastUser);
-  if (concept) {
-    return state.hint_level_max >= 1
-      ? reply(`${concept.meaning} ${concept.ask}`, 1, "ask_rationale")
-      : reply(`좋은 질문이에요. 교과서에서 '${concept.terms[0]}'의 뜻을 찾아보고, 찾은 뜻을 한 문장으로 말해 줄래요?`, 0, "ask_rationale");
-  }
+  if (concept) return reply(`${concept.meaning} ${concept.ask}`, Math.min(1, state.hint_level_max) as 0 | 1, "ask_rationale");
   if (!state.prediction_submitted && ASKS_RESULT.test(lastUser)) {
     return reply("결과를 보기 전에 먼저 예상해 보는 게 중요해요. 실행 버튼을 누르면 예상을 적는 칸이 나와요. 어떻게 될 것 같아요?", 0, "predict");
   }

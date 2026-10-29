@@ -29,9 +29,9 @@ describe("localTutor 개념 질문", () => {
     expect(r.reply).toMatch(/\?$/);
     expect(r.hint_level).toBe(1);
   });
-  it("교사가 힌트를 0단계로 묶으면 뜻 대신 찾아보게 한다", () => {
+  it("힌트 상한이 0이어도 낱말 뜻은 알려 주고, 힌트 단계는 상한을 넘지 않는다", () => {
     const r = localTutor(state({}, { hintLevelMax: 0 }), "밀도가 뭐야?", null);
     expect(r.hint_level).toBe(0);
-    expect(r.reply).not.toContain("나눈");
+    expect(r.reply).toContain("나눈");
   });
 });
