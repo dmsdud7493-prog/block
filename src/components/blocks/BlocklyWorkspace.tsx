@@ -66,9 +66,10 @@ function markBlock(ws: Blockly.WorkspaceSvg, id: string | null | undefined, cls:
 const FLYOUT_RATIO = 0.85;
 
 /**
- * 프로토타입처럼 블록 꾸러미를 늘 펼쳐 둔다: 첫 카테고리를 열고, 블록을 끌어 놓거나 같은 카테고리를 다시 눌러도 닫히지 않게.
+ * 블록 꾸러미: 처음엔 첫 카테고리를 펼쳐 두고, 블록을 끌어 놓아도 닫히지 않게(autoClose=false).
+ * 펼친 카테고리 단추를 한 번 더 누르면 꾸러미가 닫혀 조립판을 넓게 쓴다(Blockly 기본 토글).
  */
-function keepPaletteOpen(ws: Blockly.WorkspaceSvg) {
+function setupPalette(ws: Blockly.WorkspaceSvg) {
   const tb = ws.getToolbox() as Blockly.Toolbox | null;
   if (!tb) return;
   const flyout = tb.getFlyout() as (Blockly.IFlyout & { getFlyoutScale?: () => number }) | null;
@@ -78,11 +79,12 @@ function keepPaletteOpen(ws: Blockly.WorkspaceSvg) {
     flyout.getFlyoutScale = () => ws.scale * FLYOUT_RATIO;
   }
   tb.selectItemByPosition(0);
+  // 꾸러미가 열리고 닫힐 때 조립판 크기를 다시 계산한다
+  // 꾸러미가 닫히면 남는 스크롤 막대를 숨기고(palette-closed), 조립판 크기를 다시 계산한다
   ws.addChangeListener((e: Blockly.Events.Abstract) => {
     if (e.type !== Blockly.Events.TOOLBOX_ITEM_SELECT) return;
-    const ev = e as Blockly.Events.ToolboxItemSelect;
-    const prev = ev.oldItem ? tb.getToolboxItemById(ev.oldItem) : null;
-    if (!ev.newItem && prev) tb.setSelectedItem(prev);
+    ws.getParentSvg().parentElement?.classList.toggle("palette-closed", !(e as Blockly.Events.ToolboxItemSelect).newItem);
+    requestAnimationFrame(() => Blockly.svgResize(ws));
   });
 }
 
@@ -126,7 +128,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     });
     Blockly.serialization.workspaces.load(initialState ?? EMPTY_WORKSPACE, ws);
     wsRef.current = ws;
-    if (!readOnly) keepPaletteOpen(ws);
+    if (!readOnly) setupPalette(ws);
     exposeForE2E(ws);
     let timer: ReturnType<typeof setTimeout> | null = null;
     const emit = () => cbRef.current(workspaceToProgram(ws, slug), Blockly.serialization.workspaces.save(ws));

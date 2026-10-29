@@ -79,7 +79,7 @@ function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBl
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-0 xl:rounded-none xl:border-0 xl:border-r">
       <ExampleSteps steps={examples} />
-      <p className="text-xs font-semibold text-muted" id="kbd-help">⌨️ 키보드: 작업 공간 선택 후 <kbd>T</kbd> 도구 상자 · 화살표 이동 · <kbd>Enter</kbd> 블록 놓기/선택 · <kbd>M</kbd> 블록 옮기기 · <kbd>Delete</kbd> 지우기</p>
+      <p className="text-xs font-semibold text-muted" id="kbd-help">📦 블록 꾸러미는 같은 단추(실험 계획·준비물·행동…)를 한 번 더 누르면 닫혀요 · ⌨️ 키보드: 작업 공간 선택 후 <kbd>T</kbd> 도구 상자 · 화살표 이동 · <kbd>Enter</kbd> 블록 놓기/선택 · <kbd>M</kbd> 블록 옮기기 · <kbd>Delete</kbd> 지우기</p>
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-0">
         <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onFocus} />
       </div>

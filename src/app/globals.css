@@ -111,6 +111,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .blocklyToolbox .cat-action .blocklyToolboxCategoryIcon { background: var(--sun); }
 .blocklyToolbox .blocklyToolboxCategoryLabel { font-size: 12px; font-weight: 700; color: #3b4654; white-space: nowrap; }
 .blocklyToolbox .blocklyToolboxSelected .blocklyToolboxCategoryLabel { color: var(--brand); }
+.palette-closed .blocklyFlyoutScrollbar { display: none; }
 .blocklyFlyoutBackground { fill: #ffffff !important; fill-opacity: 1 !important; }
 
 /* 밝은 색 블록(준비물·수치·위치·행동)은 진한 글자로 — 대비 5:1 이상 */
