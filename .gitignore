@@ -137,3 +137,6 @@ docs/.pdca-snapshots/
 test-results/
 playwright-report/
 coverage/
+
+# 하네스 체크포인트 기록(로컬 전용)
+.harness-checkpoint
