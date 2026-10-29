@@ -1,66 +1,108 @@
 "use client";
-/** 밀도 실험 장면 (SVG) — 전자저울·눈금실린더·비커. 수치는 이벤트에 실린 측정값만 표시한다. */
+/**
+ * 밀도 실험 장면 — 실험대 위 전자저울·눈금실린더·비커.
+ * 저울에 올린 그릇은 저울 접시로 미끄러져 가고, 물을 부으면 줄기가 흐르며 수면이 차오르고,
+ * 철조각을 넣으면 가라앉으며 수면이 올라간다. 수치는 이벤트에 실린 측정값만 표시한다.
+ */
 import type { SimEvent } from "@/lib/engine/types";
 import type { DensityState } from "@/lib/engine/experiments/density/reducer";
-import { CYL_MAX } from "@/lib/engine/experiments/density/reducer";
+import { BKR_MAX, CYL_MAX } from "@/lib/engine/experiments/density/reducer";
+import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
+import { Beaker, Cylinder } from "./kit/glass";
+import { Scale } from "./kit/instruments";
+import { IronPiece, PourStream } from "./kit/effects";
 
-const LIQ_COLOR: Record<string, string> = { water: "#60a5fa", oil: "#facc15" };
+const SOLID_LABEL: Record<string, string> = { iron_big: "큰 철조각", iron_small: "작은 철조각" };
+const CYL = { w: 52, h: 150 };
+const BKR = { w: 88, h: 100 };
+/** 그릇 자리: 바닥 / 저울 접시 위 */
+const SPOT = { cylFloor: 222, cylScale: 80, bkrFloor: 322, bkrScale: 58, scaleX: 14 };
 
-function scaleText(ev: SimEvent | null): string {
-  if (!ev) return "";
-  if (ev.type === "zero") return "0.0 g";
-  if (ev.type === "measureMass" && typeof ev.mass === "number") return `${ev.mass.toFixed(1)} g`;
-  return "";
+/** 저울 표시 — 이번 단계 측정값, 아니면 저울 위 물체를 마지막으로 잰 값(측정 기록에 있는 값만) */
+function scaleText(s: DensityState, ev: SimEvent | null): string {
+  if (ev?.type === "zero") return "0.0 g";
+  if (ev?.type === "measureMass" && typeof ev.mass === "number") return `${ev.mass.toFixed(1)} g`;
+  const m = s.measured.mass;
+  if (m && (s.scaleSolid === m.name || s.scale.item === m.name)) return `${m.value.toFixed(1)} g`;
+  return s.scaleSolid || s.scale.item ? "--.- g" : "0.0 g";
 }
 
-function Cylinder({ s }: { s: DensityState }) {
+const solidSize = (id: string) => (id === "iron_big" ? 16 : 10);
+
+/** 눈금실린더 속 철조각 — 바닥에 가라앉아 있다 */
+function SolidsInCylinder({ solids }: { solids: string[] }) {
+  return (
+    <g>
+      {solids.map((id, i) => <g key={id} className="lab-appear"><IronPiece x={6 + i * 15} y={CYL.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
+    </g>
+  );
+}
+
+/** 눈금을 읽는 눈높이 선 — 부피를 재는 단계에서만 */
+function EyeLine({ y }: { y: number }) {
+  return (
+    <g aria-hidden="true">
+      <line x1="-30" x2={CYL.w + 30} y1={y} y2={y} stroke="#2563eb" strokeWidth="1.2" strokeDasharray="4 3" />
+      <text x={CYL.w + 32} y={y + 3} fontSize="9" fontWeight="700" fill="#2563eb">👁 눈높이</text>
+    </g>
+  );
+}
+
+function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
+  if (!s.shown.cyl) return null;
+  const onScale = s.scale.item === "cylinder";
+  const x = onScale ? SPOT.scaleX + SPOT.cylScale - CYL.w / 2 + 2 : SPOT.cylFloor;
+  const y = onScale ? BENCH_Y - 34 - CYL.h - 7 + 1 : BENCH_Y - CYL.h - 7;
   const level = Math.min(1, s.cyl.volume / CYL_MAX);
-  const h = 180 * level;
-  const color = s.cyl.liquid ? LIQ_COLOR[s.cyl.liquid] : "transparent";
+  const reading = ev?.type === "measureVol" || ev?.type === "measureChange";
+  const surface = CYL.h - 2 - (CYL.h - 12) * level;
   return (
-    <g transform="translate(200,40)" aria-label="눈금실린더">
-      <rect x="0" y="0" width="44" height="190" rx="4" fill="#ffffff" stroke="#334155" strokeWidth="2" />
-      <rect x="2" y={188 - h} width="40" height={h} fill={color} opacity="0.85" />
-      {[0, 25, 50, 75, 100].map((m) => <line key={m} x1="30" x2="44" y1={188 - (180 * m) / CYL_MAX} y2={188 - (180 * m) / CYL_MAX} stroke="#334155" />)}
-      {s.cyl.solids.map((id, i) => <rect key={id} x={8 + i * 14} y={170} width={id === "iron_big" ? 14 : 9} height={id === "iron_big" ? 14 : 9} fill="#374151" />)}
-      <text x="22" y="210" textAnchor="middle" fontSize="12" fill="#0f172a">눈금실린더</text>
+    <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
+      {onScale ? null : <FloorShadow cx={CYL.w / 2} w={CYL.w + 26} y={CYL.h + 7} />}
+      <Cylinder x={0} y={0} w={CYL.w} h={CYL.h} level={level} liquid={s.cyl.liquid} label="눈금실린더" max={CYL_MAX}
+        inside={<SolidsInCylinder solids={s.cyl.solids} />} />
+      {reading && level > 0 ? <EyeLine y={surface} /> : null}
+      {pouringInto(ev, "cylinder") ? <PourStream x={CYL.w / 2} y1={-60} y2={surface} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
     </g>
   );
 }
 
-function Beaker({ s }: { s: DensityState }) {
+/** 이번 단계가 이 그릇에 액체를 붓는 단계인가 */
+const pouringInto = (ev: SimEvent | null, c: "cylinder" | "beaker") => (ev?.type === "pour" && ev.container === c) || (ev?.type === "transfer" && ev.to === c);
+
+function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   if (!s.shown.bkr) return null;
-  const h = Math.min(1, s.bkr.volume / 250) * 90;
-  const color = s.bkr.liquid ? LIQ_COLOR[s.bkr.liquid] : "transparent";
+  const onScale = s.scale.item === "beaker";
+  const x = onScale ? SPOT.scaleX + SPOT.bkrScale - BKR.w / 2 + 22 : SPOT.bkrFloor;
+  const y = onScale ? BENCH_Y - 34 - BKR.h + 1 : BENCH_Y - BKR.h;
   return (
-    <g transform="translate(320,120)" aria-label="비커">
-      <rect x="0" y="0" width="80" height="100" fill="#ffffff" stroke="#334155" strokeWidth="2" />
-      <rect x="2" y={98 - h} width="76" height={h} fill={color} opacity="0.85" />
-      <text x="40" y="118" textAnchor="middle" fontSize="12" fill="#0f172a">비커</text>
+    <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
+      {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
+      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={Math.min(1, s.bkr.volume / BKR_MAX)} liquid={s.bkr.liquid} label="비커" marks={["50", "100", "150", "200", ""]} />
+      {pouringInto(ev, "beaker") ? <PourStream x={BKR.w / 2} y1={-50} y2={BKR.h * (1 - Math.min(1, s.bkr.volume / BKR_MAX)) + 4} color={s.bkr.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
     </g>
   );
 }
 
-function Scale({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
+function ScaleView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   if (!s.shown.scale) return null;
   return (
-    <g transform="translate(40,170)" aria-label="전자저울">
-      <rect x="0" y="40" width="130" height="30" rx="6" fill="#e2e8f0" stroke="#334155" strokeWidth="2" />
-      <rect x="25" y="47" width="80" height="18" rx="3" fill="#0f172a" />
-      <text x="65" y="61" textAnchor="middle" fontSize="13" fill="#4ade80" fontFamily="monospace">{scaleText(ev)}</text>
-      {s.scaleSolid ? <rect x="55" y="22" width="18" height="18" fill="#374151" /> : null}
-      <text x="65" y="88" textAnchor="middle" fontSize="12" fill="#0f172a">전자저울</text>
-    </g>
+    <Scale x={SPOT.scaleX} w={170} reading={scaleText(s, ev)}>
+      {s.scaleSolid ? <g className="lab-appear"><IronPiece x={-solidSize(s.scaleSolid) / 2} y={-solidSize(s.scaleSolid) * 1.3} s={solidSize(s.scaleSolid)} label={SOLID_LABEL[s.scaleSolid]} /></g> : null}
+    </Scale>
   );
 }
 
 export default function DensityScene({ state, event }: { state: DensityState | null; event: SimEvent | null }) {
   if (!state) return null;
   return (
-    <svg viewBox="0 0 440 270" className="h-full w-full" role="img" aria-label={event?.note ?? "실험 장치"}>
-      <Scale s={state} ev={event} />
-      <Cylinder s={state} />
-      <Beaker s={state} />
+    <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="h-full w-full" role="img" aria-label={event?.note ?? "밀도 실험 장치"}>
+      <LabDefs />
+      <LiquidDefs keys={["water", "oil"]} />
+      <Bench />
+      <ScaleView s={state} ev={event} />
+      <BeakerView s={state} ev={event} />
+      <CylinderView s={state} ev={event} />
     </svg>
   );
 }

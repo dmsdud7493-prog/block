@@ -1,22 +1,74 @@
 "use client";
-/** 혼합물 분리 1(증류) 장면 — 가지 달린 삼각 플라스크·끓임쪽·가지 온도계·고무관·얼음물 속 시험관 (plan S8) */
+/**
+ * 혼합물 분리 1(증류) 장면 — 핫플레이트 위 가지 달린 삼각 플라스크(물+에탄올, 끓임쪽), 온도계 꽂은 고무마개,
+ * 가지 → 고무관 → 유리관 → 얼음물 속 시험관. 끓으면 기포가 오르고 목에 김이 차며, 식은 액체가 시험관에 똑똑 모인다.
+ * 온도계 끝은 고른 위치(가지 갈라지는 부분·용액 속·바닥)로 내려간다. 수치는 상태에 실린 값만 쓴다.
+ */
 import type { SimEvent } from "@/lib/engine/types";
 import type { Separation1State } from "@/lib/engine/experiments/separation1/model";
-import { Bubbles, HotPlate, TempBadge, Vessel } from "./parts";
+import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
+import { Flask, Label, TestTube } from "./kit/glass";
+import { HotPlate, IceBath, Stand } from "./kit/heat";
+import { Readout, RubberTube, Stopper, Thermometer } from "./kit/instruments";
+import { BoilingChips, Bubbles, Drips } from "./kit/effects";
 
-function Flask({ s }: { s: Separation1State }) {
-  const total = s.flask.water + s.flask.ethanol;
-  const top = 118 - Math.min(60, total * 1.2);
-  const half = 10 + (30 * (top - 40)) / 78;
+const PLATE = { x: 50, w: 150, top: BENCH_Y - 30 };
+const FL = { w: 112, h: 130, x: PLATE.x + 19 };
+const FL_Y = PLATE.top - 130;
+const NECK = { x: FL.x + FL.w / 2, top: FL_Y };
+const ARM_END = { x: FL.x + FL.w + 26, y: FL_Y + 130 * 0.36 * 0.3 + 14 };
+const COLD = { x: 300, w: 106, h: 84 };
+const ET = { x: COLD.x + 43, w: 20, h: 92, y: BENCH_Y - 84 - 26 };
+
+/** 온도계 끝 높이(플라스크 기준) — 가지 갈라지는 부분 / 용액 속 / 바닥 */
+const TIP: Record<string, number> = { branch: 130 * 0.36 * 0.3 + 6, in_solution: 130 * 0.78, flask_bottom: 130 - 8 };
+
+function FlaskInside({ s, level, strength }: { s: Separation1State; level: number; strength: number }) {
   return (
-    <g transform="translate(110,90)" aria-label={`가지 달린 삼각 플라스크, 물 ${s.flask.water} mL·에탄올 ${s.flask.ethanol} mL`}>
-      <path d="M30 0 L50 0 L50 40 L80 118 L0 118 L30 40 Z" fill="#ffffff" stroke="#334155" strokeWidth="2" />
-      {total > 0 ? <path d={`M${40 - half} ${top} L${40 + half} ${top} L78 116 L2 116 Z`} fill="#a5b4fc" opacity="0.7" /> : null}
-      {s.heating && total > 0 ? <Bubbles x={20} y={112} w={40} n={6} /> : null}
-      {s.flask.chips > 0 ? <text x="40" y="114" textAnchor="middle" fontSize="9">▴▴▴</text> : null}
-      <line x1="50" y1="18" x2="110" y2="30" stroke="#334155" strokeWidth="4" aria-label="가지" />
-      {s.vapour ? <text x="80" y="14" fontSize="12" fill="#6366f1">〰 기체</text> : null}
-      <text x="40" y="134" textAnchor="middle" fontSize="11">플라스크</text>
+    <g>
+      <Bubbles x={10} y={FL.h - 6} w={FL.w - 20} rise={FL.h * level} strength={strength} />
+      {s.flask.chips > 0 ? <BoilingChips x={FL.w * 0.25} y={FL.h - 3} w={FL.w * 0.5} /> : null}
+      {s.vapour ? <rect className="lab-glint" x={FL.w * 0.38} y="0" width={FL.w * 0.24} height={FL.h * 0.36} fill="#ffffff" opacity="0.35" /> : null}
+    </g>
+  );
+}
+
+function FlaskView({ s }: { s: Separation1State }) {
+  const total = s.flask.water + s.flask.ethanol;
+  const level = Math.min(0.6, total / 160);
+  const liquid = s.flask.ethanol > 0 && s.flask.water > 0 ? "mixture" : s.flask.ethanol > 0 ? "ethanol" : "water";
+  const strength = s.heating && total > 0 ? (s.vapour ? 0.75 : 0.18) : 0;
+  return (
+    <g>
+      {s.flask.onHot ? null : <FloorShadow cx={FL.x + FL.w / 2} w={FL.w} />}
+      <Flask x={FL.x} y={s.flask.onHot ? FL_Y : BENCH_Y - FL.h} w={FL.w} h={FL.h} level={total > 0 ? level : 0} liquid={liquid} sideArm labelLeft={s.flask.onHot} label="삼각 플라스크"
+        inside={<FlaskInside s={s} level={level} strength={strength} />} />
+    </g>
+  );
+}
+
+function ThermoView({ s }: { s: Separation1State }) {
+  if (!s.flask.stopper) return null;
+  const tip = TIP[s.thermo.position ?? "branch"] ?? TIP.branch;
+  const top = FL_Y - 58;
+  return (
+    <g>
+      <Stopper x={NECK.x} y={FL_Y - 6} w={FL.w * 0.24} />
+      {s.thermo.adjusted || s.thermo.position ? <Thermometer x={NECK.x} top={top} len={tip + 58} temp={s.thermo.adjusted ? s.temp : null} min={0} max={110} /> : null}
+    </g>
+  );
+}
+
+function Condenser({ s }: { s: Separation1State }) {
+  const dripping = s.vapour && s.flask.hose && s.heating;
+  return (
+    <g>
+      <IceBath x={COLD.x} y={BENCH_Y - COLD.h} w={COLD.w} h={COLD.h} label="얼음물" />
+      <TestTube x={ET.x} y={ET.y} w={ET.w} h={ET.h} level={Math.min(0.9, s.etube.collected / 25)} liquid="ethanol" label="" />
+      {s.flask.hose ? <RubberTube d={`M${ARM_END.x} ${ARM_END.y} C ${ARM_END.x + 50} ${ARM_END.y - 10}, ${ET.x - 30} ${ET.y - 40}, ${ET.x + ET.w / 2} ${ET.y - 12}`} /> : null}
+      {s.flask.glassIn ? <rect x={ET.x + ET.w / 2 - 2} y={ET.y - 14} width="4" height="44" rx="2" fill="#e6f0ff" stroke="#94a3b8" /> : null}
+      {dripping ? <Drips x={ET.x + ET.w / 2} y={ET.y + 30} fall={ET.h * 0.45} /> : null}
+      <Label x={ET.x + ET.w / 2} y={BENCH_Y + 16} text={`모인 액체 ${s.etube.collected.toFixed(1)} mL`} />
     </g>
   );
 }
@@ -25,14 +77,16 @@ export default function Separation1Scene({ state, event }: { state: Separation1S
   if (!state) return null;
   const branch = state.thermo.position === "branch";
   return (
-    <svg viewBox="0 0 440 270" className="h-full w-full" role="img" aria-label={event?.note ?? "증류 실험 장치"}>
-      <Flask s={state} />
-      <HotPlate x={90} y={212} on={state.heating} />
-      {state.flask.hose ? <path d="M220 120 C 260 120, 280 150, 300 170" fill="none" stroke="#475569" strokeWidth="4" /> : null}
-      <Vessel x={270} y={160} w={90} h={60} level={0.75} color="#e0f2fe" label="얼음물" />
-      <Vessel x={300} y={130} w={24} h={80} level={Math.min(1, state.etube.collected / 25)} color="#c4b5fd" label="" />
-      <TempBadge x={20} y={20} temp={state.thermo.adjusted ? state.temp : null} label={branch ? "가지 부분 온도" : "온도계"} />
-      <text x="320" y="245" textAnchor="middle" fontSize="11">모인 액체 {state.etube.collected.toFixed(1)} mL</text>
+    <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="h-full w-full" role="img" aria-label={event?.note ?? "증류 실험 장치"}>
+      <LabDefs />
+      <LiquidDefs keys={["water", "ethanol", "mixture", "ice_water"]} />
+      <Bench />
+      <Stand x={26} top={14} armX={NECK.x} armY={FL_Y + 10} />
+      {state.flask.onHot || state.heating ? <HotPlate x={PLATE.x} y={PLATE.top} w={PLATE.w} on={state.heating} /> : null}
+      <FlaskView s={state} />
+      <ThermoView s={state} />
+      <Condenser s={state} />
+      <Readout x={330} y={36} value={state.thermo.adjusted ? state.temp : null} label={branch ? "가지 부분 온도" : "온도계"} />
     </svg>
   );
 }

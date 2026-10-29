@@ -1,37 +1,79 @@
 "use client";
-/** 녹는점 측정 장면 — 물중탕 비커·가열 장치·시험관(고체 비율)·온도계 (plan S8) */
+/**
+ * 녹는점 측정 장면 — 핫플레이트 위 물중탕 비커, 스탠드 클램프에 고정한 시험관(고체 → 녹은 액체),
+ * 시험관 속 유리 온도계와 디지털 표시창. 시험관을 고정하면 물속으로 내려가고, 가열하면 상판이 달아오르고
+ * 물속에 잔기포가 생기며, 고체가 줄고 녹은 액체가 늘어난다. 수치는 상태에 실린 값만 쓴다.
+ */
 import type { SimEvent } from "@/lib/engine/types";
 import type { MeltingState } from "@/lib/engine/experiments/melting/model";
-import { HotPlate, TempBadge, Vessel } from "./parts";
+import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs";
+import { Beaker, Label, TestTube } from "./kit/glass";
+import { HotPlate, Stand } from "./kit/heat";
+import { Readout, Thermometer } from "./kit/instruments";
+import { Bubbles } from "./kit/effects";
 
 const SUB_LABEL: Record<string, string> = { lauric_acid: "로르산", palmitic_acid: "팔미트산" };
+const PLATE = { x: 110, w: 150, top: BENCH_Y - 30 };
+const BKR = { w: 116, h: 104 };
+const TUBE = { w: 22, h: 118, x: PLATE.x + PLATE.w / 2 - 11 };
+/** 시험관 높이: 고정하면 물중탕 속(바닥에서 10 위), 아니면 위에 들고 있다 */
+const TUBE_Y = { fixed: PLATE.top - 12 - TUBE.h, held: 22 };
 
-function Tube({ s }: { s: MeltingState }) {
-  if (!s.shown.tube || !s.tube.sub) return null;
-  const solidH = 40 * s.solid;
-  const liquidH = 40 * (1 - s.solid);
-  const y = s.tube.fixed ? 70 : 20;
+/** 시험관 속: 아래는 하얀 고체, 위는 녹은 투명한 액체 */
+function TubeContents({ solid }: { solid: number }) {
+  const fillH = 44;
+  const bottom = TUBE.h - 2;
+  const solidH = fillH * Math.max(0, Math.min(1, solid));
   return (
-    <g transform={`translate(160,${y})`} aria-label={`${SUB_LABEL[s.tube.sub] ?? s.tube.sub} 시험관, 고체 ${Math.round(s.solid * 100)}%`}>
-      <rect x="0" y="0" width="26" height="110" rx="12" fill="#ffffff" stroke="#334155" strokeWidth="2" />
-      <rect x="3" y={104 - liquidH - solidH} width="20" height={liquidH} fill="#fde68a" opacity="0.8" />
-      <rect x="3" y={104 - solidH} width="20" height={solidH} fill="#f8fafc" stroke="#cbd5e1" />
-      {s.thermo.in ? <line x1="13" y1="-30" x2="13" y2="96" stroke="#dc2626" strokeWidth="3" /> : null}
-      <text x="13" y="126" textAnchor="middle" fontSize="11" fill="#0f172a">{SUB_LABEL[s.tube.sub] ?? s.tube.sub}</text>
+    <g>
+      <rect className="lab-liquid" x="0" y={bottom - fillH} width={TUBE.w} height={fillH - solidH} fill="url(#lab-liq-melt)" />
+      <rect className="lab-liquid" x="0" y={bottom - solidH} width={TUBE.w} height={solidH + 4} fill="#fbfaf5" />
+      {solidH > 4 ? <path d={`M2 ${bottom - solidH + 3} l4 -2 l5 2 l4 -2 l5 2`} fill="none" stroke="#d6d3c4" strokeWidth="1" /> : null}
+    </g>
+  );
+}
+
+function TubeAssembly({ s }: { s: MeltingState }) {
+  if (!s.shown.tube || !s.tube.sub) return null;
+  const y = s.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held;
+  const melting = s.solid > 0 && s.solid < 1;
+  return (
+    <g className="lab-move" style={{ transform: `translate(${TUBE.x}px, ${y}px)` }}>
+      <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={0} label="" inside={<TubeContents solid={s.solid} />} />
+      {s.thermo.in ? <Thermometer x={TUBE.w / 2} top={-46} len={TUBE.h + 40} temp={s.temp} min={0} max={100} /> : null}
+      <Label x={TUBE.w / 2 - 46} y={TUBE.h - 30} text={SUB_LABEL[s.tube.sub] ?? s.tube.sub} />
+      {melting ? <Label x={TUBE.w / 2 + 52} y={TUBE.h - 30} text="녹는 중…" /> : null}
+    </g>
+  );
+}
+
+function BathBeaker({ s }: { s: MeltingState }) {
+  if (!s.shown.bkr) return null;
+  const onHot = s.bkr.onHot || s.shown.hot;
+  const y = (onHot ? PLATE.top : BENCH_Y) - BKR.h;
+  const level = s.bkr.water ? Math.min(1, s.bkr.volume / 250) : 0;
+  const strength = s.heating && s.bkr.water ? Math.min(0.45, Math.max(0.1, ((s.temp ?? 20) - 25) / 120)) : 0;
+  return (
+    <g className="lab-move" style={{ transform: `translate(${PLATE.x + (PLATE.w - BKR.w) / 2}px, ${y}px)` }}>
+      {onHot ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 6} y={BKR.h} />}
+      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={level} liquid="hot_water" label="물중탕 비커" labelLeft={onHot} marks={["50", "100", "150", "200", ""]}
+        inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * 0.6 * level} strength={strength} />} />
     </g>
   );
 }
 
 export default function MeltingScene({ state, event }: { state: MeltingState | null; event: SimEvent | null }) {
   if (!state) return null;
-  const level = state.bkr.water ? Math.min(1, state.bkr.volume / 250) : 0;
   return (
-    <svg viewBox="0 0 440 270" className="h-full w-full" role="img" aria-label={event?.note ?? "녹는점 실험 장치"}>
-      {state.shown.hot ? <HotPlate x={115} y={214} on={state.heating} /> : null}
-      {state.shown.bkr ? <Vessel x={120} y={100} w={110} h={110} level={level} color="#93c5fd" label="물중탕 비커" /> : null}
-      <Tube s={state} />
-      <TempBadge x={300} y={60} temp={state.thermo.in ? state.temp : null} />
-      {state.solid > 0 && state.solid < 1 ? <text x="348" y="140" textAnchor="middle" fontSize="12" fill="#92400e">녹는 중…</text> : null}
+    <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="h-full w-full" role="img" aria-label={event?.note ?? "녹는점 실험 장치"}>
+      <LabDefs />
+      <LiquidDefs keys={["hot_water", "melt"]} />
+      <Bench />
+      {state.shown.stand ? <Stand x={56} top={20} armX={TUBE.x + TUBE.w / 2} armY={(state.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held) + 14} /> : null}
+      {state.shown.hot ? <HotPlate x={PLATE.x} y={PLATE.top} w={PLATE.w} on={state.heating} /> : null}
+      <BathBeaker s={state} />
+      <TubeAssembly s={state} />
+      <Readout x={320} y={44} value={state.thermo.in ? state.temp : null} label="시험관 속 온도" />
     </svg>
   );
 }

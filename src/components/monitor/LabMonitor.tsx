@@ -70,13 +70,12 @@ function Log({ frames, index }: { frames: Frame[]; index: number }) {
 
 /** 화면 위 상태 말풍선 (프로토타입의 status banner) — 같은 문장은 기록 목록과 aria-live로도 전달된다 */
 function Status({ text }: { text: string }) {
-  if (!text) return null;
-  return <p aria-hidden="true" className="mx-auto mt-2 w-fit max-w-[94%] rounded-full bg-white/95 px-4 py-1.5 text-center text-sm font-bold text-nav shadow">{text}</p>;
+  return <p aria-hidden="true" className="mt-2 flex min-h-[3.25rem] items-center justify-center rounded-2xl border-2 border-[#cfe0ff] bg-white px-4 py-1.5 text-center text-sm font-bold leading-snug text-nav shadow-sm">🔬 {text}</p>;
 }
 
 function Idle() {
   return (
-    <div className="flex h-[calc(100%-44px)] flex-col items-center justify-center text-center font-bold text-[#3d5f9e]">
+    <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center pb-6 text-center font-bold text-[#3d5f9e]">
       <span aria-hidden="true" className="float-y text-4xl">🧪</span>
       <p className="mt-2">실험 블록을 조립하고<br />[▶ 실험 실행하기]를 눌러 보세요</p>
     </div>
@@ -101,9 +100,9 @@ export default function LabMonitor({ slug, frames, runError, focusBlockId, onAct
       <h2 id="monitor-title" className="text-lg font-extrabold text-nav">💻 가상 실험 모니터</h2>
       {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /></div> : null}
       {runError ? <p role="alert" className="mt-2 rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">⛔ {runError.message}</p> : null}
-      <div className="monitor-screen mt-2 h-[300px] pb-7 sm:h-[340px]">
-        <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />
-        {frames.length > 0 ? <div className="h-[calc(100%-44px)]"><Scene slug={slug} frame={player.frame} /></div> : <Idle />}
+      <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />
+      <div className={`monitor-screen mt-1 aspect-[8/5] w-full ${frames.length > 0 ? "has-scene" : ""}`}>
+        {frames.length > 0 ? <div className="absolute inset-0"><Scene slug={slug} frame={player.frame} /></div> : <Idle />}
       </div>
       {frames.length > 0 ? <Log frames={frames} index={player.index} /> : null}
     </section>

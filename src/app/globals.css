@@ -80,8 +80,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 
 /* 모니터 바탕 — 하늘빛 화면 + 실험대 */
 .monitor-screen { background: linear-gradient(180deg, #eaf2ff 0%, #dbe9ff 100%); border: 4px solid #4c97ff; border-radius: 14px; position: relative; overflow: hidden; }
-.monitor-screen::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: #b8c4d1; border-top: 3px solid #8fa0b3; pointer-events: none; }
-.monitor-screen > * { position: relative; z-index: 1; }
+.monitor-screen:not(.has-scene)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: #b8c4d1; border-top: 3px solid #8fa0b3; pointer-events: none; }
 
 /* 실험 화면 가로 막대 — 굵고 잘 보이게 (좁은 화면에서 오른쪽 모니터로 옮겨 가기) */
 .lab-hscroll { scrollbar-color: #4c97ff #e3e9f2; scrollbar-width: auto; }
@@ -123,6 +122,33 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .lab-block-active > .blocklyPath { stroke: var(--brand) !important; stroke-width: 4px !important; }
 .lab-block-error > .blocklyPath { stroke: var(--err) !important; stroke-width: 4px !important; animation: lab-flash 0.8s ease-in-out 3; }
 @keyframes lab-flash { 50% { stroke-opacity: 0.2; } }
+
+/* ── 가상 실험 장치 움직임 (scenes/kit) ─────────────────────────── */
+.lab-liquid { transition: transform 1.1s cubic-bezier(.4,0,.2,1); }
+.lab-thermo { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 1.2s ease-in-out; }
+.lab-move { transition: transform 1s cubic-bezier(.4,0,.2,1), opacity .6s; }
+.lab-appear { animation: lab-appear .7s ease-out both; }
+@keyframes lab-appear { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+.lab-bubble { transform-box: fill-box; animation: lab-bubble 1.4s linear infinite; }
+@keyframes lab-bubble { 0% { transform: translateY(0) scale(.6); opacity: 0; } 12% { opacity: .95; } 85% { opacity: .9; } 100% { transform: translateY(var(--rise, -40px)) scale(1.15); opacity: 0; } }
+.lab-steam { transform-box: fill-box; transform-origin: center; animation: lab-steam 2.4s ease-out infinite; }
+@keyframes lab-steam { 0% { transform: translateY(0) scale(.5); opacity: 0; } 30% { opacity: .8; } 100% { transform: translateY(-46px) scale(1.7); opacity: 0; } }
+.lab-shimmer { animation: lab-shimmer 1.6s ease-in-out infinite; }
+@keyframes lab-shimmer { 0%, 100% { transform: translateY(0); opacity: .2; } 50% { transform: translateY(-6px); opacity: .9; } }
+.lab-glow { animation: lab-glow 1.4s ease-in-out infinite; }
+@keyframes lab-glow { 0%, 100% { opacity: .85; } 50% { opacity: 1; filter: brightness(1.25); } }
+.lab-blink { animation: lab-blink 1.2s steps(2) infinite; }
+@keyframes lab-blink { 50% { opacity: .35; } }
+.lab-drip { transform-box: fill-box; animation: lab-drip 1.2s ease-in infinite; }
+@keyframes lab-drip { 0% { transform: translateY(0) scale(.6); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(var(--fall, 26px)) scale(1); opacity: 0; } }
+.lab-pour { stroke-dasharray: 6 4; animation: lab-pour .5s linear infinite; }
+@keyframes lab-pour { to { stroke-dashoffset: -20; } }
+.lab-splash { transform-box: fill-box; transform-origin: center; animation: lab-splash .6s ease-out infinite; }
+@keyframes lab-splash { 0% { transform: scale(.4); opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
+.lab-glint { animation: lab-glint 2s ease-in-out infinite; }
+@keyframes lab-glint { 0%, 100% { opacity: .75; } 50% { opacity: 1; filter: drop-shadow(0 0 2px #fff); } }
+.lab-shake { transform-box: fill-box; transform-origin: 50% 100%; animation: lab-shake .5s ease-in-out 3; }
+@keyframes lab-shake { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
 
 /* 단계를 마쳤을 때 작게 튀어 오르는 별 */
 @keyframes pop-in { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
