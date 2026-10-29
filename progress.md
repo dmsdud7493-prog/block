@@ -1,7 +1,7 @@
 # progress.md — 물질의 특성 가상실험실
 
 > AI 에이전트는 작업 시작 전 이 파일을 읽고, 작업 완료 후 반드시 업데이트합니다.
-> 마지막 업데이트: 2026-10-27
+> 마지막 업데이트: 2026-10-30
 
 ---
 
@@ -10,10 +10,10 @@
 | 필드 | 내용 |
 |---|---|
 | intent | docs/plan.md Sprint 0~9 순서대로 구현 |
-| changes_made | S0~S9 전부 구현 (각 스프린트 요약: `_workspace/S1~S9/summary.md`) |
-| decisions_taken | ADR-P01~P11 (docs/decision-log.md) |
+| changes_made | S0~S9 전부 구현 (각 스프린트 요약: `_workspace/S1~S9/summary.md`). 배포 후 개선: 학생 화면 재디자인, 변인 블록 3종 정리, 블록 툴바(복사·붙여넣기·준비물 ⊗ 삭제·자동 줄바꿈), 모니터 장치 SVG 재작성, 6개 실험 모두 흰 라텍스 장갑 손동작(kit/hand.tsx) |
+| decisions_taken | ADR-P01~P13 (docs/decision-log.md) |
 | next_steps | 사용자 계정으로 DEPLOY.md 실행(GitHub·Supabase·Vercel·Claude 키) → 스테이징 점검(교사 E2E·Realtime 10초·부하 30명) → 파일럿(docs/pilot-checklist.md) |
-| test_status | unit 436 passed(실 API 회귀 25 skipped), DB 50 passed, E2E 28 passed(+axe 10페이지), verify SCORE=100 APPROVED |
+| test_status | unit 561 passed(실 API 회귀 25 skipped), E2E 31 passed(+장면 캡처 6, SHOTS=1), verify SCORE=100 APPROVED |
 
 ---
 
