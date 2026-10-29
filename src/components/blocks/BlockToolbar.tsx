@@ -7,17 +7,11 @@
  */
 import { useRef, useState } from "react";
 import * as Blockly from "blockly/core";
+import { firstEmptyFitting, isNested, removeNested } from "./slotTools";
 
 type Clip = { state: Blockly.serialization.blocks.State; chain: boolean } | null;
 
 const lastOf = (b: Blockly.Block): Blockly.Block => (b.getNextBlock() ? lastOf(b.getNextBlock()!) : b);
-
-function firstEmptyFitting(target: Blockly.Block, child: Blockly.Block): Blockly.Connection | null {
-  const out = child.outputConnection;
-  if (!out) return null;
-  const input = target.inputList.find((i) => i.connection && !i.connection.targetBlock() && i.connection.getConnectionChecker().canConnect(i.connection, out, false));
-  return input?.connection ?? null;
-}
 
 /** 붙여넣은 블록을 고른 블록 옆(행동은 바로 아래, 준비물은 빈칸)에 연결한다. 못 붙이면 고른 블록 옆에 둔다 */
 function attach(pasted: Blockly.BlockSvg, target: Blockly.BlockSvg | null) {
@@ -48,10 +42,9 @@ function Btn({ onClick, disabled, children, label }: { onClick: () => void; disa
   return <button type="button" className="tap btn-pill px-3 text-sm disabled:cursor-not-allowed disabled:border-[#c5ccd6] disabled:text-[#6b7785]" disabled={disabled} onClick={onClick} aria-label={label}>{children}</button>;
 }
 
-export default function BlockToolbar({ ws, selId, onSelect }: { ws: Blockly.WorkspaceSvg | null; selId: string | null; onSelect: (id: string | null) => void }) {
+export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws: Blockly.WorkspaceSvg | null; selId: string | null; onSelect: (id: string | null) => void; msg: string; setMsg: (m: string) => void }) {
   const sel = ws && selId ? (ws.getBlockById(selId) as Blockly.BlockSvg | null) : null;
   const clip = useRef<Clip>(null);
-  const [msg, setMsg] = useState("");
   const [hasClip, setHasClip] = useState(false);
   const isStatement = Boolean(sel?.previousConnection);
   const removable = Boolean(sel && sel.isDeletable());
@@ -79,9 +72,12 @@ export default function BlockToolbar({ ws, selId, onSelect }: { ws: Blockly.Work
 
   const remove = () => {
     if (!sel || !removable) return;
-    sel.dispose(true, true);
-    onSelect(null);
-    setMsg(isStatement ? "블록을 뺐어요. 아래 블록은 위로 이어 붙었어요." : "블록을 뺐어요. 빈칸에 다른 블록을 끼워 보세요.");
+    const parent = isNested(sel) ? sel.getParent() : null;
+    if (parent) removeNested(sel);
+    else sel.dispose(true, true);
+    onSelect(parent?.id ?? null);
+    (parent as Blockly.BlockSvg | null)?.select();
+    setMsg(parent ? "빈칸에서 뺐어요. 꾸러미에서 다른 블록을 누르면 그 빈칸에 들어가요." : isStatement ? "블록을 뺐어요. 아래 블록은 위로 이어 붙었어요." : "블록을 뺐어요.");
   };
 
   return (
@@ -90,7 +86,7 @@ export default function BlockToolbar({ ws, selId, onSelect }: { ws: Blockly.Work
       <Btn onClick={() => copy(false)} disabled={!sel || !sel.isDeletable()}>📋 복사</Btn>
       <Btn onClick={() => copy(true)} disabled={!sel || !isStatement || !sel.isDeletable()} label="고른 블록부터 아래까지 복사">📋 아래까지 복사</Btn>
       <Btn onClick={paste} disabled={!hasClip}>📥 붙여넣기</Btn>
-      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? "고른 블록으로 무엇을 할까요?" : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
+      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. ✕ 빼기로 빼거나, 꾸러미의 다른 블록을 누르면 바꿔 끼워요." : "고른 행동 블록에 꾸러미의 준비물을 누르면 빈칸에 들어가요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
     </div>
   );
 }

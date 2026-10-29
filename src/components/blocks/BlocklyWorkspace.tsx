@@ -6,7 +6,7 @@
  * - activeBlockId → 재생 중인 블록 강조, errorBlockId → 실행 오류 블록 깜빡임
  * 자동 완성 기능은 두지 않는다 (지침 2.4).
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly/core";
 import * as Ko from "blockly/msg/ko";
 import { getCatalog } from "@/lib/engine/experiments";
@@ -16,11 +16,15 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
+import { isNested, removeNested, tapInsert, type TapResult } from "./slotTools";
 
 const defined = new Set<string>();
 
 function ensureBlocks(slug: string) {
   const catalog = getCatalog(slug);
+  // 끼우기 쉽게: 블록을 빈칸 근처(기본 28 → 56)에만 놓아도 쏙 들어가게
+  Blockly.config.snapRadius = 56;
+  Blockly.config.connectingSnapRadius = 72;
   if (!catalog || defined.has(slug)) return;
   registerAutoWrap();
   Blockly.common.defineBlocksWithJsonArray(allBlockJson(catalog));
@@ -91,6 +95,55 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
   });
 }
 
+/** 꾸러미의 준비물·수치 블록을 누르면(끌지 않고) 고른 행동 블록의 빈칸에 끼운다 */
+function listenFlyoutTaps(ws: Blockly.WorkspaceSvg, selected: () => string | null, done: (r: TapResult) => void) {
+  const fws = ws.getToolbox()?.getFlyout()?.getWorkspace();
+  fws?.addChangeListener((e: Blockly.Events.Abstract) => {
+    if (e.type !== Blockly.Events.CLICK) return;
+    const id = (e as Blockly.Events.Click).blockId;
+    const source = id ? fws.getBlockById(id) : null;
+    const r = source ? tapInsert(ws, source, selected()) : null;
+    if (r) done(r);
+  });
+}
+
+interface ChipAt { id: string; x: number; y: number }
+
+/** 빈칸에 끼워진 블록을 고르면 그 블록 오른쪽 위에 "✕ 빼기" 단추를 띄운다 */
+function useRemoveChip(ws: Blockly.WorkspaceSvg | null, selId: string | null, hostRef: React.RefObject<HTMLDivElement | null>): ChipAt | null {
+  const [chip, setChip] = useState<ChipAt | null>(null);
+  useEffect(() => {
+    if (!ws) return undefined;
+    const place = () => {
+      const b = selId ? ws.getBlockById(selId) : null;
+      const host = hostRef.current;
+      if (!b || !host || !isNested(b)) return setChip(null);
+      const r = b.getSvgRoot().getBoundingClientRect();
+      const h = host.getBoundingClientRect();
+      setChip({ id: b.id, x: r.left - h.left + r.width / 2 - 36, y: Math.max(0, r.top - h.top - 46) });
+    };
+    const raf = requestAnimationFrame(place);
+    const onEvent = (e: Blockly.Events.Abstract) => {
+      if (e.type === Blockly.Events.VIEWPORT_CHANGE || e.type === Blockly.Events.BLOCK_MOVE || e.type === Blockly.Events.BLOCK_DELETE) requestAnimationFrame(place);
+    };
+    ws.addChangeListener(onEvent);
+    return () => {
+      cancelAnimationFrame(raf);
+      ws.removeChangeListener(onEvent);
+    };
+  }, [ws, selId, hostRef]);
+  return chip;
+}
+
+function RemoveChip({ at, onRemove }: { at: ChipAt; onRemove: () => void }) {
+  return (
+    <button type="button" onClick={onRemove} style={{ left: at.x, top: at.y }} aria-label="빈칸에서 이 블록 빼기"
+      className="tap absolute z-20 flex items-center gap-1 rounded-full border-2 border-white bg-err px-2 text-xs font-bold text-white shadow-md hover:brightness-110">
+      ✕ 빼기
+    </button>
+  );
+}
+
 /** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
 function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   if (process.env.NEXT_PUBLIC_E2E !== "1") return;
@@ -121,14 +174,24 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
   const cbRef = useRef(props.onProgramChange);
   const clickRef = useRef(props.onBlockClick);
   const [wsState, setWsState] = useState<Blockly.WorkspaceSvg | null>(null);
-  // 조립판에서 블록을 누르거나 키를 누를 때마다 "고른 블록"을 다시 읽는다(도구 막대 단추 누름은 제외)
-  const [selId, setSelId] = useState<string | null>(null);
+  // 조립판에서 블록을 누르거나 키를 누를 때마다 "고른 블록"을 다시 읽는다(도구 막대 단추·꾸러미 누름은 제외)
+  const [selId, setSelIdState] = useState<string | null>(null);
+  const selRef = useRef<string | null>(null);
+  const [msg, setMsg] = useState("");
+  const setSelId = useCallback((id: string | null) => {
+    selRef.current = id;
+    setSelIdState(id);
+  }, []);
   useEffect(() => {
     // Blockly가 포인터 이벤트 전파를 멈추므로 문서 단계(capture)에서 듣는다. 고른 블록 표시(.blocklySelected)를 읽는다
     const read = (e: Event) => {
       const host = hostRef.current;
-      if (!host || !(e.target instanceof Node) || !host.contains(e.target)) return;
-      setTimeout(() => setSelId(selectedIn(wsRef.current)?.id ?? host.querySelector(".blocklySelected")?.getAttribute("data-id") ?? null), 0);
+      if (!host || !(e.target instanceof Element) || !host.contains(e.target) || e.target.closest(".blocklyFlyout, .blocklyToolbox")) return;
+      setTimeout(() => {
+        const id = selectedIn(wsRef.current)?.id ?? host.querySelector("svg.blocklySvg .blocklySelected")?.getAttribute("data-id") ?? null;
+        if (id !== selRef.current) setMsg("");
+        setSelId(id);
+      }, 0);
     };
     document.addEventListener("pointerup", read, true);
     document.addEventListener("keyup", read, true);
@@ -136,7 +199,16 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       document.removeEventListener("pointerup", read, true);
       document.removeEventListener("keyup", read, true);
     };
-  }, []);
+  }, [setSelId]);
+  const chip = useRemoveChip(wsState, selId, hostRef);
+  const removeChipBlock = () => {
+    const b = chip && wsState ? (wsState.getBlockById(chip.id) as Blockly.BlockSvg | null) : null;
+    const parent = b?.getParent() as Blockly.BlockSvg | null;
+    if (b) removeNested(b);
+    parent?.select();
+    setSelId(parent?.id ?? null);
+    setMsg("빈칸에서 뺐어요. 꾸러미에서 다른 블록을 누르면 그 빈칸에 들어가요.");
+  };
 
   useEffect(() => {
     cbRef.current = props.onProgramChange;
@@ -154,7 +226,13 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     wsRef.current = ws;
     setWsState(ws);
     relayoutWorkspace(ws);
-    if (!readOnly) setupPalette(ws);
+    if (!readOnly) {
+      setupPalette(ws);
+      listenFlyoutTaps(ws, () => selRef.current, (r) => {
+        setSelId(r.selectId);
+        setMsg(r.msg);
+      });
+    }
     exposeForE2E(ws);
 
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -181,7 +259,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       wsRef.current = null;
       setWsState(null);
     };
-  }, [slug, initialState, readOnly]);
+  }, [slug, initialState, readOnly, setSelId]);
 
   useEffect(() => {
     if (wsRef.current) applyDiagnostics(wsRef.current, props.diagnostics);
@@ -205,9 +283,10 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
 
   return (
     <div className="absolute inset-0 flex flex-col">
-      {readOnly ? null : <BlockToolbar ws={wsState} selId={selId} onSelect={setSelId} />}
+      {readOnly ? null : <BlockToolbar ws={wsState} selId={selId} onSelect={setSelId} msg={msg} setMsg={setMsg} />}
       <div className="relative min-h-[380px] flex-1">
         <div ref={hostRef} className="absolute inset-0" role="application" aria-label="블록 실험 설계 작업 공간. 키보드로 블록을 고르고 옮길 수 있어요." />
+        {chip ? <RemoveChip at={chip} onRemove={removeChipBlock} /> : null}
       </div>
     </div>
   );
