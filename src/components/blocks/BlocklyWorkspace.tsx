@@ -63,14 +63,20 @@ function markBlock(ws: Blockly.WorkspaceSvg, id: string | null | undefined, cls:
   ws.getAllBlocks(false).forEach((b) => b.getSvgRoot().classList.toggle(cls, b.id === id));
 }
 
+const FLYOUT_RATIO = 0.85;
+
 /**
  * 프로토타입처럼 블록 꾸러미를 늘 펼쳐 둔다: 첫 카테고리를 열고, 블록을 끌어 놓거나 같은 카테고리를 다시 눌러도 닫히지 않게.
  */
 function keepPaletteOpen(ws: Blockly.WorkspaceSvg) {
   const tb = ws.getToolbox() as Blockly.Toolbox | null;
   if (!tb) return;
-  const flyout = tb.getFlyout();
-  if (flyout) flyout.autoClose = false;
+  const flyout = tb.getFlyout() as (Blockly.IFlyout & { getFlyoutScale?: () => number }) | null;
+  if (flyout) {
+    flyout.autoClose = false;
+    // 블록 꾸러미는 작게(작업판 배율의 85%) — 긴 문장형 행동 블록이 조립 화면을 덮지 않게
+    flyout.getFlyoutScale = () => ws.scale * FLYOUT_RATIO;
+  }
   tb.selectItemByPosition(0);
   ws.addChangeListener((e: Blockly.Events.Abstract) => {
     if (e.type !== Blockly.Events.TOOLBOX_ITEM_SELECT) return;

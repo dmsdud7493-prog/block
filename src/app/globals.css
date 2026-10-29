@@ -83,6 +83,12 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .monitor-screen::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: #b8c4d1; border-top: 3px solid #8fa0b3; pointer-events: none; }
 .monitor-screen > * { position: relative; z-index: 1; }
 
+/* 실험 화면 가로 막대 — 굵고 잘 보이게 (좁은 화면에서 오른쪽 모니터로 옮겨 가기) */
+.lab-hscroll { scrollbar-color: #4c97ff #e3e9f2; scrollbar-width: auto; }
+.lab-hscroll::-webkit-scrollbar { height: 14px; }
+.lab-hscroll::-webkit-scrollbar-track { background: #e3e9f2; }
+.lab-hscroll::-webkit-scrollbar-thumb { background: #4c97ff; border-radius: 9999px; border: 3px solid #e3e9f2; }
+
 /* 작업 공간 점무늬 */
 .dot-grid { background-image: radial-gradient(#d5d5d5 1px, transparent 1px); background-size: 20px 20px; background-color: #fafafa; }
 

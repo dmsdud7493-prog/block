@@ -31,10 +31,45 @@ export function hatBlocks(): BlockJson[] {
   ];
 }
 
+/** 이 글자 수보다 긴 행동 문장은 두 줄로 접어 블록 폭을 줄인다 (긴 블록이 조립 화면을 덮지 않게) */
+const WRAP_AT = 24;
+
+type Token = { kind: "text"; text: string } | { kind: "slot"; index: number } | { kind: "row" };
+
+function tokensOf(def: ActionBlockDef): Token[] {
+  return def.text.split("(  )").flatMap((p, i): Token[] => (i === 0 ? [{ kind: "text", text: p }] : [{ kind: "slot", index: i - 1 }, { kind: "text", text: p }]));
+}
+
+/** 전체 길이의 절반쯤에 있는 띄어쓰기 또는 빈칸 뒤에 줄바꿈을 넣는다 (빈칸은 글자 4개 폭으로 친다) */
+function wrapTokens(tokens: Token[]): Token[] {
+  const len = (t: Token) => (t.kind === "text" ? t.text.length : t.kind === "slot" ? 4 : 0);
+  const total = tokens.reduce((n, t) => n + len(t), 0);
+  if (total <= WRAP_AT) return tokens;
+  const half = total / 2;
+  let pos = 0;
+  let best: { at: number; split?: number; dist: number } | null = null;
+  tokens.forEach((t, i) => {
+    if (t.kind === "text") {
+      [...t.text].forEach((ch, j) => {
+        const d = Math.abs(pos + j - half);
+        if (ch === " " && j > 0 && j < t.text.length - 1 && (!best || d < best.dist)) best = { at: i, split: j, dist: d };
+      });
+    }
+    pos += len(t);
+    if (t.kind === "slot" && i < tokens.length - 2 && (!best || Math.abs(pos - half) < best.dist)) best = { at: i, dist: Math.abs(pos - half) };
+  });
+  const b = best as { at: number; split?: number; dist: number } | null;
+  if (!b) return tokens;
+  if (b.split === undefined) return [...tokens.slice(0, b.at + 1), { kind: "row" }, ...tokens.slice(b.at + 1)];
+  const t = tokens[b.at] as { kind: "text"; text: string };
+  return [...tokens.slice(0, b.at), { kind: "text", text: t.text.slice(0, b.split) }, { kind: "row" }, { kind: "text", text: t.text.slice(b.split + 1) }, ...tokens.slice(b.at + 1)];
+}
+
 export function actionBlock(slug: string, def: ActionBlockDef): BlockJson {
-  const parts = def.text.split("(  )");
-  const message = parts.reduce((acc, p, i) => (i === 0 ? p : `${acc}%${i}${p}`), "");
-  const args = def.slots.map((s, i) => ({ type: "input_value", name: `S${i}`, check: s.accepts }));
+  const tokens = wrapTokens(tokensOf(def));
+  const inputs = tokens.filter((t) => t.kind !== "text");
+  const args: BlockJson[] = inputs.map((t, i) => (t.kind === "slot" ? { type: "input_value", name: `S${t.index}`, check: def.slots[t.index].accepts } : { type: "input_end_row", name: `ROW${i + 1}` }));
+  const message = tokens.map((t) => (t.kind === "text" ? t.text : `%${inputs.indexOf(t) + 1}`)).join("");
   return {
     type: T.action(slug, def.id),
     message0: message.trim() || def.text,

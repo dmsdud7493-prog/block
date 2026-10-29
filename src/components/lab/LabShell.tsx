@@ -166,7 +166,8 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
         {stepper}
         <RunButton running={state.running} onRun={runCtl.onRun} errors={runCtl.errors} />
       </LabHeader>
-      <main id="main" className="flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(540px,1fr)_minmax(440px,1fr)] xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-0 xl:p-0">
+      {/* 넓은 화면: 조립 칸을 넉넉히(680px 이상) 두고, 화면이 좁으면 아래 가로 막대로 오른쪽 모니터까지 옮겨 본다 */}
+      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
         <div className="xl:col-span-2 xl:col-start-2 xl:row-start-1 xl:border-b xl:border-line xl:bg-[#eef1f5] xl:px-3 xl:py-2"><InquiryCards catalog={catalog} program={state.program} inquiry={state.inquiry} predictions={state.predictions} onInquiry={(field, value) => dispatch({ type: "inquiry", field, value })} /></div>
         <div className="xl:col-start-2 xl:row-start-2 xl:flex xl:min-h-0 xl:flex-col">{design}</div>
         <div className="space-y-4 xl:col-start-3 xl:row-start-2 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} /></div>
