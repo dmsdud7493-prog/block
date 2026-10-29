@@ -6,6 +6,7 @@ import type { TutorReply } from "./schemas";
 import type { TutorState } from "./stateInjection";
 import { ERROR_HINTS, type ErrorType } from "@/lib/engine/grader/errorTypes";
 import { SAFETY_REPLY } from "./safety";
+import { conceptOf } from "./glossary";
 
 const ASKS_RESULT = /(결과|그래프|정답|답|몇|얼마|뜨|가라앉|녹는점|끓는점|밀도는)/;
 
@@ -22,6 +23,13 @@ const reply = (text: string, level: 0 | 1 | 2 | 3, action: TutorReply["next_acti
 
 export function localTutor(state: TutorState, lastUser: string, risk: string | null): TutorReply {
   if (risk) return { ...reply(SAFETY_REPLY, 0, "none"), flag_teacher: true };
+  // "밀도가 뭐야?" 같은 개념 질문 — 뜻만 알려 주고 다시 질문으로 돌려준다(결과·결론은 말하지 않음)
+  const concept = conceptOf(lastUser);
+  if (concept) {
+    return state.hint_level_max >= 1
+      ? reply(`${concept.meaning} ${concept.ask}`, 1, "ask_rationale")
+      : reply(`좋은 질문이에요. 교과서에서 '${concept.terms[0]}'의 뜻을 찾아보고, 찾은 뜻을 한 문장으로 말해 줄래요?`, 0, "ask_rationale");
+  }
   if (!state.prediction_submitted && ASKS_RESULT.test(lastUser)) {
     return reply("결과를 보기 전에 먼저 예상해 보는 게 중요해요. 실행 버튼을 누르면 예상을 적는 칸이 나와요. 어떻게 될 것 같아요?", 0, "predict");
   }
