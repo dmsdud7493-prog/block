@@ -1,60 +1,74 @@
 "use client";
 /**
- * 실험용 장갑을 낀 손 — 행동하는 단계에만 위에서 들어와 동작하고 빠진다(lab-hand).
- * 손목이 위, 손끝이 아래. (0,0)은 손이 무언가를 잡는 점(grip)·집는 점(pinch)·누르는 점(point).
- * 흰 실험복 소매가 화면 위로 이어진다. 장갑은 안전 습관(실험할 땐 장갑)도 함께 보여 준다.
+ * 흰 라텍스 장갑을 낀 손 — 팔·소매 없이 손목의 장갑 끝단까지만 그린다.
+ * 행동하는 단계에만 위에서 들어와 동작하고 빠진다(lab-hand).
+ * (0,0)은 손이 물건을 잡는 점(grip)·핀셋을 집는 점(pinch)·단추를 누르는 손끝(point).
+ * 손가락은 둥근 끝을 가진 곡선(마디 주름·반사광 포함)으로 그려 자연스럽게 보이게 한다.
  */
 
-const GLOVE = "#8db7f5";
-const GLOVE_DARK = "#4f7fcf";
-const CUFF = "#b9d3fb";
+const EDGE = "#a9b5c3";
+const CREASE = "#c9d2dc";
 
-function Sleeve({ x, y }: { x: number; y: number }) {
+/** 손가락 한 개 — 장갑 윤곽선 + 라텍스 면 + 위쪽 반사광, crease는 마디 주름 선 */
+function Finger({ d, w, crease }: { d: string; w: number; crease?: string }) {
   return (
     <g>
-      <path d={`M${x - 13} ${y} L${x - 16} ${y - 120} L${x + 16} ${y - 120} L${x + 13} ${y} Z`} fill="#ffffff" stroke="#cbd5e1" strokeWidth="1.2" />
-      <rect x={x - 14} y={y - 6} width="28" height="9" rx="3" fill={CUFF} stroke={GLOVE_DARK} strokeWidth="1" />
+      <path d={d} fill="none" stroke={EDGE} strokeWidth={w + 1.6} strokeLinecap="round" />
+      <path d={d} fill="none" stroke="url(#lab-latex)" strokeWidth={w} strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#ffffff" strokeWidth={w * 0.28} strokeLinecap="round" opacity="0.85" transform="translate(-0.6,-0.9)" />
+      {crease ? <path d={crease} fill="none" stroke={CREASE} strokeWidth="0.9" strokeLinecap="round" /> : null}
     </g>
   );
 }
 
-/** 물건을 감싸 쥔 손 — 손가락이 물건 앞쪽으로 감긴다 */
+/** 손바닥·손등과 장갑 끝단(말린 테두리) */
+function Palm({ d, cuff, rim }: { d: string; cuff: string; rim: string }) {
+  return (
+    <g>
+      <path d={cuff} fill="url(#lab-latex)" stroke={EDGE} strokeWidth="1.1" strokeLinejoin="round" />
+      <path d={rim} fill="none" stroke={EDGE} strokeWidth="1.6" strokeLinecap="round" />
+      <path d={d} fill="url(#lab-latex)" stroke={EDGE} strokeWidth="1.1" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+/** 물건 옆을 감싸 쥔 손 — 손은 오른쪽, 손가락이 물건 앞쪽으로 감긴다 */
 function Grip() {
   return (
     <g>
-      <Sleeve x={0} y={-30} />
-      <path d="M-13 -28 Q-17 -10 -12 2 L12 2 Q17 -10 13 -28 Z" fill={GLOVE} stroke={GLOVE_DARK} strokeWidth="1.2" />
-      {[-9, -3, 3, 9].map((fx) => <rect key={fx} x={fx - 3} y="-4" width="6.5" height="13" rx="3.2" fill={GLOVE} stroke={GLOVE_DARK} strokeWidth="1" />)}
-      <path d="M-13 -16 Q-22 -6 -15 4" fill="none" stroke={GLOVE_DARK} strokeWidth="6" strokeLinecap="round" />
-      <path d="M-13 -16 Q-22 -6 -15 4" fill="none" stroke={GLOVE} strokeWidth="4" strokeLinecap="round" />
+      <Palm d="M31 -16 C20 -19 10 -16 4 -11 C1 -4 1 5 4 11 C11 16 22 16 31 13 Z" cuff="M30 -17 L44 -15 Q47 -1 44 13 L30 14 Z" rim="M44 -15 Q47 -1 44 13" />
+      <Finger d="M14 -14 C8 -20 0 -20 -6 -17" w={6.8} crease="M3 -21 Q4 -18 3 -15" />
+      <Finger d="M8 -9 C0 -11 -9 -10 -15 -7" w={6.2} crease="M-4 -13 Q-3 -10 -4 -7" />
+      <Finger d="M8 -3 C-1 -4 -10 -3 -16 -1" w={6.2} crease="M-5 -7 Q-4 -4 -5 -1" />
+      <Finger d="M8 3 C0 2 -8 3 -14 5" w={6} crease="M-4 0 Q-3 3 -4 6" />
+      <Finger d="M7 8.5 C2 8.5 -4 9 -9 10.5" w={5.2} />
     </g>
   );
 }
 
-/** 엄지와 검지로 집는 손 (핀셋을 쥘 때) */
+/** 엄지와 검지로 핀셋을 집은 손 — 손은 위, 손끝이 아래 */
 function Pinch() {
   return (
     <g>
-      <Sleeve x={6} y={-40} />
-      <path d="M-6 -38 Q-10 -24 -4 -14 L16 -14 Q20 -26 18 -38 Z" fill={GLOVE} stroke={GLOVE_DARK} strokeWidth="1.2" />
-      <path d="M-2 -16 L-3 -2" stroke={GLOVE_DARK} strokeWidth="6.5" strokeLinecap="round" />
-      <path d="M-2 -16 L-3 -2" stroke={GLOVE} strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M12 -16 L4 -3" stroke={GLOVE_DARK} strokeWidth="6.5" strokeLinecap="round" />
-      <path d="M12 -16 L4 -3" stroke={GLOVE} strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M17 -18 Q20 -12 17 -8" fill="none" stroke={GLOVE_DARK} strokeWidth="1" />
+      <Finger d="M20 -28 C24 -23 23 -17 19 -14" w={5.4} />
+      <Finger d="M16 -24 C19 -18 18 -12 14 -9" w={5.8} />
+      <Palm d="M12 -46 C2 -44 -8 -38 -9 -28 C-9 -20 -4 -15 2 -14 C10 -14 18 -20 22 -30 C24 -38 20 -44 12 -46 Z" cuff="M8 -46 L20 -60 L34 -50 L23 -38 Z" rim="M20 -60 L34 -50" />
+      <Finger d="M10 -22 C10 -14 7 -8 3 -2" w={6} crease="M5 -13 Q8 -12 11 -13" />
+      <Finger d="M-6 -26 C-8 -18 -6 -10 -3 -3" w={6.6} crease="M-9 -16 Q-6 -15 -3 -16" />
     </g>
   );
 }
 
-/** 검지로 단추를 누르는 손 */
+/** 검지를 펴서 단추를 누르는 손 — 나머지 손가락은 말아 쥔다 */
 function Point() {
   return (
     <g>
-      <Sleeve x={10} y={-34} />
-      <path d="M-2 -32 Q-6 -20 0 -12 L20 -12 Q24 -22 22 -32 Z" fill={GLOVE} stroke={GLOVE_DARK} strokeWidth="1.2" />
-      <path d="M2 -14 L0 -2" stroke={GLOVE_DARK} strokeWidth="6.5" strokeLinecap="round" />
-      <path d="M2 -14 L0 -2" stroke={GLOVE} strokeWidth="4.5" strokeLinecap="round" />
-      {[8, 14, 19].map((fx) => <rect key={fx} x={fx - 3} y="-15" width="6" height="8" rx="3" fill={GLOVE} stroke={GLOVE_DARK} strokeWidth="1" />)}
+      <Palm d="M8 -46 C-2 -44 -6 -36 -5 -28 C-4 -21 2 -17 9 -17 C17 -17 24 -22 26 -30 C27 -39 20 -46 8 -46 Z" cuff="M4 -46 L16 -60 L32 -52 L22 -40 Z" rim="M16 -60 L32 -52" />
+      <Finger d="M19 -24 C21 -19 24 -19 25 -22" w={5.4} />
+      <Finger d="M13 -21 C15 -16 19 -15 21 -18" w={5.6} />
+      <Finger d="M7 -20 C9 -15 13 -14 15 -17" w={5.8} />
+      <Finger d="M-4 -30 C-6 -24 -3 -19 3 -18" w={6.2} />
+      <Finger d="M3 -22 C2 -14 1 -7 0 -1" w={6} crease="M-2 -11 Q1 -10 4 -11" />
     </g>
   );
 }
@@ -69,9 +83,9 @@ export function Hand({ x, y, pose, rotate = 0, children }: { x: number; y: numbe
   const Pose = POSE[pose];
   return (
     <g transform={`translate(${x},${y}) rotate(${rotate})`} aria-hidden="true">
-      <g className="lab-hand">
+      <g className="lab-hand" filter="url(#lab-shadow)">
         {children}
-        <g transform="scale(1.4)"><Pose /></g>
+        <g transform="scale(1.25)"><Pose /></g>
       </g>
     </g>
   );
@@ -81,8 +95,8 @@ export function Hand({ x, y, pose, rotate = 0, children }: { x: number; y: numbe
 export function Tweezers({ len = 44, tip }: { len?: number; tip?: React.ReactNode }) {
   return (
     <g>
-      <path d={`M-2 -10 L-1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
-      <path d={`M3 -10 L1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
+      <path d={`M-2.5 -14 L-1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
+      <path d={`M3.5 -14 L1.2 ${len}`} stroke="url(#lab-metal)" strokeWidth="2.4" strokeLinecap="round" />
       <g transform={`translate(0,${len})`}>{tip}</g>
     </g>
   );

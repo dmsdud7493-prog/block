@@ -65,7 +65,7 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
       {reading && level > 0 ? <EyeLine y={surface} /> : null}
       {pouringInto(ev, "cylinder") ? <PourStream x={CYL.w / 2} y1={-24} y2={surface} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
       {pouringInto(ev, "cylinder") ? <PouringHand key={ev?.note} sx={CYL.w / 2} sy={-24} liquid={s.cyl.liquid} /> : null}
-      {ev?.type === "dropSolid" ? <TweezerHand key={ev.note} x={CYL.w / 2 - 6} y={14} solid={String(ev.name)} /> : null}
+      {ev?.type === "dropSolid" ? <TweezerHand key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
     </g>
   );
 }
