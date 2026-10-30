@@ -50,7 +50,8 @@ export interface BlocklyWorkspaceProps {
   /** 점검 패널에서 고른 블록으로 이동·선택 */
   selectBlockId?: string | null;
   onProgramChange: (program: Program, state: object) => void;
-  onBlockClick?: (blockId: string) => void;
+  /** 누른 블록 id와, 그 블록이 들어 있는 행동(문장) 블록 id — 빈칸 속 준비물을 눌러도 그 행동을 찾는다 */
+  onBlockClick?: (blockId: string, stepId: string) => void;
 }
 
 function applyDiagnostics(ws: Blockly.WorkspaceSvg, diags: Diagnostic[]) {
@@ -92,6 +93,13 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
     ws.getParentSvg().parentElement?.classList.toggle("palette-closed", !(e as Blockly.Events.ToolboxItemSelect).newItem);
     requestAnimationFrame(() => Blockly.svgResize(ws));
   });
+}
+
+/** 빈칸 속 값 블록이면 그것을 품은 행동(문장) 블록 id를 찾는다 */
+function stepOf(ws: Blockly.WorkspaceSvg, id: string): string {
+  const b = ws.getBlockById(id);
+  const parent = b?.outputConnection ? b.getParent() : null;
+  return parent ? stepOf(ws, parent.id) : id;
 }
 
 /** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
@@ -185,7 +193,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     ws.addChangeListener((e: Blockly.Events.Abstract) => {
       if (e.type === Blockly.Events.CLICK) {
         const id = (e as Blockly.Events.Click).blockId;
-        if (id) clickRef.current?.(id);
+        if (id) clickRef.current?.(id, stepOf(ws, id));
       }
       if (e.isUiEvent) return;
       // 빈칸에 블록을 끼우거나 빼면 행동 블록 줄바꿈을 다시 정한다

@@ -84,29 +84,29 @@ function BlockHelp() {
   );
 }
 
-function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onFocus }: {
+function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick }: {
   slug: string; examples: string[]; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
-  onProgram: LabController["onProgram"]; onFocus: (id: string) => void;
+  onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-0 xl:rounded-none xl:border-0 xl:border-r">
       <ExampleSteps steps={examples} />
       <BlockHelp />
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-0">
-        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onFocus} />
+        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
       </div>
     </section>
   );
 }
 
-function MonitorPane({ slug, ctl, settings, shown, runError, focusBlock, onFocus, onActive, onFinish }: {
-  slug: string; ctl: LabController; settings: LabSettings; shown: Diagnostic[]; runError: Diagnostic | null; focusBlock: string | null; onFocus: (id: string) => void; onActive: (id: string | null) => void; onFinish: () => void;
+function MonitorPane({ slug, ctl, settings, shown, runError, play, onFocus, onActive, onFinish }: {
+  slug: string; ctl: LabController; settings: LabSettings; shown: Diagnostic[]; runError: Diagnostic | null; play: { id: string; n: number } | null; onFocus: (id: string) => void; onActive: (id: string | null) => void; onFinish: () => void;
 }) {
   const { state } = ctl;
   const run = latestRun(state);
   return (
     <section aria-label="점검과 실험 모니터" className="flex flex-col gap-3">
-      <LabMonitor key={run?.runNo ?? 0} slug={slug} frames={run?.frames ?? []} runError={runError} focusBlockId={focusBlock} onActiveBlock={onActive} onFinish={onFinish} />
+      <LabMonitor key={run?.runNo ?? 0} slug={slug} frames={run?.frames ?? []} runError={runError} play={play} onActiveBlock={onActive} onFinish={onFinish} />
       {state.runError ? <p role="alert" className="rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">{state.runError}</p> : null}
       {settings.hintLevelEditing === "none" ? <p className="text-sm text-muted">이번 실험은 실행할 때만 점검 결과를 보여 줘요.</p> : <CheckPanel diagnostics={shown} onFocusBlock={onFocus} />}
     </section>
@@ -139,6 +139,11 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const { state, dispatch } = ctl;
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [focusBlock, setFocusBlock] = useState<string | null>(null);
+  const [play, setPlay] = useState<{ id: string; n: number } | null>(null);
+  const onBlockClick = useCallback((id: string, stepId: string) => {
+    setFocusBlock(id);
+    setPlay((p) => ({ id: stepId, n: (p?.n ?? 0) + 1 }));
+  }, []);
   const [initial] = useState<object | null>(initialBlockly ?? null);
   const run = latestRun(state);
   const runError: Diagnostic | null = run && !run.ok ? run.diagnostics.find((d) => d.severity === "error") ?? null : null;
@@ -160,8 +165,8 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   };
 
   const stepper = <div className="min-w-0 flex-1"><StepStepper phase={state.phase} done={st.done} locked={st.locked} onSelect={(p) => dispatch({ type: "phase", phase: p })} /></div>;
-  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onFocus={setFocusBlock} />;
-  const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} focusBlock={focusBlock} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
+  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} />;
+  const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} play={play} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
 
   if (state.phase === "report" && report) {
     return (

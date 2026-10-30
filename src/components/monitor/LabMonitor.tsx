@@ -12,13 +12,14 @@ import BoilingScene from "./scenes/BoilingScene";
 import SolubilityScene from "./scenes/SolubilityScene";
 import Separation1Scene from "./scenes/Separation1Scene";
 import Separation2Scene from "./scenes/Separation2Scene";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   slug: string;
   frames: Frame[];
   runError: Diagnostic | null;
-  focusBlockId: string | null;
+  /** 조립판에서 누른 블록 — n은 같은 블록을 다시 눌러도 다시 실행되도록 늘어나는 번호 */
+  play: { id: string; n: number } | null;
   onActiveBlock: (blockId: string | null) => void;
   onFinish: () => void;
 }
@@ -73,6 +74,15 @@ function Status({ text }: { text: string }) {
   return <p aria-hidden="true" className="mt-2 flex min-h-[3.25rem] items-center justify-center rounded-2xl border-2 border-[#cfe0ff] bg-white px-4 py-1.5 text-center text-sm font-bold leading-snug text-nav shadow-sm">🔬 {text}</p>;
 }
 
+/** 블록 하나만 다시 실행하는 방법 안내 */
+function PlayHint({ missed }: { missed: boolean }) {
+  return (
+    <p className="mt-1 text-xs font-semibold text-muted" aria-live="polite">
+      {missed ? "🙈 그 블록은 이번 실험에서 실행되지 않았어요. 실행된 행동 블록을 눌러 보세요." : "👆 조립판의 행동 블록을 누르면 그 행동만 다시 실행해 보여 줘요."}
+    </p>
+  );
+}
+
 function Idle() {
   return (
     <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center pb-6 text-center font-bold text-[#3d5f9e]">
@@ -82,26 +92,31 @@ function Idle() {
   );
 }
 
-export default function LabMonitor({ slug, frames, runError, focusBlockId, onActiveBlock, onFinish }: Props) {
+export default function LabMonitor({ slug, frames, runError, play, onActiveBlock, onFinish }: Props) {
   const player = useFramePlayer(frames, onFinish);
-  const { showBlock } = player;
+  const { playBlock } = player;
+  const [missed, setMissed] = useState<number | null>(null);
   const activeId = player.frame?.blockId ?? null;
 
   useEffect(() => {
     onActiveBlock(activeId);
   }, [activeId, onActiveBlock]);
 
+  // 실행한 뒤 블록을 누르면 그 블록의 행동만 다시 실행한다(실행 기록에 없는 블록이면 안내만)
   useEffect(() => {
-    if (focusBlockId) showBlock(focusBlockId);
-  }, [focusBlockId, showBlock]);
+    if (!play || frames.length === 0) return;
+    const ok = playBlock(play.id);
+    setMissed(ok ? null : play.n); // eslint-disable-line react-hooks/set-state-in-effect -- 누른 블록에 대한 일회성 안내
+  }, [play, playBlock, frames.length]);
 
   return (
     <section aria-labelledby="monitor-title" className="flex flex-col">
       <h2 id="monitor-title" className="text-lg font-extrabold text-nav">💻 가상 실험 모니터</h2>
       {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /></div> : null}
+      {frames.length > 0 ? <PlayHint missed={missed !== null && missed === play?.n} /> : null}
       {runError ? <p role="alert" className="mt-2 rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">⛔ {runError.message}</p> : null}
       <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />
-      <div className={`monitor-screen mt-1 aspect-[8/5] w-full ${frames.length > 0 ? "has-scene" : ""}`} style={{ ["--lab-speed" as string]: player.speed }}>
+      <div className={`monitor-screen mt-1 aspect-[8/5] w-full ${frames.length > 0 ? "has-scene" : ""} ${player.lead ? "lab-snap" : ""}`} style={{ ["--lab-speed" as string]: player.speed }}>
         {frames.length > 0 ? <div className="absolute inset-0"><Scene slug={slug} frame={player.frame} /></div> : <Idle />}
       </div>
       {frames.length > 0 ? <Log frames={frames} index={player.index} /> : null}

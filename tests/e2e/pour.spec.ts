@@ -54,3 +54,34 @@ test("밀도: 빈 눈금실린더에 물을 부으면 바닥부터 점점 차오
   // 처음에는 바닥 근처(큰 y)였다가 점점 올라온다(작은 y)
   expect(ys[0] - Math.min(...ys)).toBeGreaterThan(20);
 });
+
+test("실행한 뒤 블록 하나를 누르면 그 행동만 다시 실행한다(빈칸 속 준비물을 눌러도)", async ({ page }) => {
+  const D = "density";
+  await loadAndRun(page, D, workspace(D, [
+    { action: "a4", id: "mass1", inputs: [item(D, "iron_big")] },
+    { action: "a2", id: "pour1", inputs: [item(D, "water"), qty("mL", 50)] },
+  ]));
+  const log = page.getByRole("list", { name: "실험 기록" });
+  const items = log.getByRole("listitem");
+  await expect(items).toHaveCount(2, { timeout: 10_000 });
+  await expect(page.getByRole("button", { name: /이어 보기/ })).toBeVisible({ timeout: 10_000 });
+
+  // 질량 재기 블록을 누르면 그 단계만 다시 보여 주고 멈춘다(붓기 전 상태)
+  await page.locator('g[data-id="mass1"] > .blocklyPath').first().click({ position: { x: 6, y: 12 }, force: true });
+  await expect(items).toHaveCount(1);
+  await expect(page.locator(".monitor-screen .lab-pour-life")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /이어 보기/ })).toBeVisible({ timeout: 5000 });
+  await expect(items).toHaveCount(1);
+
+  // 빈칸 속 준비물(물)을 눌러도 그 붓기 행동만 다시 실행된다 — 물줄기가 다시 흐른다
+  await page.locator('g[data-id="pour1"] g.item_density_water').first().click({ force: true });
+  await expect(page.locator(".monitor-screen .lab-pour-life")).toHaveCount(1);
+  await expect(items).toHaveCount(2);
+
+  // 같은 블록을 한 번 더 눌러도 다시 실행된다
+  await expect(page.getByRole("button", { name: /이어 보기/ })).toBeVisible({ timeout: 5000 });
+  await page.locator('g[data-id="mass1"] > .blocklyPath').first().click({ position: { x: 6, y: 12 }, force: true });
+  await expect(items).toHaveCount(1);
+  await page.locator('g[data-id="mass1"] > .blocklyPath').first().click({ position: { x: 6, y: 12 }, force: true });
+  await expect(items).toHaveCount(1);
+});
