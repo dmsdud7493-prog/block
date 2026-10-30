@@ -27,14 +27,14 @@ const labelPos = (w: number, h: number, left?: boolean, below = 16) => (left ? {
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
-/** 액체 — 오목한 수면(메니스커스) + 수면 반사선. 높이 변화는 CSS 전환 */
+/** 액체 — 오목한 수면(메니스커스) + 수면 반사선. 높이 변화는 CSS 전환, 빈 그릇에 처음 담길 때는 바닥부터 차오른다(lab-fill-in) */
 function Liquid({ w, h, level, liquid, top = 0 }: { w: number; h: number; level: number; liquid?: string | null; top?: number }) {
   const lv = clamp(level);
   const span = h - top;
   const dy = top + span * (1 - lv);
   if (!liquid || lv <= 0.001) return null;
   return (
-    <g className="lab-liquid" style={{ transform: `translateY(${dy}px)` }}>
+    <g className="lab-liquid" style={{ transform: `translateY(${dy}px)`, ["--lab-empty" as string]: `${h + 4}px` }}>
       <path d={`M-2 3 Q${w / 2} 7 ${w + 2} 3 L${w + 2} ${h + 4} L-2 ${h + 4} Z`} fill={liqFill(liquid)} />
       <path d={`M2 3.5 Q${w / 2} 7.5 ${w - 2} 3.5`} fill="none" stroke="#ffffff" strokeOpacity="0.8" strokeWidth="1.5" />
     </g>

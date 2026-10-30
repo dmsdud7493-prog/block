@@ -33,3 +33,24 @@ test("밀도: 물을 다 부은 뒤 멈춰 있으면 물줄기가 사라진다",
   expect(ops.length).toBeGreaterThan(0);
   expect(ops.every((o) => o === "0")).toBe(true);
 });
+
+test("밀도: 빈 눈금실린더에 물을 부으면 바닥부터 점점 차오른다", async ({ page }) => {
+  const D = "density";
+  await loadAndRun(page, D, workspace(D, [
+    { action: "a2", inputs: [item(D, "water"), qty("mL", 50)] },
+    { action: "a8", inputs: [item(D, "cylinder")] },
+  ]));
+  const liquid = page.locator(".monitor-screen .lab-liquid").first();
+  await liquid.waitFor({ state: "attached" });
+  const ys = await liquid.evaluate(async (el) => {
+    const read = () => new DOMMatrixReadOnly(getComputedStyle(el).transform).f;
+    const seen = [read()];
+    for (let i = 0; i < 16; i += 1) {
+      await new Promise((r) => setTimeout(r, 90));
+      seen.push(read());
+    }
+    return seen;
+  });
+  // 처음에는 바닥 근처(큰 y)였다가 점점 올라온다(작은 y)
+  expect(ys[0] - Math.min(...ys)).toBeGreaterThan(20);
+});

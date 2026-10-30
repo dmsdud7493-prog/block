@@ -10,8 +10,8 @@ import { BENCH_Y, Bench, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from "./kit/defs"
 import { Beaker, Label, TestTube } from "./kit/glass";
 import { IceBath } from "./kit/heat";
 import { Scale } from "./kit/instruments";
-import { Crystals, PourStream, Powder, Steam } from "./kit/effects";
-import { GripHand, PouringHand, PressHand, SpatulaHand } from "./kit/hand";
+import { Crystals, Powder, Steam } from "./kit/effects";
+import { GripHand, PourWithHand, PressHand, SpatulaHand } from "./kit/hand";
 
 const SOLUTE_LIQ: Record<string, string> = { kno3: "kno3", cuso4: "cuso4", nacl: "nacl" };
 const POWDER: Record<string, string> = { kno3: "#f8fafc", cuso4: "#3b82f6", nacl: "#ffffff" };
@@ -69,15 +69,10 @@ function TubeInside({ solute, crystal, solidH }: { solute: string | null; crysta
 }
 
 /** 이 시험관에서 일어나는 손동작 — 물 붓기·용질 넣기·중탕에 넣기 */
-function TubeHands({ id, ev, level, solute }: { id: string; ev: SimEvent | null; level: number; solute: string | null }) {
+function TubeHands({ id, ev, solute }: { id: string; ev: SimEvent | null; solute: string | null }) {
   if (!ev || ev.tube !== id) return null;
   if (ev.type === "pour") {
-    return (
-      <g key={ev.note}>
-        <PourStream key={ev?.note} x={TUBE.w / 2} y1={-22} y2={4 + (TUBE.h - 4) * (1 - level)} />
-        <PouringHand sx={TUBE.w / 2} sy={-22} />
-      </g>
-    );
+    return <PourWithHand key={ev.note} x={TUBE.w / 2} y1={-22} y2={TUBE.h - 8} />;
   }
   if (ev.type === "add") return <SpatulaHand key={ev.note} x={TUBE.w / 2} y={-4} color={solute ? POWDER[solute] : undefined} />;
   if (ev.type === "bath") return <GripHand key={ev.note} x={TUBE.w} y={30} />;
@@ -98,7 +93,7 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
       {t.bath ? <BathAround bath={t.bath} x={x} /> : null}
       <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
         <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={level} liquid={liquidOf(t.solute, t.water, info)} label="" inside={<TubeInside solute={t.solute} crystal={t.crystal} solidH={solidH} />} />
-        <TubeHands id={id} ev={event} level={level} solute={t.solute} />
+        <TubeHands id={id} ev={event} solute={t.solute} />
       </g>
       <Label x={x + TUBE.w / 2} y={BENCH_Y + 16} text={`${name.slice(-1)} · ${t.temp}℃`} />
       <title>{name}</title>

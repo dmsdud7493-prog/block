@@ -124,7 +124,12 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 @keyframes lab-flash { 50% { stroke-opacity: 0.2; } }
 
 /* ── 가상 실험 장치 움직임 (scenes/kit) ─────────────────────────── */
-.lab-liquid { transition: transform calc(1.1s / var(--lab-speed, 1)) cubic-bezier(.4,0,.2,1); }
+/* 액체 높이 — 붓는 손·물줄기(lab-pour-life, 1.5s 중 24%~70%)에 맞춰 조금 늦게 시작해 물줄기가 흐르는 동안 차오른다 */
+.lab-liquid {
+  transition: transform calc(1s / var(--lab-speed, 1)) cubic-bezier(.4,0,.2,1) calc(.35s / var(--lab-speed, 1));
+  animation: lab-fill-in calc(1s / var(--lab-speed, 1)) cubic-bezier(.4,0,.2,1) calc(.35s / var(--lab-speed, 1)) backwards;
+}
+@keyframes lab-fill-in { from { transform: translateY(var(--lab-empty, 100px)); } }
 .lab-thermo { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 1.2s ease-in-out; }
 .lab-move { transition: transform 1s cubic-bezier(.4,0,.2,1), opacity .6s; }
 .lab-appear { animation: lab-appear .7s ease-out both; }

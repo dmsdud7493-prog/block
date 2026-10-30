@@ -81,7 +81,7 @@ function Hands({ s, ev }: { s: Separation1State; ev: SimEvent | null }) {
   const k = ev.note;
   switch (ev.type) {
     case "pour":
-      return <PourWithHand key={k} x={NECK.x} y1={top - 22} y2={top + FL.h * 0.7} color="#c9bdf5" liquid={s.flask.ethanol > 0 ? "ethanol" : "water"} />;
+      return <PourWithHand key={k} x={NECK.x} y1={top - 22} y2={top + FL.h - 6} color="#c9bdf5" liquid={s.flask.ethanol > 0 ? "ethanol" : "water"} />;
     case "chips": return <TweezerHand key={k} x={NECK.x - 2} y={top - 4} tip={<BoilingChips x={-6} y={2} w={12} />} />;
     case "stopper": return <PinchHand key={k} x={NECK.x} y={top - 4} />;
     case "adjust": return <PinchHand key={k} x={NECK.x} y={top - 40} />;

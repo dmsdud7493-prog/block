@@ -10,8 +10,8 @@ import { BENCH_Y, Bench, FloorShadow, LabDefs, LiquidDefs, VIEW_H, VIEW_W } from
 import { Beaker, Label, TestTube } from "./kit/glass";
 import { HotPlate, Stand, knobOf } from "./kit/heat";
 import { Readout, Thermometer } from "./kit/instruments";
-import { Bubbles, PourStream } from "./kit/effects";
-import { GripHand, PinchHand, PouringHand, PressHand } from "./kit/hand";
+import { Bubbles } from "./kit/effects";
+import { GripHand, PinchHand, PourWithHand, PressHand } from "./kit/hand";
 
 const SUB_LABEL: Record<string, string> = { lauric_acid: "로르산", palmitic_acid: "팔미트산" };
 const PLATE = { x: 110, w: 150, top: BENCH_Y - 30 };
@@ -27,8 +27,8 @@ function TubeContents({ solid }: { solid: number }) {
   const solidH = fillH * Math.max(0, Math.min(1, solid));
   return (
     <g>
-      <rect className="lab-liquid" x="0" y={bottom - fillH} width={TUBE.w} height={fillH - solidH} fill="url(#lab-liq-melt)" />
-      <rect className="lab-liquid" x="0" y={bottom - solidH} width={TUBE.w} height={solidH + 4} fill="#fbfaf5" />
+      <rect x="0" y={bottom - fillH} width={TUBE.w} height={fillH - solidH} fill="url(#lab-liq-melt)" />
+      <rect x="0" y={bottom - solidH} width={TUBE.w} height={solidH + 4} fill="#fbfaf5" />
       {solidH > 4 ? <path d={`M2 ${bottom - solidH + 3} l4 -2 l5 2 l4 -2 l5 2`} fill="none" stroke="#d6d3c4" strokeWidth="1" /> : null}
     </g>
   );
@@ -61,8 +61,7 @@ function BathBeaker({ s, ev }: { s: MeltingState; ev: SimEvent | null }) {
       {onHot ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 6} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={level} liquid="hot_water" label="물중탕 비커" labelLeft={onHot} marks={["50", "100", "150", "200", ""]}
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * 0.6 * level} strength={strength} />} />
-      {ev?.type === "pour" ? <PourStream key={ev?.note} x={BKR.w * 0.78} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
-      {ev?.type === "pour" ? <PouringHand key={ev.note} sx={BKR.w * 0.78} sy={-22} /> : null}
+      {ev?.type === "pour" ? <PourWithHand key={ev.note} x={BKR.w * 0.78} y1={-22} y2={BKR.h - 6} /> : null}
       {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
     </g>
   );

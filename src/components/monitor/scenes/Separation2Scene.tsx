@@ -83,7 +83,7 @@ function Hands({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
   const blue = s.bkr.dis.cuso4 > 0 ? "cuso4_light" : "water";
   switch (ev.type) {
     case "addWater":
-      return <PourWithHand key={k} x={BK.x + BK.w / 2} y1={top - 22} y2={top + BK.h * 0.6} />;
+      return <PourWithHand key={k} x={BK.x + BK.w / 2} y1={top - 22} y2={top + BK.h - 6} />;
     case "addSolid": return <SpatulaHand key={k} x={BK.x + BK.w / 2} y={top - 2} />;
     case "bath":
     case "cool": return <GripHand key={k} x={BK.x + BK.w - 2} y={top + BK.h * 0.4} />;
