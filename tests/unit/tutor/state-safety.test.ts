@@ -9,7 +9,7 @@ describe("상태 주입 (지침 5.1, R4)", () => {
     expect(s.blocks_summary).toEqual(["눈금실린더를 전자저울에 올린 다음, 영점조정을 한다"]);
     expect(s.variables[0]).toContain("철조각의 크기");
     expect(s.variables[0]).toContain("크기만 바꾸려고");
-    expect(s.predictions_pending).toEqual(["same_density", "float_sink"]);
+    expect(s.predictions_pending).toEqual(["oil_water", "same_density", "float_sink"]);
   });
   it("이름·학교·정답 관련 키가 없다", () => {
     const text = stateBlock(state());

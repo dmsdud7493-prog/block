@@ -6,11 +6,12 @@
  * - 블록 변경 즉시 dryRun(지침 1.3·2.3)
  * - 실행·채점·예측 이벤트는 서버 기록에서 DB 트리거가 남긴다(위조 방지, 0009) — 여기서는 화면 조작만 로그
  */
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { CalcRequest, Program } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import { dryRun } from "@/lib/engine/simulator/run";
 import { changedVariables } from "@/lib/engine/rules/variables";
+import { graphTargets, runTarget } from "@/lib/engine/predictionScope";
 import type { LabBackend } from "./backend";
 import { initialLabState, labReducer, latestRun, missingPrediction } from "./state";
 import type { LabState, PredictionRecord, RunRecord } from "./types";
@@ -18,7 +19,6 @@ import type { LabState, PredictionRecord, RunRecord } from "./types";
 export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydrate?: Partial<LabState>) {
   const [state, dispatch] = useReducer(labReducer, initialLabState(catalog.slug, hydrate));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const targets = useMemo(() => catalog.predictionTargets.map((t) => t.id), [catalog]);
 
   const onProgram = useCallback((program: Program, blockly: object) => {
     dispatch({ type: "program", program, blockly, diagnostics: dryRun(program, catalog) });
@@ -41,7 +41,8 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
   }, [backend, program, blockly, inquiry, programVersion]);
 
   const run = useCallback(async (justSaved?: PredictionRecord) => {
-    const first = targets[0];
+    // 블록에 쓰인 물질에 맞는 예측을 묻는다(물·식용유만 다루면 철조각 예측은 묻지 않음)
+    const first = runTarget(catalog, state.program);
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
     if (first && missingPrediction({ ...state, predictions }, [first])) {
       dispatch({ type: "openGate", target: first });
@@ -65,7 +66,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const changed = changedVariables(prev, state.program, catalog.variableOptions, catalog.isTrialEnd);
     const record: RunRecord = { ...res.data, runNo, program: state.program, changedVars: changed };
     dispatch({ type: "runDone", run: record });
-  }, [backend, catalog, state, targets]);
+  }, [backend, catalog, state]);
 
   const predict = useCallback(async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
     const prev = state.predictions.find((p) => p.target === target);
@@ -86,14 +87,14 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
 
   const openGraph = useCallback((justSaved?: PredictionRecord) => {
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
-    const missing = missingPrediction({ ...state, predictions }, targets);
+    const missing = missingPrediction({ ...state, predictions }, graphTargets(catalog, latestRun(state)?.program ?? state.program));
     if (missing) {
       dispatch({ type: "openGate", target: missing });
       return;
     }
     dispatch({ type: "graph" });
     backend.logEvent("graph_opened", { guideline: "3.1" });
-  }, [backend, state, targets]);
+  }, [backend, catalog, state]);
 
   const explainAfter = useCallback((target: string, matched: boolean, text: string) => {
     dispatch({ type: "after", target, matched, text });

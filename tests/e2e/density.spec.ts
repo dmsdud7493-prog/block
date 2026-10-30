@@ -61,8 +61,9 @@ test("밀도: 설계부터 보고서까지", async ({ page }) => {
   await row.getByRole("button", { name: "확인" }).click();
   await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
 
+  // 철조각만 다룬 설계라서 그래프 전에 비커 속 순서(물·식용유) 예측은 다시 묻지 않는다
   await page.getByRole("button", { name: "📈 그래프 그리기" }).click();
-  await predict(page, "아래부터 철조각 → 물 → 식용유");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("figure", { name: /결과 그래프/ })).toBeVisible();
 
   const report = page.getByRole("button", { name: /보고서 쓰러 가기/ });
@@ -105,7 +106,7 @@ test("실행 오류: 영점조정 없이 질량 측정 → 그 블록에서 멈�
     { action: "a4", inputs: [item(D, "water")], id: "bad" },
   ]));
   await page.getByRole("button", { name: /실험 실행하기/ }).click();
-  await predict(page, "두 철조각의 밀도는 같다");
+  await predict(page, "식용유가 위로 간다");
   await expect(page.getByRole("alert").filter({ hasText: "전자저울 위에 용기가 없어요" })).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("g.lab-block-error")).toHaveCount(1);
 });

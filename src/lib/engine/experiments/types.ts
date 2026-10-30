@@ -62,6 +62,8 @@ export interface PredictionTarget {
   hints: [string, string, string];
   /** 있으면 선택지 외에 시간–온도 곡선을 직접 그려 볼 수 있다(선택) */
   sketch?: SketchSpec;
+  /** 이 예측이 다루는 물질(준비물 id). 있으면 학생 블록에 쓰인 물질에 맞는 예측을 묻는다 */
+  subjects?: string[];
 }
 
 /**

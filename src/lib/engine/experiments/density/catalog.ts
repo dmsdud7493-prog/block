@@ -42,18 +42,26 @@ const variableOptions: VariableOption[] = [
 ];
 
 
-const target = (id: string, question: string, choices: [string, string][], hints: [string, string, string]): PredictionTarget => ({
-  id, question, hints, choices: choices.map(([cid, label]) => ({ id: cid, label })),
+const target = (id: string, question: string, choices: [string, string][], hints: [string, string, string], subjects: string[]): PredictionTarget => ({
+  id, question, hints, subjects, choices: choices.map(([cid, label]) => ({ id: cid, label })),
 });
 
 const PREDICTIONS: PredictionTarget[] = [
+  target("oil_water", "물과 식용유를 한 그릇에 담으면 어느 쪽이 위로 갈까요?",
+    [["oil_top", "식용유가 위로 간다"], ["water_top", "물이 위로 간다"], ["mixed", "고르게 섞인다"]],
+    [
+      "국이나 라면 위에 동동 뜬 기름을 떠올려 보세요.",
+      "같은 부피라면 더 무거운 쪽은 어디로 갈까요?",
+      "두 액체의 밀도를 구해 비교해 보세요. 밀도가 작은 쪽은 위와 아래 중 어디에 있을까요?",
+    ], ["water", "oil"]),
+
   target("same_density", "큰 철조각과 작은 철조각의 밀도는 어떨까요?",
     [["same", "두 철조각의 밀도는 같다"], ["big", "큰 철조각의 밀도가 더 크다"], ["small", "작은 철조각의 밀도가 더 크다"]],
     [
       "밀도는 '얼마나 빽빽한가'예요. 크기와 빽빽함은 같은 걸까요?",
       "같은 철을 반으로 자르면 질량과 부피가 각각 어떻게 될까요?",
       "물 한 컵과 물 두 컵은 끓는점이 같아요. 양이 달라도 변하지 않는 성질을 떠올려 보세요.",
-    ]),
+    ], ["iron_big", "iron_small"]),
 
   target("float_sink", "물·식용유·철조각을 한 비커에 넣으면 어떻게 자리 잡을까요?",
     [["iron_water_oil", "아래부터 철조각 → 물 → 식용유"], ["oil_water_iron", "아래부터 식용유 → 물 → 철조각"], ["mixed", "모두 고르게 섞인다"]],
@@ -61,7 +69,7 @@ const PREDICTIONS: PredictionTarget[] = [
       "국에 뜬 기름은 위에 있나요, 아래에 있나요?",
       "밀도가 큰 물질과 작은 물질 중 어느 쪽이 가라앉을까요?",
       "측정한 값을 떠올려 밀도가 큰 순서로 아래에서부터 쌓아 보세요.",
-    ]),
+    ], ["water", "oil", "iron_big", "iron_small"]),
 ];
 
 const ACTIONS: ActionBlockDef[] = [

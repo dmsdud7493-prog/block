@@ -31,3 +31,24 @@ test("밀도: 미션 카드가 보이고, 넷을 한 비커에 넣으면 밀도 
   // ①은 아직이므로 지금 할 미션은 여전히 ①
   await expect(card.locator("li").first().getByText("(지금 할 미션)")).toHaveCount(1);
 });
+
+test("밀도: 물과 식용유만 다루는 설계에서는 물·식용유 예측을 묻는다(철조각 예측 아님)", async ({ page }) => {
+  await page.goto(`/demo/${D}`);
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), workspace(D, [
+    { action: "a1", inputs: [item(D, "cylinder"), item(D, "scale")] },
+    { action: "a2", inputs: [item(D, "water"), qty("mL", 50)] },
+    { action: "a3", inputs: [item(D, "water")] },
+    { action: "a4", inputs: [item(D, "water")] },
+    { action: "a5" },
+    { action: "a1", inputs: [item(D, "cylinder"), item(D, "scale")] },
+    { action: "a2", inputs: [item(D, "oil"), qty("mL", 50)] },
+    { action: "a3", inputs: [item(D, "oil")] },
+    { action: "a4", inputs: [item(D, "oil")] },
+    { action: "a5" },
+  ]));
+  await page.getByRole("button", { name: /실험 실행하기/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("물과 식용유를 한 그릇에 담으면 어느 쪽이 위로 갈까요?")).toBeVisible();
+  await expect(dialog.getByText(/철조각/)).toHaveCount(0);
+});
