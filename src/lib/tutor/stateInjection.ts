@@ -20,6 +20,8 @@ export const tutorContextSchema = z.object({
   lastHintLevel: z.number().int().min(-1).max(3),
   nudgeSent: z.boolean(),
   reportSection: z.string().max(40).nullable(),
+  /** 지금 열려 있는 '오늘의 미션'(없으면 null) */
+  mission: z.string().max(120).nullable().optional(),
 });
 
 export type TutorContext = z.infer<typeof tutorContextSchema>;
@@ -45,6 +47,7 @@ export interface TutorState {
   student_attempted: boolean;
   fail_count: number;
   report_section: string | null;
+  mission: string | null;
 }
 
 function variableLines(catalog: AnyCatalog, program: Program): string[] {
@@ -89,6 +92,7 @@ export function buildState(i: StateInput): TutorState {
     student_attempted: i.studentAttempted,
     fail_count: i.failCount,
     report_section: i.ctx.reportSection,
+    mission: i.ctx.mission ?? null,
   };
 }
 

@@ -109,6 +109,23 @@ export const densityCatalog: ExperimentCatalog<DensityState> = {
     "물의 부피를 측정한다",
   ],
   predictionTargets: PREDICTIONS,
+  missions: [
+    {
+      id: "liquids", icon: "🛢️", title: "물과 식용유, 누가 위로 갈까? 둘의 밀도를 구해 봐",
+      cheer: "🎉 미션 ① 성공! 물과 식용유의 밀도를 다 구했네. 밀도가 더 작은 쪽은 위로 갈까, 아래로 갈까? 이제 미션 ② 철조각 차례야 💪",
+      done: { solved: ["water", "oil"] },
+    },
+    {
+      id: "irons", icon: "⬛", title: "큰 철조각 vs 작은 철조각, 크기가 다르면 밀도도 다를까?",
+      cheer: "🎉 미션 ② 성공! 두 철조각의 밀도를 비교해 봤어? 크기가 달라도 같은 물질이면 밀도는 어떨까? 마지막 미션 ③만 남았어 🔥",
+      done: { solved: ["iron_big", "iron_small"] },
+    },
+    {
+      id: "together", icon: "🫙", title: "넷을 한 비커에! 예상한 대로 쌓이는지 확인해 봐",
+      cheer: "🏆 미션 ③까지 모두 성공! 네가 구한 밀도 순서와 비커 속 순서가 맞았어? 결과 해석에서 그 이유를 정리해 보자 ✨",
+      done: { event: { settled: ["water", "oil", "iron_big", "iron_small"] } },
+    },
+  ],
   requiredSubjects: ["water", "oil", "iron_big", "iron_small"],
   initialState: initialDensityState,
   reduce: reduceDensity,

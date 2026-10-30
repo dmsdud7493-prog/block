@@ -4,7 +4,7 @@ import type { LabState } from "@/components/lab/types";
 import { latestRun } from "@/components/lab/state";
 import type { TutorContext } from "@/lib/tutor/stateInjection";
 
-export function buildTutorContext(s: LabState, catalog: AnyCatalog, extra: { idleSeconds: number; lastHintLevel: number; nudgeSent: boolean; reportSection: string | null }): TutorContext {
+export function buildTutorContext(s: LabState, catalog: AnyCatalog, extra: { idleSeconds: number; lastHintLevel: number; nudgeSent: boolean; reportSection: string | null; mission?: string | null }): TutorContext {
   const run = latestRun(s);
   const labelOf = (key: string) => run?.calcRequests.find((c) => c.key === key)?.label ?? key;
   return {
@@ -19,5 +19,6 @@ export function buildTutorContext(s: LabState, catalog: AnyCatalog, extra: { idl
     lastHintLevel: extra.lastHintLevel,
     nudgeSent: extra.nudgeSent,
     reportSection: extra.reportSection,
+    mission: extra.mission ?? null,
   };
 }

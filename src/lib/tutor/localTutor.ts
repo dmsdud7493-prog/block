@@ -42,6 +42,8 @@ export function localTutor(state: TutorState, lastUser: string, risk: string | n
   if (state.changed_vars.length >= 2) {
     return reply(`이번 실행에서 한꺼번에 바꾼 것이 ${state.changed_vars.length}개(${state.changed_vars.join(", ")})예요. 결과가 달라진 게 어느 것을 바꿔서인지 알 수 있을까요?`, 0, "ask_rationale");
   }
-  if (lastUser.startsWith("(시스템 알림")) return reply("잠깐 멈춰 있네요. 지금 어디에서 고민하고 있는지 한 줄로 알려 줄래요?", 0, "none");
+  const missionAsk = state.mission ? `지금 미션은 「${state.mission}」이에요. 그걸 알아내려면 무엇을 재야 할까요? 첫 블록부터 하나씩 골라 볼까요?` : null;
+  if (lastUser.startsWith("(시스템 알림")) return reply(missionAsk ? `막혔어요? ${missionAsk}` : "잠깐 멈춰 있네요. 지금 어디에서 고민하고 있는지 한 줄로 알려 줄래요?", 0, "none");
+  if (missionAsk && (state.step === "design" || /뭐부터|막혔|모르겠/.test(lastUser))) return reply(missionAsk, 0, "edit_block");
   return reply(PHASE_QUESTION[state.step] ?? PHASE_QUESTION.design, 0, "ask_rationale");
 }

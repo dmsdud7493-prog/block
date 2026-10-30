@@ -14,7 +14,8 @@ interface Measured { name: string; value: number; key: string }
 
 export interface DensityState {
   cyl: { liquid: string | null; volume: number; solids: string[] };
-  bkr: { liquid: string | null; volume: number };
+  /** 비커 — 물·식용유를 함께 담고 철조각도 넣을 수 있다. layers는 밀도 순서(아래→위)로 자리 잡은 물질 */
+  bkr: { liquids: Record<string, number>; solids: string[]; layers: string[] };
   scale: { item: ContainerId | null; tare: number };
   scaleSolid: string | null;
   lastInsert: { name: string; before: number; after: number } | null;
@@ -36,7 +37,7 @@ const isContainer = (id: string | null): id is ContainerId => id === "cylinder" 
 export function initialDensityState(): DensityState {
   return {
     cyl: { liquid: null, volume: 0, solids: [] },
-    bkr: { liquid: null, volume: 0 },
+    bkr: { liquids: {}, solids: [], layers: [] },
     scale: { item: null, tare: 0 },
     scaleSolid: null,
     lastInsert: null,
@@ -60,9 +61,35 @@ function cylLevel(s: DensityState, ctx: ReduceContext): number {
   return round1(s.cyl.volume + s.cyl.solids.reduce((a, n) => a + ctx.param(`${n}.volume`), 0));
 }
 
+/* ── 비커 도우미 ── */
+const bkrVol = (s: DensityState, id: string): number => s.bkr.liquids[id] ?? 0;
+export const bkrVolume = (b: DensityState["bkr"]): number => round1(Object.values(b.liquids).reduce((a, v) => a + v, 0));
+const bkrKinds = (b: DensityState["bkr"]): string[] => [...Object.keys(b.liquids).filter((k) => (b.liquids[k] ?? 0) > 0), ...b.solids];
+/** 비커 속 액체가 한 가지뿐이면 그 액체(고체 없음), 아니면 null */
+const bkrOnly = (s: DensityState): string | null => {
+  const kinds = bkrKinds(s.bkr);
+  return kinds.length === 1 && isLiquid(kinds[0]) ? kinds[0] : null;
+};
+const densityOf = (id: string, ctx: ReduceContext): number => (isSolid(id) ? ctx.param(`${id}.mass`) / ctx.param(`${id}.volume`) : ctx.param(`${id}.density`));
+/** 비커 속 물질이 밀도 순서로 자리 잡는다 — 밀도가 큰 것이 아래(같으면 넣은 순서) */
+function settle(b: DensityState["bkr"], ctx: ReduceContext): DensityState["bkr"] {
+  const kinds = bkrKinds(b);
+  const layers = [...kinds].sort((x, y) => densityOf(y, ctx) - densityOf(x, ctx));
+  return { ...b, layers };
+}
+const josaLayers = (layers: string[]): string => layers.map((n) => L(n)).join(" → ");
+/** 비커에 두 가지 이상이 들어 있으면 자리 잡은 순서를 알려 준다(관찰 결과) */
+function withSettle(out: Out, cont: ContainerId): Out {
+  if (out.error || cont !== "beaker" || !out.event) return out;
+  const layers = out.state.bkr.layers;
+  if (layers.length < 2) return out;
+  return { ...out, event: { ...out.event, settled: layers, note: `${out.event.note} 비커 속에서 아래부터 ${josaLayers(layers)} 순서로 자리 잡았어요.` } };
+}
+
 function totalMass(s: DensityState, item: ContainerId, ctx: ReduceContext): number {
   if (item === "beaker") {
-    return ctx.param("beaker.mass") + (s.bkr.liquid ? s.bkr.volume * ctx.param(`${s.bkr.liquid}.density`) : 0);
+    const liquids = Object.entries(s.bkr.liquids).reduce((a, [k, v]) => a + v * ctx.param(`${k}.density`), 0);
+    return ctx.param("beaker.mass") + liquids + s.bkr.solids.reduce((a, n) => a + ctx.param(`${n}.mass`), 0);
   }
   const liquid = s.cyl.liquid ? s.cyl.volume * ctx.param(`${s.cyl.liquid}.density`) : 0;
   return ctx.param("cylinder.mass") + liquid + s.cyl.solids.reduce((a, n) => a + ctx.param(`${n}.mass`), 0);
@@ -75,26 +102,25 @@ function readScale(s: DensityState, ctx: ReduceContext): number {
 }
 
 function addLiquid(s: DensityState, container: ContainerId, liq: string, amt: number, ctx: ReduceContext): Out | DensityState {
-  const c = container === "cylinder" ? s.cyl : s.bkr;
-  if (c.liquid && c.liquid !== liq && c.volume > 0) {
-    return fail(s, "liquid_mix", `${L(container)}에 이미 ${L(c.liquid)}이(가) 들어 있어요. 다른 액체와 섞을 수 없어요.`);
+  if (container === "cylinder" && s.cyl.liquid && s.cyl.liquid !== liq && s.cyl.volume > 0) {
+    return fail(s, "liquid_mix", `눈금실린더에 이미 ${L(s.cyl.liquid)}이(가) 들어 있어요. 눈금실린더에서는 다른 액체와 섞지 않아요. 여러 물질은 비커에 함께 넣어 볼 수 있어요.`);
   }
   if (container === "cylinder" && cylLevel(s, ctx) + amt > CYL_MAX) {
     return fail(s, "over_capacity", `눈금실린더는 ${CYL_MAX}mL까지만 담을 수 있어요. (현재 ${fmtNum(cylLevel(s, ctx))}mL + ${fmtNum(amt)}mL)`);
   }
-  if (container === "beaker" && c.volume + amt > BKR_MAX) {
+  if (container === "beaker" && bkrVolume(s.bkr) + amt > BKR_MAX) {
     return fail(s, "over_capacity", `비커는 ${BKR_MAX}mL까지만 담을 수 있어요.`);
   }
   return container === "cylinder"
     ? { ...s, cyl: { ...s.cyl, liquid: liq, volume: round1(s.cyl.volume + amt) }, shown: { ...s.shown, cyl: true } }
-    : { ...s, bkr: { ...s.bkr, liquid: liq, volume: round1(s.bkr.volume + amt) }, shown: { ...s.shown, bkr: true } };
+    : { ...s, bkr: settle({ ...s.bkr, liquids: { ...s.bkr.liquids, [liq]: round1(bkrVol(s, liq) + amt) } }, ctx), shown: { ...s.shown, bkr: true } };
 }
 
 const isOut = (x: Out | DensityState): x is Out => "state" in x;
 
 function pourOut(r: Out | DensityState, container: ContainerId, liq: string, amt: number): Out {
   if (isOut(r)) return r;
-  return { state: r, event: { type: "pour", container, liquid: liq, amount: amt, note: fixJosa(`${L(container)}에 ${L(liq)}을(를) ${fmtNum(amt)} mL 부었어요.`) } };
+  return withSettle({ state: r, event: { type: "pour", container, liquid: liq, amount: amt, note: fixJosa(`${L(container)}에 ${L(liq)}을(를) ${fmtNum(amt)} mL 부었어요.`) } }, container);
 }
 
 function zeroScale(s: DensityState, step: Step, ctx: ReduceContext): Out {
@@ -136,7 +162,7 @@ function measureVolume(s: DensityState, step: Step, ctx: ReduceContext): Out {
   }
   if (!isLiquid(t)) return fail(s, "volume_not_substance", `${L(t)}의 부피는 이 블록으로 잴 수 없어요. 물질(물, 식용유)을 넣어 주세요.`);
   if (s.cyl.liquid !== t || s.cyl.volume <= 0) {
-    return s.bkr.liquid === t
+    return bkrVol(s, t as string) > 0
       ? fail(s, "volume_in_beaker", `${L(t)}이(가) 비커에 있어요. 비커 눈금은 정확하지 않아서, 부피는 눈금실린더에서 재야 해요.`)
       : fail(s, "volume_nothing", `눈금실린더에 ${L(t)}이(가) 없어요. 먼저 ${L(t)}을(를) 눈금실린더에 부어야 부피를 잴 수 있어요.`);
   }
@@ -163,10 +189,13 @@ function liquidMassProblem(s: DensityState, t: string): Out | null {
   if (!item) {
     return fail(s, "mass_no_tare", "전자저울 위에 용기가 없어요. 먼저 '눈금실린더를 전자저울에 올린 다음, 영점조정을 한다'를 해야 해요.");
   }
-  const c = item === "cylinder" ? s.cyl : s.bkr;
-  const other = item === "cylinder" ? s.bkr : s.cyl;
-  if (c.liquid !== t || c.volume <= 0) {
-    return other.liquid === t && other.volume > 0
+  const inCyl = s.cyl.liquid === t && s.cyl.volume > 0;
+  const inBkr = bkrVol(s, t) > 0;
+  if (item === "beaker" && inBkr && bkrOnly(s) !== t) {
+    return fail(s, "mass_mixed", `비커에 여러 물질이 함께 들어 있어서 ${L(t)}만의 질량을 잴 수 없어요. 질량은 한 가지 물질만 담아서 재요.`);
+  }
+  if (item === "cylinder" ? !inCyl : !inBkr) {
+    return (item === "cylinder" ? inBkr : inCyl)
       ? fail(s, "mass_wrong_container", `${L(t)}은(는) ${L(item === "cylinder" ? "beaker" : "cylinder")}에 있어요. 저울 위의 ${L(item)}에 들어 있어야 질량을 잴 수 있어요.`)
       : fail(s, "mass_nothing", `전자저울 위의 ${L(item)}에 ${L(t)}이(가) 없어요. 먼저 ${L(t)}을(를) 부어야 해요.`);
   }
@@ -214,8 +243,21 @@ function addVolumeOut(s: DensityState, step: Step, ctx: ReduceContext): Out {
   return pourOut(addLiquid(s, cont, sub as string, amt, ctx), cont, sub as string, amt);
 }
 
+function dropSolidInBeaker(s: DensityState, sub: string, ctx: ReduceContext): Out {
+  const state: DensityState = {
+    ...s,
+    bkr: settle({ ...s.bkr, solids: [...s.bkr.solids, sub] }, ctx),
+    scaleSolid: s.scaleSolid === sub ? null : s.scaleSolid,
+    shown: { ...s.shown, bkr: true },
+  };
+  return withSettle({ state, event: { type: "dropSolid", name: sub, container: "beaker", note: fixJosa(`핀셋으로 ${L(sub)}을(를) 비커에 살며시 넣었어요.`) } }, "beaker");
+}
+
 function dropSolid(s: DensityState, sub: string, cont: ContainerId, ctx: ReduceContext): Out {
-  if (cont !== "cylinder") return fail(s, "solid_not_cylinder", "고체의 부피는 물이 든 눈금실린더에 넣어서 재요. 두 번째 칸에 눈금실린더를 넣어 주세요.");
+  if (s.cyl.solids.includes(sub) || s.bkr.solids.includes(sub)) {
+    return fail(s, "solid_already_in", `${L(sub)}은(는) 이미 ${L(s.cyl.solids.includes(sub) ? "cylinder" : "beaker")} 안에 있어요.`);
+  }
+  if (cont === "beaker") return dropSolidInBeaker(s, sub, ctx);
   if (s.cyl.volume <= 0) return fail(s, "solid_no_water", "눈금실린더에 아직 액체가 없어요. 먼저 물(또는 식용유)을 부어야 해요.");
   const before = round1(ctx.noise(cylLevel(s, ctx), { resolution: 0.1 }));
   const after = round1(ctx.noise(cylLevel(s, ctx) + ctx.param(`${sub}.volume`), { resolution: 0.1 }));
@@ -227,25 +269,30 @@ function dropSolid(s: DensityState, sub: string, cont: ContainerId, ctx: ReduceC
     lastInsert: { name: sub, before, after },
     shown: { ...s.shown, cyl: true },
   };
-  return { state, event: { type: "dropSolid", name: sub, before, after, note: fixJosa(`핀셋으로 ${L(sub)}을(를) 눈금실린더에 살며시 넣었어요.`) } };
+  return { state, event: { type: "dropSolid", name: sub, container: "cylinder", before, after, note: fixJosa(`핀셋으로 ${L(sub)}을(를) 눈금실린더에 살며시 넣었어요.`) } };
+}
+
+/** 액체를 옮길 출발 그릇 — 눈금실린더(고체 없음) 또는 그 액체만 든 비커 */
+function transferSource(s: DensityState, sub: string): ContainerId | "mixed" | null {
+  if (s.cyl.liquid === sub && s.cyl.volume > 0) return "cylinder";
+  if (bkrVol(s, sub) > 0) return bkrOnly(s) === sub ? "beaker" : "mixed";
+  return null;
 }
 
 function transferLiquid(s: DensityState, sub: string, cont: ContainerId, ctx: ReduceContext): Out {
-  const src = s.cyl.liquid === sub && s.cyl.volume > 0 ? "cylinder" : s.bkr.liquid === sub && s.bkr.volume > 0 ? "beaker" : null;
+  const src = transferSource(s, sub);
   if (!src) return fail(s, "transfer_nothing", `넣을 ${L(sub)}이(가) 아직 없어요. 먼저 눈금실린더에 부어야 해요.`);
+  if (src === "mixed") return fail(s, "transfer_mixed", `비커 속 ${L(sub)}은(는) 다른 물질과 함께 있어서 따로 옮길 수 없어요.`);
   if (src === cont) return fail(s, "transfer_same", `${L(sub)}은(는) 이미 ${L(cont)}에 들어 있어요.`);
   if (src === "cylinder" && s.cyl.solids.length > 0) return fail(s, "transfer_with_solid", "눈금실린더에 고체가 들어 있어서 액체만 옮길 수 없어요.");
-  const dest = cont === "cylinder" ? s.cyl : s.bkr;
-  if (dest.liquid && dest.liquid !== sub && dest.volume > 0) return fail(s, "liquid_mix", `${L(cont)}에 이미 ${L(dest.liquid)}이(가) 들어 있어요. 다른 액체와 섞을 수 없어요.`);
-  const vol = src === "cylinder" ? s.cyl.volume : s.bkr.volume;
-  const destNow = cont === "cylinder" ? cylLevel(s, ctx) : s.bkr.volume;
+  if (cont === "cylinder" && s.cyl.liquid && s.cyl.liquid !== sub && s.cyl.volume > 0) return fail(s, "liquid_mix", `눈금실린더에 이미 ${L(s.cyl.liquid)}이(가) 들어 있어요. 눈금실린더에서는 다른 액체와 섞지 않아요.`);
+  const vol = src === "cylinder" ? s.cyl.volume : bkrVol(s, sub);
+  const destNow = cont === "cylinder" ? cylLevel(s, ctx) : bkrVolume(s.bkr);
   if (destNow + vol > (cont === "cylinder" ? CYL_MAX : BKR_MAX)) return fail(s, "over_capacity", `${L(cont)}에 다 담기지 않아요.`);
-  const emptied = { liquid: null, volume: 0 };
-  const filled = { liquid: sub, volume: round1(dest.volume + vol) };
   const state: DensityState = cont === "cylinder"
-    ? { ...s, cyl: { ...s.cyl, ...filled }, bkr: { ...s.bkr, ...emptied }, shown: { ...s.shown, cyl: true, bkr: true } }
-    : { ...s, bkr: { ...s.bkr, ...filled }, cyl: { ...s.cyl, ...emptied }, shown: { ...s.shown, cyl: true, bkr: true } };
-  return { state, event: { type: "transfer", liquid: sub, from: src, to: cont, volume: vol, note: fixJosa(`${L(sub)}을(를) ${L(src)}에서 ${L(cont)}(으)로 옮겼어요.`) } };
+    ? { ...s, cyl: { ...s.cyl, liquid: sub, volume: round1(s.cyl.volume + vol) }, bkr: { liquids: {}, solids: [], layers: [] }, shown: { ...s.shown, cyl: true, bkr: true } }
+    : { ...s, bkr: settle({ ...s.bkr, liquids: { ...s.bkr.liquids, [sub]: round1(bkrVol(s, sub) + vol) } }, ctx), cyl: { ...s.cyl, liquid: null, volume: 0 }, shown: { ...s.shown, cyl: true, bkr: true } };
+  return withSettle({ state, event: { type: "transfer", liquid: sub, from: src, to: cont, volume: vol, note: fixJosa(`${L(sub)}을(를) ${L(src)}에서 ${L(cont)}(으)로 옮겼어요.`) } }, cont);
 }
 
 function putInto(s: DensityState, step: Step, ctx: ReduceContext): Out {

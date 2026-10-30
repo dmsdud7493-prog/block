@@ -3,7 +3,7 @@
  * AI 튜터 패널 (요구사항 1·3) — "AI 튜터예요 · 선생님이 볼 수 있어요" 상시 표시(R5), 대화는 aria-live로 읽어 준다.
  * 2분 동안 조작이 없으면 한 번만 먼저 말을 건다(지침 4.3). 답은 주지 않고 다음 한 단계를 함께 생각한다(지침 5.4).
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { LabController } from "@/components/lab/useLabController";
 import { latestRun } from "@/components/lab/state";
@@ -14,8 +14,9 @@ import { buildTutorContext } from "./context";
 import HintLadderBadge from "./HintLadderBadge";
 import { editorDiagnostics } from "@/components/lab/editorDiagnostics";
 import { useIdle } from "./useIdle";
+import { currentMissionTitle, missionProgress, type MissionProgress } from "@/components/lab/missions";
 
-export interface ChatMsg { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean; notice?: boolean }
+export interface ChatMsg { role: "user" | "assistant"; content: string; hintLevel?: number; source?: string; nudge?: boolean; notice?: boolean; local?: boolean }
 
 interface Props {
   ctl: LabController;
@@ -56,6 +57,19 @@ function Bubble({ m }: { m: ChatMsg }) {
   );
 }
 
+/** 미션을 새로 마칠 때마다 튜터가 먼저 응원 한마디 — 처음 열 때 이미 마친 미션은 건너뛴다 */
+function useMissionCheers(progress: MissionProgress, setMsgs: React.Dispatch<React.SetStateAction<ChatMsg[]>>) {
+  const doneIds = progress.missions.filter((_, i) => progress.done[i]).map((m) => m.id);
+  const seen = useRef(new Set(doneIds));
+  const key = doneIds.join(",");
+  useEffect(() => {
+    const fresh = progress.missions.filter((m, i) => progress.done[i] && !seen.current.has(m.id));
+    if (fresh.length === 0) return;
+    fresh.forEach((m) => seen.current.add(m.id));
+    setMsgs((prev) => [...prev, ...fresh.map((m): ChatMsg => ({ role: "assistant", content: m.cheer, local: true }))]);
+  }, [key, progress, setMsgs]);
+}
+
 export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null, hintLevelEditing = "all", notice }: Props) {
   const GREETING = GREETINGS[catalog.slug] ?? GREETING_DEFAULT;
   const [msgs, setMsgs] = useState<ChatMsg[]>(() => [...(notice ? [{ role: "assistant" as const, content: notice, notice: true }] : []), ...(initial?.length ? initial : [GREETING])]);
@@ -65,15 +79,17 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
   const lastHint = [...msgs].reverse().find((m) => m.role === "assistant" && typeof m.hintLevel === "number")?.hintLevel ?? -1;
   const idle = useIdle([ctl.state.programVersion, ctl.state.runs.length, ctl.state.predictions.length, Object.keys(ctl.state.calc).length, msgs.length]);
   const listRef = useRef<HTMLOListElement | null>(null);
+  const progress = useMemo(() => missionProgress(catalog, ctl.state), [catalog, ctl.state]);
+  useMissionCheers(progress, setMsgs);
 
   const ask = async (content: string, nudge = false) => {
     const outgoing: ChatMsg = { role: "user", content };
-    const history = [...msgs.filter((m) => m !== GREETING && !m.notice), outgoing].slice(-24).map(({ role, content: c }) => ({ role, content: c }));
+    const history = [...msgs.filter((m) => m !== GREETING && !m.notice && !m.local), outgoing].slice(-24).map(({ role, content: c }) => ({ role, content: c }));
     if (!nudge) setMsgs((prev) => [...prev, outgoing]);
     setBusy(true);
     try {
       const visible = { ...ctl.state, diagnostics: editorDiagnostics(ctl.state.diagnostics, hintLevelEditing) };
-      const context = buildTutorContext(visible, catalog, { idleSeconds: idle.seconds(), lastHintLevel: lastHint, nudgeSent: nudged, reportSection });
+      const context = buildTutorContext(visible, catalog, { idleSeconds: idle.seconds(), lastHintLevel: lastHint, nudgeSent: nudged, reportSection, mission: currentMissionTitle(progress) });
       const res = await postJson<TutorResponse>("/api/tutor", { mode, slug: catalog.slug, sessionId, seed, runNo: latestRun(ctl.state)?.runNo ?? null, program: ctl.state.program, messages: history, context, nudge });
       const reply = res.data ? res.data.reply : res.error?.message ?? "지금은 답하기 어려워요. 잠시 후 다시 물어봐 주세요.";
       setMsgs((prev) => [...prev, { role: "assistant", content: reply, hintLevel: res.data?.hint_level, source: res.data?.source, nudge }]);

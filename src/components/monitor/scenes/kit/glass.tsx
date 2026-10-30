@@ -28,7 +28,7 @@ const labelPos = (w: number, h: number, left?: boolean, below = 16) => (left ? {
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
 /** 액체 — 오목한 수면(메니스커스) + 수면 반사선. 높이 변화는 CSS 전환, 빈 그릇에 처음 담길 때는 바닥부터 차오른다(lab-fill-in) */
-function Liquid({ w, h, level, liquid, top = 0 }: { w: number; h: number; level: number; liquid?: string | null; top?: number }) {
+export function Liquid({ w, h, level, liquid, top = 0 }: { w: number; h: number; level: number; liquid?: string | null; top?: number }) {
   const lv = clamp(level);
   const span = h - top;
   const dy = top + span * (1 - lv);

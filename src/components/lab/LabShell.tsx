@@ -4,11 +4,13 @@
  * 왼쪽: 블록 설계 / 가운데: 점검·모니터 / 오른쪽: AI 튜터 / 아래: 결과 표·그래프·차이 설명
  */
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { getCatalog } from "@/lib/engine/experiments";
 import type { Diagnostic } from "@/lib/engine/types";
 import StepStepper from "@/components/inquiry/StepStepper";
 import CheckPanel from "@/components/inquiry/CheckPanel";
+import MissionBar from "@/components/inquiry/MissionBar";
+import { missionProgress, type MissionProgress } from "./missions";
 import LabMonitor from "@/components/monitor/LabMonitor";
 import PredictionGate from "@/components/data/PredictionGate";
 import type { LabBackend } from "./backend";
@@ -84,13 +86,14 @@ function BlockHelp() {
   );
 }
 
-function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick }: {
-  slug: string; examples: string[]; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
+function DesignPane({ slug, examples, missions, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick }: {
+  slug: string; examples: string[]; missions: MissionProgress; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
   onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-0 xl:rounded-none xl:border-0 xl:border-r">
-      <ExampleSteps steps={examples} />
+      <MissionBar progress={missions} />
+      {missions.missions.length > 0 && missions.done[0] ? null : <ExampleSteps steps={examples} />}
       <BlockHelp />
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-0">
         <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
@@ -150,6 +153,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const gate = catalog.predictionTargets.find((t) => t.id === state.gateTarget);
   const st = stepperState(state);
   const runCtl = useRun(ctl, settings);
+  const missions = useMemo(() => missionProgress(catalog, state), [catalog, state]);
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);
   const onFinish = useCallback(() => backend.logEvent("playback_done", {}), [backend]);
   /** 실행 버튼에서 열린 예측 게이트는 저장 뒤 바로 실행, 그래프에서 열린 게이트는 바로 그래프를 연다 */
@@ -165,7 +169,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   };
 
   const stepper = <div className="min-w-0 flex-1"><StepStepper phase={state.phase} done={st.done} locked={st.locked} onSelect={(p) => dispatch({ type: "phase", phase: p })} /></div>;
-  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} />;
+  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} />;
   const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} play={play} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
 
   if (state.phase === "report" && report) {

@@ -64,6 +64,19 @@ export interface PredictionTarget {
   sketch?: SketchSpec;
 }
 
+/**
+ * 오늘의 미션 — 무엇을 알아낼지만 알려 주고, 순서는 학생이 블록으로 짠다(규칙 6: 설계를 대신 만들지 않음).
+ * 완료 조건은 선언형: solved = 계산값을 맞힌 대상(subject) 모두, event = 실행 기록에 이 종류의 이벤트가 있고 그 settled에 items가 모두 있음.
+ */
+export interface MissionDef {
+  id: string;
+  icon: string;
+  title: string;
+  /** 미션을 마쳤을 때 튜터가 건네는 한마디(정답 수치는 넣지 않는다) */
+  cheer: string;
+  done: { solved?: string[]; event?: { type?: string; settled: string[] } };
+}
+
 export interface ExperimentCatalog<S> {
   slug: string;
   title: string;
@@ -79,6 +92,8 @@ export interface ExperimentCatalog<S> {
   predictionTargets: PredictionTarget[];
   /** 학생이 계산에 쓰는 공개 참고 자료(교과서 표) */
   reference?: ReferenceTable[];
+  /** 오늘의 미션(순서대로 열린다). 없으면 미션 카드를 보이지 않는다 */
+  missions?: MissionDef[];
   /** 이 목록의 대상(subject)을 모두 측정하면 실험 완료 */
   requiredSubjects: string[];
   initialState: () => S;
