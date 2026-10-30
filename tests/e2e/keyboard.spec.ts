@@ -13,7 +13,7 @@ test("키보드로 도구 상자에서 블록을 꺼내 작업 공간에 놓는�
     if (cls.includes("blocklyToolboxCategoryContainer")) break;
     await page.keyboard.press("Tab");
   }
-  await page.keyboard.press("ArrowDown");
+  // 밀도는 '오늘의 미션'이 있어 실험 계획 꾸러미가 없으므로 첫 꾸러미가 준비물
   await expect(page.locator(".blocklyToolboxCategoryContainer.blocklyActiveFocus")).toContainText("준비물");
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");

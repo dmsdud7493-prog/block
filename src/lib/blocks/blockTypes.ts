@@ -140,7 +140,7 @@ export function toolbox(catalog: AnyCatalog) {
     { name: "용량/수치", key: "quant", types: catalog.quants.map((q: QuantDef) => T.quant(q.unit)) },
     { name: "위치", key: "pos", types: catalog.positions.map((p: PosDef) => T.pos(catalog.slug, p.id)) },
     { name: "행동", key: "action", types: catalog.actions.map((a: ActionBlockDef) => T.action(catalog.slug, a.id)) },
-  ].filter((c) => c.types.length > 0);
+  ].filter((c) => c.types.length > 0 && !(c.key === "design" && catalog.missions?.length));
   return {
     kind: "categoryToolbox",
         // cssConfig: 카테고리마다 색 동그라미를 그리기 위한 클래스 (globals.css .cat-*)

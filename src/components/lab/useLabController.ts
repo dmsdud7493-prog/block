@@ -44,7 +44,8 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     // 블록에 쓰인 물질에 맞는 예측을 묻는다(물·식용유만 다루면 철조각 예측은 묻지 않음)
     const first = runTarget(catalog, state.program);
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
-    if (first && missingPrediction({ ...state, predictions }, [first])) {
+    // 방금 예측을 저장했다면 그대로 실행한다(그 사이 블록이 바뀌어 다른 예측이 맞아져도 같은 창을 다시 띄우지 않음)
+    if (!justSaved && first && missingPrediction({ ...state, predictions }, [first])) {
       dispatch({ type: "openGate", target: first });
       return;
     }

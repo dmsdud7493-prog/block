@@ -59,7 +59,7 @@ const kids = (page: import("@playwright/test").Page) => page.evaluate(() => [...
 
 test("빈칸 속 준비물 옆 ⊗로 그 블록만 빼고, 다른 준비물을 끌어 넣는다 — 꾸러미 블록을 누르기만 하면 저절로 들어가지 않는다", async ({ page }) => {
   await loadDensity(page, { type: "act_density_a4", id: "ac1", inputs: { S0: { block: { type: "item_density_iron_big", id: "it1" } } } });
-  await page.locator(".cat-equip .blocklyToolboxCategory").click();
+  await openEquip(page);
   await expect(page.locator(".blocklyFlyout g.item_density_iron_big image")).toHaveCount(0);
   const x = await boxOf(page, 'g[data-id="it1"] image');
   await page.mouse.click(x.x + x.w / 2, x.y + x.h / 2);
@@ -81,7 +81,7 @@ test("빈칸 속 준비물 옆 ⊗로 그 블록만 빼고, 다른 준비물을 
 
 test("빈칸이 두 개인 행동 블록에서 뒤 빈칸부터 채워도 앞 빈칸에 끌어 넣을 수 있다", async ({ page }) => {
   await loadDensity(page, { type: "act_density_a7", id: "ac1" });
-  await page.locator(".cat-equip .blocklyToolboxCategory").click();
+  await openEquip(page);
   const cyl = await boxOf(page, "g.item_density_cylinder", true);
   const s1 = await slotAt(page, "ac1", "S1");
   await drag(page, { x: cyl.x + cyl.w / 2, y: cyl.y + cyl.h / 2 }, { x: s1.x + cyl.w / 2, y: s1.y + cyl.h / 2 - 4 });
@@ -92,6 +92,13 @@ test("빈칸이 두 개인 행동 블록에서 뒤 빈칸부터 채워도 앞 �
   await drag(page, { x: iron.x + iron.w / 2, y: iron.y + iron.h / 2 }, { x: s0.x + iron.w / 2, y: s0.y + iron.h / 2 - 4 });
   await expect.poll(() => slotKids(page, "ac1")).toEqual({ S0: "item_density_iron_small", S1: "item_density_cylinder" });
 });
+
+/** 준비물 꾸러미를 연다 — 이미 열려 있으면 그대로(같은 단추를 다시 누르면 닫히므로) */
+async function openEquip(page: import("@playwright/test").Page) {
+  const open = await page.locator(".blocklyFlyout g.item_density_cylinder").first().isVisible().catch(() => false);
+  if (!open) await page.locator(".cat-equip .blocklyToolboxCategory").click();
+  await expect(page.locator(".blocklyFlyout g.item_density_cylinder").first()).toBeVisible();
+}
 
 async function loadDensity(page: import("@playwright/test").Page, action: object) {
   await page.goto("/demo/density");

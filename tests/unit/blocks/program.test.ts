@@ -51,8 +51,8 @@ describe("Blockly → Program (지침 2.2)", () => {
     expect(diags).toMatchObject([{ blockId: "e", code: "slot_invalid", guideline: "2.3" }]);
   });
 
-  it("도구 상자에 변인 설계 카테고리가 있다 (지침 2.1)", () => {
+  it("오늘의 미션이 있는 밀도에는 실험 계획 꾸러미가 없다 (ADR-P18)", () => {
     const names = toolbox(densityCatalog).contents.map((c) => c.name);
-    expect(names).toEqual(["실험 계획", "준비물", "용량/수치", "행동"]);
+    expect(names).toEqual(["준비물", "용량/수치", "행동"]);
   });
 });

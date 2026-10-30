@@ -7,6 +7,7 @@
  * 자동 완성 기능은 두지 않는다 (지침 2.4).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import * as Blockly from "blockly/core";
 import * as Ko from "blockly/msg/ko";
 import { getCatalog } from "@/lib/engine/experiments";
@@ -28,6 +29,18 @@ function ensureBlocks(slug: string) {
   registerAutoWrap();
   Blockly.common.defineBlocksWithJsonArray(allBlockJson(catalog));
   defined.add(slug);
+}
+
+/** '오늘의 미션'이 있는 실험은 미션 카드가 실험 계획을 대신하므로 '실험 계획 세우기' 블록을 두지 않는다(ADR-P18) */
+export const usesPlanBlocks = (catalog: AnyCatalog): boolean => !(catalog.missions?.length);
+
+const emptyWorkspace = (catalog: AnyCatalog) => (usesPlanBlocks(catalog)
+  ? EMPTY_WORKSPACE
+  : { blocks: { languageVersion: 0, blocks: [{ type: T.procStart, x: 24, y: 24, deletable: false }] } });
+
+/** 예전에 저장된 작업 공간에 남은 '실험 계획 세우기' 묶음을 치운다(미션이 있는 실험) */
+function dropPlanBlocks(ws: Blockly.WorkspaceSvg) {
+  ws.getTopBlocks(false).filter((b) => b.type === T.designStart).forEach((b) => b.dispose(false));
 }
 
 export const EMPTY_WORKSPACE = {
@@ -179,7 +192,8 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     Blockly.setLocale(Ko as unknown as Record<string, string>);
     ensureBlocks(slug);
     const ws = Blockly.inject(host, injectOptions(catalog, Boolean(readOnly)));
-    Blockly.serialization.workspaces.load(initialState ?? EMPTY_WORKSPACE, ws);
+    Blockly.serialization.workspaces.load(initialState ?? emptyWorkspace(catalog), ws);
+    if (!usesPlanBlocks(catalog) && !readOnly) dropPlanBlocks(ws);
     wsRef.current = ws;
     setWsState(ws);
     relayoutWorkspace(ws);
