@@ -112,3 +112,26 @@ const slotKids = (page: import("@playwright/test").Page, id: string) => page.eva
   void bid;
   return { S0: act.inputs?.S0?.block.type ?? null, S1: act.inputs?.S1?.block.type ?? null };
 }, id);
+
+/** proc_start 아래 행동 블록 종류를 위에서부터 차례로 */
+const chainTypes = (page: import("@playwright/test").Page) => page.evaluate(() => {
+  type B = { type: string; next?: { block: B } };
+  const ws = (window as unknown as { __labSave: () => { blocks: { blocks: B[] } } }).__labSave();
+  const start = ws.blocks.blocks.find((b) => b.type === "proc_start")!;
+  const walk = (b: B | undefined): string[] => (b ? [b.type.replace("act_density_", ""), ...walk(b.next?.block)] : []);
+  return walk(start.next?.block);
+});
+
+test("아래까지 복사한 묶음을 붙여넣으면 한 세트가 끝난 뒤 다음 세트가 이어진다", async ({ page }) => {
+  await loadDensity(page, {
+    type: "act_density_a4", id: "m1", inputs: { S0: { block: { type: "item_density_iron_big" } } },
+    next: { block: { type: "act_density_a2", id: "p1", next: { block: { type: "act_density_a5", id: "c1" } } } },
+  });
+  const bar = page.getByRole("toolbar", { name: "블록 편집" });
+  await page.locator('g[data-id="m1"] > .blocklyPath').first().click({ position: { x: 6, y: 12 }, force: true });
+  await bar.getByRole("button", { name: /아래까지 복사/ }).click();
+  await bar.getByRole("button", { name: "📥 붙여넣기" }).click();
+  await expect.poll(() => chainTypes(page)).toEqual(["a4", "a2", "a5", "a4", "a2", "a5"]);
+  await bar.getByRole("button", { name: "📥 붙여넣기" }).click();
+  await expect.poll(() => chainTypes(page)).toEqual(["a4", "a2", "a5", "a4", "a2", "a5", "a4", "a2", "a5"]);
+});

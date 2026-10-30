@@ -56,10 +56,11 @@ export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws:
     Blockly.Events.setGroup(true);
     try {
       const pasted = Blockly.serialization.blocks.append(clip.current.state, ws) as Blockly.BlockSvg;
-      attach(pasted, sel);
+      // '아래까지 복사'한 묶음은 그 줄의 맨 끝에 이어 붙인다 — 한 세트가 끝난 뒤 다음 세트가 오도록
+      attach(pasted, clip.current.chain && sel?.nextConnection ? (lastOf(sel) as Blockly.BlockSvg) : sel);
       pasted.select();
       onSelect(pasted.id);
-      setMsg("붙여 넣었어요. 이제 빈칸 속 내용만 바꿔 보세요.");
+      setMsg(clip.current.chain ? "맨 아래에 한 세트를 이어 붙였어요. 이제 빈칸 속 내용만 바꿔 보세요." : "붙여 넣었어요. 이제 빈칸 속 내용만 바꿔 보세요.");
     } finally {
       Blockly.Events.setGroup(false);
     }
