@@ -31,7 +31,17 @@ interface Props {
   notice?: string;
 }
 
-const GREETING: ChatMsg = { role: "assistant", content: "안녕하세요! 저는 실험을 함께 생각하는 AI 도우미예요. 답을 대신 알려 주기보다 질문으로 도와줄게요. 막히면 언제든 물어보세요.", hintLevel: -1 };
+/** 첫인사 — 유머 한 스푼 + 자신감 북돋우기. 실험마다 다르게 (규칙 2 학습 안전) */
+const greet = (content: string): ChatMsg => ({ role: "assistant", content, hintLevel: -1 });
+const GREETINGS: Record<string, ChatMsg> = {
+  density: greet("어서 와! 밀도 측정 실험은 처음이지? 철조각이 물에 퐁당 빠지는 순간, 너는 이미 과학자야. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 💪"),
+  solubility: greet("어서 와! 용해도 측정 실험은 처음이지? 가루가 물속으로 사라지는 마술, 오늘은 네가 마술사야. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! ✨"),
+  boiling: greet("어서 와! 끓는점 측정 실험은 처음이지? 보글보글 끓는 건 라면만이 아니라는 걸 보여 주자. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 🔥"),
+  melting: greet("어서 와! 녹는점 측정 실험은 처음이지? 아이스크림 녹는 건 슬프지만, 이 실험에서 녹는 건 신나는 일이야. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 🍦"),
+  separation1: greet("어서 와! 끓는점 차로 혼합물을 나누는 실험은 처음이지? 물과 에탄올, 사이좋던 둘을 떼어 놓는 건 미안하지만 과학을 위해서야. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 🧪"),
+  separation2: greet("어서 와! 용해도 차로 혼합물을 나누는 실험은 처음이지? 반짝이는 결정을 건져 내면 보물찾기 성공이야. 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 💎"),
+};
+const GREETING_DEFAULT = greet("어서 와! 이 실험은 처음이지? 잘할 수 있을 거야. 막히면 내가 도와줄게, 화이팅! 💪");
 
 function Bubble({ m }: { m: ChatMsg }) {
   if (m.notice) {
@@ -47,6 +57,7 @@ function Bubble({ m }: { m: ChatMsg }) {
 }
 
 export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initial, reportSection = null, hintLevelEditing = "all", notice }: Props) {
+  const GREETING = GREETINGS[catalog.slug] ?? GREETING_DEFAULT;
   const [msgs, setMsgs] = useState<ChatMsg[]>(() => [...(notice ? [{ role: "assistant" as const, content: notice, notice: true }] : []), ...(initial?.length ? initial : [GREETING])]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);

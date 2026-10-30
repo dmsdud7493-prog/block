@@ -16,7 +16,7 @@ export const CATALOGS: Record<string, AnyCatalog> = {
   separation2: separation2Catalog,
 };
 
-export const EXPERIMENT_ORDER = ["density", "melting", "boiling", "solubility", "separation1", "separation2"] as const;
+export const EXPERIMENT_ORDER = ["density", "solubility", "boiling", "melting", "separation1", "separation2"] as const;
 
 export function getCatalog(slug: string): AnyCatalog | null {
   return CATALOGS[slug] ?? null;
