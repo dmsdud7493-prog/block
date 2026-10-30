@@ -68,7 +68,7 @@ const REMOVE_ICON = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
 function addRemoveButton(block: Blockly.Block) {
   if (block.isInFlyout || block.workspace.isFlyout) return;
   const last = block.inputList[block.inputList.length - 1];
-  const field = new Blockly.FieldImage(REMOVE_ICON, 18, 18, "빼기", (f) => {
+  const field = new Blockly.FieldImage(REMOVE_ICON, 18, 18, "삭제", (f) => {
     const b = f.getSourceBlock();
     if (b && b.isDeletable() && !b.isInFlyout) (b as Blockly.BlockSvg).dispose(false, true);
   });

@@ -1,7 +1,7 @@
 "use client";
 /**
  * 조립판 도구 막대 (원래 프로토타입의 📋 복사 · 📥 붙여넣기) — 블록을 누른 뒤 버튼을 눌러요.
- * - 🗑 빼기: 잘못 끼운 준비물 블록 등을 빼낸다(행동 블록을 빼면 아래 블록은 위로 이어 붙는다)
+ * - 🗑 삭제: 고른 블록을 지운다 — 잘못 끼운 준비물 블록 등(행동 블록을 지우면 아래 블록은 위로 이어 붙는다)
  * - 📋 복사 / 📋 아래까지 복사: 같은 과정을 되풀이할 때 이미 만든 블록을 복사
  * - 📥 붙여넣기: 고른 행동 블록 바로 아래에 끼워 넣는다(준비물 블록은 고른 행동 블록의 빈칸에)
  */
@@ -72,16 +72,16 @@ export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws:
     else sel.dispose(true, true);
     onSelect(parent?.id ?? null);
     (parent as Blockly.BlockSvg | null)?.select();
-    setMsg(parent ? "빈칸에서 뺐어요. 꾸러미에서 다른 블록을 누르면 그 빈칸에 들어가요." : isStatement ? "블록을 뺐어요. 아래 블록은 위로 이어 붙었어요." : "블록을 뺐어요.");
+    setMsg(parent ? "빈칸의 블록을 삭제했어요. 꾸러미에서 다른 블록을 끌어 그 빈칸에 놓아 보세요." : isStatement ? "블록을 삭제했어요. 아래 블록은 위로 이어 붙었어요." : "블록을 삭제했어요.");
   };
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b border-line bg-white/95 px-2 py-1.5" role="toolbar" aria-label="블록 편집">
-      <Btn onClick={remove} disabled={!removable}>🗑 빼기</Btn>
+      <Btn onClick={remove} disabled={!removable}>🗑 삭제</Btn>
       <Btn onClick={() => copy(false)} disabled={!sel || !sel.isDeletable()}>📋 복사</Btn>
       <Btn onClick={() => copy(true)} disabled={!sel || !isStatement || !sel.isDeletable()} label="고른 블록부터 아래까지 복사">📋 아래까지 복사</Btn>
       <Btn onClick={paste} disabled={!hasClip}>📥 붙여넣기</Btn>
-      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 빠져요. 다른 블록을 그 빈칸으로 끌어 놓아 바꿀 수도 있어요." : "행동 블록을 골랐어요. 📋 복사 → 📥 붙여넣기 하면 바로 아래에 같은 블록이 생겨요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
+      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 삭제돼요. 다른 블록을 그 빈칸으로 끌어 놓아 바꿀 수도 있어요." : "행동 블록을 골랐어요. 📋 복사 → 📥 붙여넣기 하면 바로 아래에 같은 블록이 생겨요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
     </div>
   );
 }

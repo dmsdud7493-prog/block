@@ -25,9 +25,9 @@ test("잘못 끼운 준비물 블록을 빼고, 행동 블록을 복사·붙여�
     ] },
   }));
   const bar = page.getByRole("toolbar", { name: "블록 편집" });
-  await expect(bar.getByRole("button", { name: "🗑 빼기" })).toBeDisabled();
+  await expect(bar.getByRole("button", { name: "🗑 삭제" })).toBeDisabled();
   await page.locator('g[data-id="it1"] > .blocklyPath').first().click({ position: { x: 6, y: 20 }, force: true });
-  await bar.getByRole("button", { name: "🗑 빼기" }).click();
+  await bar.getByRole("button", { name: "🗑 삭제" }).click();
   await expect(page.locator('g[data-id="it1"]')).toHaveCount(0);
   await expect(page.locator('g[data-id="ac1"]')).toHaveCount(1);
 
