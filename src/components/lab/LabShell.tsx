@@ -71,6 +71,19 @@ function useRun(ctl: LabController, settings: LabSettings) {
   return { shown, errors, onRun };
 }
 
+/** 조립 도움말 — 터치·마우스 기준 한 줄, 키보드 단축키는 눌렀을 때만 펼친다 */
+function BlockHelp() {
+  return (
+    <div className="flex flex-wrap items-start gap-x-3 gap-y-1 text-xs font-semibold text-muted">
+      <p>👆 행동 블록을 한 번 누른 뒤 준비물을 누르면 빈칸에 쏙 들어가요 · 같은 동그라미를 한 번 더 누르면 블록 꾸러미가 닫혀요</p>
+      <details className="min-w-0">
+        <summary className="cursor-pointer text-brand">⌨️ 키보드로 하기</summary>
+        <p id="kbd-help" className="mt-1">작업 공간 선택 후 <kbd>T</kbd> 도구 상자 · 화살표 이동 · <kbd>Enter</kbd> 블록 놓기/선택 · <kbd>M</kbd> 블록 옮기기 · <kbd>Delete</kbd> 지우기</p>
+      </details>
+    </div>
+  );
+}
+
 function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onFocus }: {
   slug: string; examples: string[]; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
   onProgram: LabController["onProgram"]; onFocus: (id: string) => void;
@@ -78,7 +91,7 @@ function DesignPane({ slug, examples, initial, diagnostics, activeBlock, errorBl
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-0 xl:rounded-none xl:border-0 xl:border-r">
       <ExampleSteps steps={examples} />
-      <p className="text-xs font-semibold text-muted" id="kbd-help">📦 블록 꾸러미는 같은 단추(실험 계획·준비물·행동…)를 한 번 더 누르면 닫혀요 · ⌨️ 키보드: 작업 공간 선택 후 <kbd>T</kbd> 도구 상자 · 화살표 이동 · <kbd>Enter</kbd> 블록 놓기/선택 · <kbd>M</kbd> 블록 옮기기 · <kbd>Delete</kbd> 지우기</p>
+      <BlockHelp />
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-0">
         <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onFocus} />
       </div>
