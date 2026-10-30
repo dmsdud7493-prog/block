@@ -57,31 +57,58 @@ const boxOf = (page: import("@playwright/test").Page, sel: string, inFlyout = fa
 
 const kids = (page: import("@playwright/test").Page) => page.evaluate(() => [...document.querySelectorAll('g[data-id="ac1"] g[class*="item_density"]')].map((k) => k.getAttribute("class")!.split(" ")[0]));
 
-test("빈칸 속 준비물 옆 ⊗로 그 블록만 빼고, 다른 준비물을 끌어 넣거나 눌러서 넣는다", async ({ page }) => {
-  await page.goto("/demo/density");
-  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
-  await page.evaluate(() => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
-    blocks: { languageVersion: 0, blocks: [
-      { type: "proc_start", x: 24, y: 200, deletable: false, next: { block: { type: "act_density_a4", id: "ac1", inputs: { S0: { block: { type: "item_density_iron_big", id: "it1" } } } } } },
-    ] },
-  }));
+test("빈칸 속 준비물 옆 ⊗로 그 블록만 빼고, 다른 준비물을 끌어 넣는다 — 꾸러미 블록을 누르기만 하면 저절로 들어가지 않는다", async ({ page }) => {
+  await loadDensity(page, { type: "act_density_a4", id: "ac1", inputs: { S0: { block: { type: "item_density_iron_big", id: "it1" } } } });
   await page.locator(".cat-equip .blocklyToolboxCategory").click();
   await expect(page.locator(".blocklyFlyout g.item_density_iron_big image")).toHaveCount(0);
   const x = await boxOf(page, 'g[data-id="it1"] image');
   await page.mouse.click(x.x + x.w / 2, x.y + x.h / 2);
   await expect.poll(() => kids(page)).toEqual([]);
 
-  // 끌어 넣기: 빈칸 근처에만 놓아도 들어간다
-  const ac = await boxOf(page, 'g[data-id="ac1"]');
-  const small = await boxOf(page, "g.item_density_iron_small", true);
-  await drag(page, { x: small.x + 6, y: small.y + small.h / 2 }, { x: ac.x + 28, y: ac.y + ac.h / 2 + 8 });
-  await expect.poll(() => kids(page)).toEqual(["item_density_iron_small"]);
-
-  // 눌러서 바꾸기: 빈칸 속 블록을 고르고 꾸러미의 다른 준비물을 누른다
-  const s2 = await boxOf(page, 'g[data-id="ac1"] g.item_density_iron_small');
-  await page.mouse.click(s2.x + 6, s2.y + s2.h / 2);
+  // 행동 블록을 고른 채 꾸러미의 준비물을 눌러도 빈칸에 저절로 들어가지 않는다
+  await page.locator('g[data-id="ac1"] > .blocklyPath').first().click({ position: { x: 6, y: 20 }, force: true });
   const big = await boxOf(page, "g.item_density_iron_big", true);
-  await page.mouse.click(big.x + 6, big.y + big.h / 2);
+  await page.mouse.click(big.x + big.w / 2, big.y + big.h / 2);
+  await page.waitForTimeout(300);
+  await expect.poll(() => kids(page)).toEqual([]);
 
-  await expect.poll(() => kids(page)).toEqual(["item_density_iron_big"]);
+  // 끌어 넣기: 블록 가운데를 잡고 빈칸 위에 놓으면 들어간다
+  const small = await boxOf(page, "g.item_density_iron_small", true);
+  const s0 = await slotAt(page, "ac1", "S0");
+  await drag(page, { x: small.x + small.w / 2, y: small.y + small.h / 2 }, { x: s0.x + small.w / 2, y: s0.y + small.h / 2 - 4 });
+  await expect.poll(() => kids(page)).toEqual(["item_density_iron_small"]);
 });
+
+test("빈칸이 두 개인 행동 블록에서 뒤 빈칸부터 채워도 앞 빈칸에 끌어 넣을 수 있다", async ({ page }) => {
+  await loadDensity(page, { type: "act_density_a7", id: "ac1" });
+  await page.locator(".cat-equip .blocklyToolboxCategory").click();
+  const cyl = await boxOf(page, "g.item_density_cylinder", true);
+  const s1 = await slotAt(page, "ac1", "S1");
+  await drag(page, { x: cyl.x + cyl.w / 2, y: cyl.y + cyl.h / 2 }, { x: s1.x + cyl.w / 2, y: s1.y + cyl.h / 2 - 4 });
+  await expect.poll(() => slotKids(page, "ac1")).toEqual({ S0: null, S1: "item_density_cylinder" });
+
+  const iron = await boxOf(page, "g.item_density_iron_small", true);
+  const s0 = await slotAt(page, "ac1", "S0");
+  await drag(page, { x: iron.x + iron.w / 2, y: iron.y + iron.h / 2 }, { x: s0.x + iron.w / 2, y: s0.y + iron.h / 2 - 4 });
+  await expect.poll(() => slotKids(page, "ac1")).toEqual({ S0: "item_density_iron_small", S1: "item_density_cylinder" });
+});
+
+async function loadDensity(page: import("@playwright/test").Page, action: object) {
+  await page.goto("/demo/density");
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.evaluate((a) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
+    blocks: { languageVersion: 0, blocks: [{ type: "proc_start", x: 24, y: 200, deletable: false, next: { block: a } }] },
+  }), action);
+}
+
+type SlotFn = { __labSlot: (id: string, input: string) => { x: number; y: number } };
+const slotAt = (page: import("@playwright/test").Page, id: string, input: string) =>
+  page.evaluate(([i, n]) => (window as unknown as SlotFn).__labSlot(i, n), [id, input] as const);
+
+/** 빈칸별로 끼워진 블록 종류 — 화면 순서가 아니라 S0·S1 자리로 확인한다 */
+const slotKids = (page: import("@playwright/test").Page, id: string) => page.evaluate((bid) => {
+  const xml = (window as unknown as { __labSave: () => { blocks: { blocks: Array<{ next?: { block: { id: string; inputs?: Record<string, { block: { type: string } }> } } }> } } }).__labSave();
+  const act = xml.blocks.blocks[0].next!.block;
+  void bid;
+  return { S0: act.inputs?.S0?.block.type ?? null, S1: act.inputs?.S1?.block.type ?? null };
+}, id);

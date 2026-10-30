@@ -7,13 +7,13 @@
  */
 import { useRef, useState } from "react";
 import * as Blockly from "blockly/core";
-import { firstEmptyFitting, isNested, removeNested } from "./slotTools";
+import { isNested, removeNested } from "./slotTools";
 
 type Clip = { state: Blockly.serialization.blocks.State; chain: boolean } | null;
 
 const lastOf = (b: Blockly.Block): Blockly.Block => (b.getNextBlock() ? lastOf(b.getNextBlock()!) : b);
 
-/** 붙여넣은 블록을 고른 블록 옆(행동은 바로 아래, 준비물은 빈칸)에 연결한다. 못 붙이면 고른 블록 옆에 둔다 */
+/** 붙여넣은 행동 블록은 고른 블록 바로 아래에 잇는다. 준비물·수치 블록은 빈칸에 저절로 넣지 않고 옆에 두어 학생이 끌어 넣게 한다 */
 function attach(pasted: Blockly.BlockSvg, target: Blockly.BlockSvg | null) {
   if (target?.nextConnection && pasted.previousConnection) {
     const after = target.nextConnection.targetBlock();
@@ -21,11 +21,6 @@ function attach(pasted: Blockly.BlockSvg, target: Blockly.BlockSvg | null) {
     target.nextConnection.connect(pasted.previousConnection);
     const tail = lastOf(pasted);
     if (after && tail.nextConnection && after.previousConnection) tail.nextConnection.connect(after.previousConnection);
-    return;
-  }
-  const slot = target ? firstEmptyFitting(target, pasted) : null;
-  if (slot && pasted.outputConnection) {
-    slot.connect(pasted.outputConnection);
     return;
   }
   const at = target?.getRelativeToSurfaceXY() ?? new Blockly.utils.Coordinate(40, 40);
@@ -86,7 +81,7 @@ export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws:
       <Btn onClick={() => copy(false)} disabled={!sel || !sel.isDeletable()}>📋 복사</Btn>
       <Btn onClick={() => copy(true)} disabled={!sel || !isStatement || !sel.isDeletable()} label="고른 블록부터 아래까지 복사">📋 아래까지 복사</Btn>
       <Btn onClick={paste} disabled={!hasClip}>📥 붙여넣기</Btn>
-      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 빠지고, 꾸러미의 다른 블록을 누르면 바꿔 끼워요." : "고른 행동 블록에 꾸러미의 준비물을 누르면 빈칸에 들어가요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
+      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 빠져요. 다른 블록을 그 빈칸으로 끌어 놓아 바꿀 수도 있어요." : "행동 블록을 골랐어요. 📋 복사 → 📥 붙여넣기 하면 바로 아래에 같은 블록이 생겨요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
     </div>
   );
 }

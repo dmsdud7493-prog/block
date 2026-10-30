@@ -75,7 +75,7 @@ function useRun(ctl: LabController, settings: LabSettings) {
 function BlockHelp() {
   return (
     <div className="flex flex-wrap items-start gap-x-3 gap-y-1 text-xs font-semibold text-muted">
-      <p>👆 행동 블록을 한 번 누른 뒤 준비물을 누르면 빈칸에 쏙 들어가요 · 같은 동그라미를 한 번 더 누르면 블록 꾸러미가 닫혀요</p>
+      <p>👆 준비물 블록을 손가락(마우스)으로 끌어서 원하는 빈칸에 놓아요 · 같은 동그라미를 한 번 더 누르면 블록 꾸러미가 닫혀요</p>
       <details className="min-w-0">
         <summary className="cursor-pointer text-brand">⌨️ 키보드로 하기</summary>
         <p id="kbd-help" className="mt-1">작업 공간 선택 후 <kbd>T</kbd> 도구 상자 · 화살표 이동 · <kbd>Enter</kbd> 블록 놓기/선택 · <kbd>M</kbd> 블록 옮기기 · <kbd>Delete</kbd> 지우기</p>

@@ -16,7 +16,6 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
-import { tapInsert, type TapResult } from "./slotTools";
 
 const defined = new Set<string>();
 
@@ -95,23 +94,19 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
   });
 }
 
-/** 꾸러미의 준비물·수치 블록을 누르면(끌지 않고) 고른 행동 블록의 빈칸에 끼운다 */
-function listenFlyoutTaps(ws: Blockly.WorkspaceSvg, selected: () => string | null, done: (r: TapResult) => void) {
-  const fws = ws.getToolbox()?.getFlyout()?.getWorkspace();
-  fws?.addChangeListener((e: Blockly.Events.Abstract) => {
-    if (e.type !== Blockly.Events.CLICK) return;
-    const id = (e as Blockly.Events.Click).blockId;
-    const source = id ? fws.getBlockById(id) : null;
-    const r = source ? tapInsert(ws, source, selected()) : null;
-    if (r) done(r);
-  });
-}
-
 /** E2E 전용: NEXT_PUBLIC_E2E=1 빌드에서만 작업 공간 불러오기 훅을 연다 */
 function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   if (process.env.NEXT_PUBLIC_E2E !== "1") return;
-  const w = window as unknown as { __labLoad?: (state: object) => void };
+  const w = window as unknown as { __labLoad?: (state: object) => void; __labSlot?: (blockId: string, input: string) => { x: number; y: number } | null; __labSave?: () => object };
   w.__labLoad = (state: object) => Blockly.serialization.workspaces.load(state, ws);
+  w.__labSave = () => Blockly.serialization.workspaces.save(ws);
+  // 빈칸(값 입력) 연결점의 화면 좌표 — 끌어 넣기 E2E가 정확한 자리에 놓을 수 있게
+  w.__labSlot = (blockId: string, input: string) => {
+    const c = ws.getBlockById(blockId)?.getInput(input)?.connection as Blockly.RenderedConnection | null | undefined;
+    if (!c) return null;
+    const p = Blockly.utils.svgMath.wsToScreenCoordinates(ws, new Blockly.utils.Coordinate(c.x, c.y));
+    return { x: p.x, y: p.y };
+  };
 }
 
 function injectOptions(catalog: NonNullable<ReturnType<typeof getCatalog>>, readOnly: boolean): Blockly.BlocklyOptions {
@@ -182,10 +177,6 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     relayoutWorkspace(ws);
     if (!readOnly) {
       setupPalette(ws);
-      listenFlyoutTaps(ws, () => selRef.current, (r) => {
-        setSelId(r.selectId);
-        setMsg(r.msg);
-      });
     }
     exposeForE2E(ws);
 
