@@ -42,7 +42,7 @@ function BeakerView({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * level * 0.85} strength={strength} />} />
       {direct && s.heating ? <Steam cx={BKR.w / 2} y={-8} w={BKR.w} strength={s.bubbles} /> : null}
       {direct && s.thermo.where === "bkr" ? <Thermometer x={BKR.w * 0.7} top={-70} len={BKR.h + 56} temp={s.temp} min={0} max={110} /> : null}
-      {ev?.type === "pour" && ev.container === "beaker" ? <PourStream x={BKR.w / 2} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
+      {ev?.type === "pour" && ev.container === "beaker" ? <PourStream key={ev?.note} x={BKR.w / 2} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
       {ev?.type === "pour" && ev.container === "beaker" ? <PouringHand key={ev.note} sx={BKR.w / 2} sy={-22} /> : null}
       {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
       {direct && isThermo(ev) ? <PinchHand key={ev?.note} x={BKR.w * 0.7} y={-58} /> : null}
@@ -63,7 +63,7 @@ function SideTube({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
       {s.tube.stopper ? <Stopper x={TUBE.w / 2} y={-6} w={TUBE.w} /> : null}
       {s.thermo.where === "tube" ? <Thermometer x={TUBE.w / 2} top={-54} len={TUBE.h + 40} temp={s.temp} min={0} max={110} /> : null}
       <Label x={-28} y={TUBE.h - 16} text={LABEL[s.tube.liquid] ?? s.tube.liquid} />
-      {ev?.type === "pour" && ev.container !== "beaker" ? <PourStream x={TUBE.w / 2} y1={-22} y2={TUBE.h * (1 - level)} color="#c9bdf5" /> : null}
+      {ev?.type === "pour" && ev.container !== "beaker" ? <PourStream key={ev?.note} x={TUBE.w / 2} y1={-22} y2={TUBE.h * (1 - level)} color="#c9bdf5" /> : null}
       {ev?.type === "pour" && ev.container !== "beaker" ? <PouringHand key={ev.note} sx={TUBE.w / 2} sy={-22} liquid={s.tube.liquid} /> : null}
       {ev?.type === "fixTube" ? <GripHand key={ev.note} x={TUBE.w} y={48} /> : null}
       {ev?.type === "stopper" ? <PinchHand key={ev.note} x={TUBE.w / 2} y={-4} /> : null}

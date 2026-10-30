@@ -12,7 +12,7 @@ async function load(page: Page, state: object) {
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), state);
   // 손동작은 잠깐 나타났다 사라지므로 캡처할 때는 멈춰 둔다
-  await page.addStyleTag({ content: ".lab-hand{animation:none!important}" });
+  await page.addStyleTag({ content: ".lab-hand,.lab-pour-life{animation:none!important}" });
   await page.waitForTimeout(400);
 }
 

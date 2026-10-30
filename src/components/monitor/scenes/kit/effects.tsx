@@ -40,10 +40,10 @@ export function Drips({ x, y, fall = 26, color = "#c9bdf5" }: { x: number; y: nu
   );
 }
 
-/** 위에서 아래로 따르는 액체 줄기 (따르는 단계에만) */
+/** 위에서 아래로 따르는 액체 줄기 — 따르는 단계에 한 번만 흐르고 사라진다(lab-pour-life). 단계마다 key를 바꿔 다시 흐르게 한다 */
 export function PourStream({ x, y1, y2, color = "#7cc4f5" }: { x: number; y1: number; y2: number; color?: string }) {
   return (
-    <g aria-hidden="true">
+    <g aria-hidden="true" className="lab-pour-life">
       <path className="lab-pour" d={`M${x} ${y1} C${x + 3} ${y1 + (y2 - y1) * 0.3}, ${x - 1} ${y1 + (y2 - y1) * 0.6}, ${x} ${y2}`} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
       <ellipse className="lab-splash" cx={x} cy={y2} rx="6" ry="2" fill={color} opacity="0.6" />
     </g>

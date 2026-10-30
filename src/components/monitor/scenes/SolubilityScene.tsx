@@ -74,7 +74,7 @@ function TubeHands({ id, ev, level, solute }: { id: string; ev: SimEvent | null;
   if (ev.type === "pour") {
     return (
       <g key={ev.note}>
-        <PourStream x={TUBE.w / 2} y1={-22} y2={4 + (TUBE.h - 4) * (1 - level)} />
+        <PourStream key={ev?.note} x={TUBE.w / 2} y1={-22} y2={4 + (TUBE.h - 4) * (1 - level)} />
         <PouringHand sx={TUBE.w / 2} sy={-22} />
       </g>
     );

@@ -58,7 +58,7 @@ function MainBeaker({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
   );
 }
 
-function FilterView({ s }: { s: Separation2State }) {
+function FilterView({ s, ev }: { s: Separation2State; ev: SimEvent | null }) {
   if (!s.shown.filter) return null;
   const onPaper = Math.min(1, total(s.filter.paper) / 6);
   const cone = `M${FUN.cx - FUN.w / 2} ${FUN.top} L${FUN.cx + FUN.w / 2} ${FUN.top} L${FUN.cx + 6} ${FUN.top + 46} L${FUN.cx - 6} ${FUN.top + 46} Z`;
@@ -69,7 +69,7 @@ function FilterView({ s }: { s: Separation2State }) {
       <path d={`M${FUN.cx - FUN.w / 2 + 6} ${FUN.top + 3} L${FUN.cx + FUN.w / 2 - 6} ${FUN.top + 3} L${FUN.cx} ${FUN.top + 40} Z`} fill="#ffffff" stroke="#d6d3c4" data-part="거름종이" />
       <Crystals x={FUN.cx - 16} y={FUN.top + 16} w={32} amount={onPaper} />
       <rect x={FUN.cx - 3} y={FUN.top + 46} width="6" height="40" fill="url(#lab-glass)" stroke="#64748b" strokeWidth="1.5" />
-      {s.filter.ready && !s.filter.done ? <Drips x={FUN.cx} y={FUN.top + 88} fall={30} color="#9fd4f7" /> : null}
+      {ev?.type === "filter" ? <g key={ev.note} className="lab-pour-life"><Drips x={FUN.cx} y={FUN.top + 88} fall={30} color="#9fd4f7" /></g> : null}
       <Beaker x={CATCH.x} y={BENCH_Y - CATCH.h} w={CATCH.w} h={CATCH.h} level={s.filter.done ? Math.min(1, s.filter.fw / 120) : 0.02} liquid={s.filter.fdis.cuso4 > 0 ? "cuso4_light" : "water"} label="걸러진 용액" />
     </g>
   );
@@ -105,7 +105,7 @@ export default function Separation2Scene({ state, event }: { state: Separation2S
       {state.shown.bath && state.inBath ? <IceBath x={BATH.x} y={BENCH_Y - BATH.h} w={BATH.w} h={BATH.h} label="" /> : null}
       <MainBeaker s={state} ev={event} />
       {state.shown.bath && state.inBath ? <Label x={BATH.x + BATH.w / 2} y={BENCH_Y + 16} text="얼음물 (식히는 중)" /> : null}
-      <FilterView s={state} />
+      <FilterView s={state} ev={event} />
       {state.thermo ? <Readout x={20} y={30} value={state.bkr.T} label="비커 속 온도" /> : null}
       <Hands s={state} ev={event} />
       {state.shown.scale ? <Scale x={346} w={90} reading={state.weighed !== null ? `${state.weighed.toFixed(1)} g` : "0.0 g"} /> : null}

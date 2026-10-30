@@ -63,7 +63,7 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
       <Cylinder x={0} y={0} w={CYL.w} h={CYL.h} level={level} liquid={s.cyl.liquid} label="눈금실린더" max={CYL_MAX}
         inside={<SolidsInCylinder solids={s.cyl.solids} />} />
       {reading && level > 0 ? <EyeLine y={surface} /> : null}
-      {pouringInto(ev, "cylinder") ? <PourStream x={CYL.w / 2} y1={-24} y2={surface} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
+      {pouringInto(ev, "cylinder") ? <PourStream key={ev?.note} x={CYL.w / 2} y1={-24} y2={surface} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
       {pouringInto(ev, "cylinder") ? <PouringHand key={ev?.note} sx={CYL.w / 2} sy={-24} liquid={s.cyl.liquid} /> : null}
       {ev?.type === "dropSolid" ? <IronTweezers key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
     </g>
@@ -86,7 +86,7 @@ function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={Math.min(1, s.bkr.volume / BKR_MAX)} liquid={s.bkr.liquid} label="비커" marks={["50", "100", "150", "200", ""]} />
-      {pouringInto(ev, "beaker") ? <PourStream x={BKR.w / 2} y1={-22} y2={BKR.h * (1 - Math.min(1, s.bkr.volume / BKR_MAX)) + 4} color={s.bkr.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
+      {pouringInto(ev, "beaker") ? <PourStream key={ev?.note} x={BKR.w / 2} y1={-22} y2={BKR.h * (1 - Math.min(1, s.bkr.volume / BKR_MAX)) + 4} color={s.bkr.liquid === "oil" ? "#e8b923" : "#7cc4f5"} /> : null}
       {pouringInto(ev, "beaker") ? <PouringHand key={ev?.note} sx={BKR.w / 2} sy={-22} liquid={s.bkr.liquid} /> : null}
     </g>
   );

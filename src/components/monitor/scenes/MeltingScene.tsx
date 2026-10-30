@@ -61,7 +61,7 @@ function BathBeaker({ s, ev }: { s: MeltingState; ev: SimEvent | null }) {
       {onHot ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 6} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={level} liquid="hot_water" label="물중탕 비커" labelLeft={onHot} marks={["50", "100", "150", "200", ""]}
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * 0.6 * level} strength={strength} />} />
-      {ev?.type === "pour" ? <PourStream x={BKR.w * 0.78} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
+      {ev?.type === "pour" ? <PourStream key={ev?.note} x={BKR.w * 0.78} y1={-22} y2={6 + (BKR.h - 6) * (1 - level)} /> : null}
       {ev?.type === "pour" ? <PouringHand key={ev.note} sx={BKR.w * 0.78} sy={-22} /> : null}
       {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
     </g>
