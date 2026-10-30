@@ -8,7 +8,6 @@ import { useCallback, useState } from "react";
 import { getCatalog } from "@/lib/engine/experiments";
 import type { Diagnostic } from "@/lib/engine/types";
 import StepStepper from "@/components/inquiry/StepStepper";
-import InquiryCards from "@/components/inquiry/InquiryCards";
 import CheckPanel from "@/components/inquiry/CheckPanel";
 import LabMonitor from "@/components/monitor/LabMonitor";
 import PredictionGate from "@/components/data/PredictionGate";
@@ -167,11 +166,10 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
         <RunButton running={state.running} onRun={runCtl.onRun} errors={runCtl.errors} />
       </LabHeader>
       {/* 넓은 화면: 조립 칸을 넉넉히(680px 이상) 두고, 화면이 좁으면 아래 가로 막대로 오른쪽 모니터까지 옮겨 본다 */}
-      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
-        <div className="xl:col-span-2 xl:col-start-2 xl:row-start-1 xl:border-b xl:border-line xl:bg-[#eef1f5] xl:px-3 xl:py-2"><InquiryCards catalog={catalog} program={state.program} inquiry={state.inquiry} predictions={state.predictions} onInquiry={(field, value) => dispatch({ type: "inquiry", field, value })} /></div>
-        <div className="xl:col-start-2 xl:row-start-2 xl:flex xl:min-h-0 xl:flex-col">{design}</div>
-        <div className="space-y-4 xl:col-start-3 xl:row-start-2 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} /></div>
-        <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
+      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
+        <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col">{design}</div>
+        <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} /></div>
+        <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
       </main>
       {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.runs.length ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
     </div>

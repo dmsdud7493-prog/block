@@ -35,7 +35,6 @@ test("잘못 끼운 준비물 블록을 빼고, 행동 블록을 복사·붙여�
   await bar.getByRole("button", { name: "📋 복사" }).click();
   await bar.getByRole("button", { name: "📥 붙여넣기" }).click();
   await expect(page.locator(".blocklyBlockCanvas g.act_density_a4")).toHaveCount(2);
-  await expect(page.getByText("행동 블록 2개")).toBeVisible();
 });
 
 /** 실제 마우스 끌기 — Blockly는 프레임마다 위치를 읽으므로 조금씩 옮긴다 */

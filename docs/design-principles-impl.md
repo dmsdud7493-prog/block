@@ -6,7 +6,7 @@
 
 | 지침 | 구현 위치 | 검증 | 파일럿 지표 (`v_guideline_metrics` 열 / events) | 상태 |
 |---|---|---|---|---|
-| 1.1 탐구 요소를 구분된 시각 요소로 | `components/inquiry/InquiryCards.tsx`(문제·가설·변인·절차·예상 카드), 블록 범주 색 구분 | jest-axe `components.test.tsx`, E2E | 카드 작성률(`sessions.inquiry`) | ✅ |
+| 1.1 탐구 요소를 구분된 시각 요소로 | 블록 범주 색 구분, 단계 표시(StepStepper) — 탐구 카드 5칸은 ADR-P14로 실험 화면에서 뺌(`InquiryCards.tsx`는 보존) | jest-axe `components.test.tsx`, E2E | 카드 작성률(`sessions.inquiry`) | ✅ |
 | 1.2 요소 간 관계 표현 | 변인 블록 ↔ 절차 수치 일관성 진단 `engine/rules/variables.ts` | 실험별 단위 테스트, `editor-settings.test.ts` | 진단 후 수정률(`block_edit`) | ✅ |
 | 1.3 입력 변경 시 함께 갱신 | `useLabController.onProgram` → `dryRun` → 블록 경고·CheckPanel·카드 동시 갱신, 그래프 평탄 구간은 학생이 켬 | E2E `density.spec.ts` "점검 결과", 5종 E2E | — | ✅ |
 | 1.4 전체 흐름 + 현재 단계 | 학생 `StepStepper`(`aria-current`) / 교사 `LiveBoard` 단계 열 | jest-axe, `fold.test.ts` | 단계별 체류 시간(fold) | ✅ |
