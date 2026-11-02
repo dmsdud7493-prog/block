@@ -1,4 +1,5 @@
 /** 실험실 상태 리듀서 (순수 함수) — 지침 1.3·3.1·3.3·3.4 */
+import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { CalcEntry, InquiryText, LabState, Phase, PredictionRecord, RunRecord } from "./types";
 import type { Diagnostic, Program } from "@/lib/engine/types";
 
@@ -87,6 +88,13 @@ export function labReducer(s: LabState, a: LabAction): LabState {
 /** 지침 3.1: 아직 예측하지 않은 대상 */
 export function missingPrediction(s: LabState, targets: string[]): string | null {
   return targets.find((t) => !s.predictions.some((p) => p.target === t && p.choice)) ?? null;
+}
+
+/** 결과 확인을 마쳤는가 — 그래프형: 예상과 결과 비교(지침 3.3) / 층 그림형(밀도): 마지막 성공 실행의 계산값을 모두 맞힘 */
+export function resultsDone(s: LabState, catalog: AnyCatalog): boolean {
+  if (catalog.resultView?.kind !== "layers") return afterExplained(s);
+  const ok = [...s.runs].reverse().find((r) => r.ok);
+  return Boolean(ok && ok.calcRequests.length > 0 && ok.calcRequests.every((c) => s.calc[c.key]?.correct));
 }
 
 /** 지침 3.3: 결과를 본 뒤 차이 설명을 모두 했는가 */

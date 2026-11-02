@@ -57,6 +57,10 @@ describe("제출 게이트 (app_submit_report)", () => {
   it("성찰 3개 미만이면 reflection_required", async () => {
     expect(await errorOf(submit(S, sess))).toContain("reflection_required");
   });
+  it("예상이 맞았는지(가설 판단)를 고르지 않아도 다른 조건을 채우면 제출 조건 통과 (0011)", async () => {
+    const r = await pool.query("select private.report_ready($1::jsonb) as ok", [JSON.stringify({ ...READY, interpretation: { ...READY.interpretation, hypothesisVerdict: "" } })]);
+    expect(r.rows[0].ok).toBe(true);
+  });
   it("조건을 채우면 제출되고 세션이 잠긴다", async () => {
     await save(S, sess, READY);
     const r = (await submit(S, sess)).rows[0];

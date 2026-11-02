@@ -62,29 +62,35 @@ test("밀도: 설계부터 보고서까지", async ({ page }) => {
   await row.getByRole("button", { name: "확인" }).click();
   await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
 
-  // 철조각만 다룬 설계라서 그래프 전에 비커 속 순서(물·식용유) 예측은 다시 묻지 않는다
-  await page.getByRole("button", { name: "📈 그래프 그리기" }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("figure", { name: /결과 그래프/ })).toBeVisible();
-
+  // 밀도는 그래프·예상과 결과 비교가 없다. 계산값을 모두 맞혀야 보고서가 열린다
+  await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+  await expect(page.locator("section[aria-labelledby=after-title]")).toHaveCount(0);
   const report = page.getByRole("button", { name: /보고서 쓰러 가기/ });
   await expect(report).toBeDisabled();
-  for (const box of await page.locator("section[aria-labelledby=after-title] li").all()) {
-    await box.getByLabel("예상과 같았어요").check();
-    await box.getByRole("textbox").fill("두 철조각 모두 7.9 근처로 같았다");
-    await box.getByRole("button", { name: "저장" }).click();
-  }
+  const small = table.getByRole("row").filter({ hasText: "작은 철조각" });
+  const t2 = await small.locator("td").nth(1).innerText();
+  const m2 = Number(/질량 ([\d.]+)/.exec(t2)![1]);
+  const v2 = Number(/부피 ([\d.]+)/.exec(t2)![1]);
+  await small.getByLabel("밀도 값").fill((m2 / v2).toFixed(2));
+  await small.getByLabel("밀도 단위").selectOption("g/mL");
+  await small.getByRole("button", { name: "확인" }).click();
+  await expect(small.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
   await expect(report).toBeEnabled();
 
   // S6: 보고서 — 기록이 초안으로 옮겨지고, 해석·성찰은 비어 있으며, 체크리스트가 채워져야 제출 조건 충족
   await report.click();
   await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
   await expect(page.locator("#r-procedure")).toHaveValue(/1\. /);
-  await expect(page.locator("#r-results")).toHaveValue(/큰 철조각/);
+  // 6. 결과는 표로, 4. 변인 칸은 없다
+  const results = page.getByRole("table", { name: "실험 결과 표" });
+  await expect(results.getByRole("row").filter({ hasText: "큰 철조각" })).toBeVisible();
+  await expect(results.getByRole("columnheader", { name: "밀도(g/mL)" })).toBeVisible();
+  await expect(page.locator("#r-var-i")).toHaveCount(0);
   await expect(page.locator("#r-evidence")).toHaveValue("");
   const gate = page.locator("section[aria-labelledby=submit-title]");
   await expect(gate.getByText(/아직: 성찰 질문 4개 중 3개 이상/)).toBeVisible();
-  await page.getByLabel("가설이 지지되었다").check();
+  await expect(gate.getByText(/가설을 지지/)).toHaveCount(0);
+  await page.getByLabel("⭕ 내 예상이 맞았어요").check();
   await page.locator("#r-evidence").fill("표의 밀도 7.9 g/mL 두 값");
   await page.locator("#r-error").fill("눈금을 읽을 때 오차");
   await page.locator("#r-improve").fill("여러 번 재서 평균");

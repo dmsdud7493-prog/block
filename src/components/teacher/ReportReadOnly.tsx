@@ -1,8 +1,9 @@
 /** T-05 제출된 보고서(스냅숏) 읽기 — AI 도움을 받았다고 학생이 표시한 칸은 배지로 보여 준다 (R11) */
 import { SECTIONS, REFLECTION_QUESTIONS, reportContentSchema } from "@/lib/report/template";
+import ResultsTable from "@/components/report/ResultsTable";
 
-const VERDICT: Record<string, string> = { supported: "가설이 지지되었다", rejected: "가설이 기각되었다", unclear: "자료만으로는 판단하기 어렵다", "": "(고르지 않음)" };
-const SIMPLE = ["title", "goal", "hypothesis", "materials", "procedure", "results"] as const;
+const VERDICT: Record<string, string> = { supported: "내 예상이 맞았어요", rejected: "내 예상과 달랐어요", unclear: "아직 잘 모르겠어요", "": "(고르지 않음)" };
+const SIMPLE = ["title", "goal", "hypothesis", "materials", "procedure"] as const;
 type SimpleId = (typeof SIMPLE)[number];
 
 function Block({ title, ai, children }: { title: string; ai: boolean; children: React.ReactNode }) {
@@ -24,9 +25,9 @@ export default function ReportReadOnly({ content, aiAssisted }: { content: Recor
   return (
     <div className="space-y-2">
       {head.map((s) => <Block key={s.id} title={s.title} ai={aiAssisted.includes(s.id)}>{c[s.id as SimpleId] || "—"}</Block>)}
-      <Block title="4. 변인" ai={aiAssisted.includes("variables")}>{`조작: ${c.variables.independent || "—"}\n종속: ${c.variables.dependent || "—"}\n통제: ${c.variables.controlled || "—"}`}</Block>
-      <Block title="8. 해석·결론" ai={aiAssisted.includes("interpretation")}>{`판단: ${VERDICT[i.hypothesisVerdict]}\n경향: ${i.trend || "—"}\n근거: ${i.evidence || "—"}\n오차: ${i.errorSources || "—"}\n개선: ${i.improvements || "—"}`}</Block>
-      <Block title="9. 느낀 점·성찰" ai={aiAssisted.includes("reflection")}>{reflection}</Block>
+      <Block title="6. 결과" ai={aiAssisted.includes("results")}>{c.resultsTable.rows.length ? <ResultsTable table={c.resultsTable} caption="제출한 결과 표" /> : c.results || "—"}</Block>
+      <Block title="7. 해석·결론" ai={aiAssisted.includes("interpretation")}>{`알게 된 것: ${i.trend || "—"}\n예상이 맞았나: ${VERDICT[i.hypothesisVerdict]}\n그렇게 생각한 까닭: ${i.evidence || "—"}\n오차: ${i.errorSources || "—"}\n다음에: ${i.improvements || "—"}`}</Block>
+      <Block title="8. 느낀 점·성찰" ai={aiAssisted.includes("reflection")}>{reflection}</Block>
     </div>
   );
 }

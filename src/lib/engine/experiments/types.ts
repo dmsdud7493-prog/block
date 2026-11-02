@@ -96,6 +96,11 @@ export interface ExperimentCatalog<S> {
   reference?: ReferenceTable[];
   /** 오늘의 미션(순서대로 열린다). 없으면 미션 카드를 보이지 않는다 */
   missions?: MissionDef[];
+  /**
+   * 결과 영역 모양. "graph"(기본) = 그래프 + 예상과 결과 비교.
+   * "layers" = 그래프·비교 없이 계산값만 확인하고, 두 액체를 한 비커에 담은 모습(layers.liquids, 아래→위)을 보여 준다.
+   */
+  resultView?: { kind: "graph" } | { kind: "layers"; liquids: string[] };
   /** 이 목록의 대상(subject)을 모두 측정하면 실험 완료 */
   requiredSubjects: string[];
   initialState: () => S;

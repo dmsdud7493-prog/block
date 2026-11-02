@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import { getCatalog } from "@/lib/engine/experiments";
 import type { Diagnostic } from "@/lib/engine/types";
+import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import StepStepper from "@/components/inquiry/StepStepper";
 import CheckPanel from "@/components/inquiry/CheckPanel";
 import MissionBar from "@/components/inquiry/MissionBar";
@@ -15,7 +16,7 @@ import LabMonitor from "@/components/monitor/LabMonitor";
 import PredictionGate from "@/components/data/PredictionGate";
 import type { LabBackend } from "./backend";
 import { useLabController, type LabController } from "./useLabController";
-import { afterExplained, latestRun } from "./state";
+import { latestRun, resultsDone } from "./state";
 import type { LabState, Phase } from "./types";
 import ResultsSection from "./ResultsSection";
 import { DEFAULT_SETTINGS, editorDiagnostics, type LabSettings } from "./editorDiagnostics";
@@ -38,11 +39,13 @@ interface Props {
 }
 
 
-function stepperState(s: LabState): { done: Partial<Record<Phase, boolean>>; locked: Partial<Record<Phase, string>> } {
+function stepperState(s: LabState, catalog: AnyCatalog): { done: Partial<Record<Phase, boolean>>; locked: Partial<Record<Phase, string>> } {
   const run = latestRun(s);
+  const done = resultsDone(s, catalog);
+  const why = catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인한 다음 열려요" : "결과를 보고 예상과 비교한 다음 열려요";
   return {
-    done: { design: s.runs.length > 0, predict: s.predictions.length > 0, run: Boolean(run?.ok), interpret: afterExplained(s) },
-    locked: afterExplained(s) ? {} : { report: "결과를 보고 예상과 비교한 다음 열려요" },
+    done: { design: s.runs.length > 0, predict: s.predictions.length > 0, run: Boolean(run?.ok), interpret: done },
+    locked: done ? {} : { report: why },
   };
 }
 
@@ -152,7 +155,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const run = latestRun(state);
   const runError: Diagnostic | null = run && !run.ok ? run.diagnostics.find((d) => d.severity === "error") ?? null : null;
   const gate = catalog.predictionTargets.find((t) => t.id === state.gateTarget);
-  const st = stepperState(state);
+  const st = stepperState(state, catalog);
   const runCtl = useRun(ctl, settings);
   const missions = useMemo(() => missionProgress(catalog, state), [catalog, state]);
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);

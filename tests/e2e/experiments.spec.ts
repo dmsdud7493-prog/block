@@ -80,6 +80,6 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
     await page.getByRole("button", { name: /보고서 쓰러 가기/ }).click();
     await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
     await expect(page.locator("#r-procedure")).toHaveValue(/1\. /);
-    await expect(page.locator("#r-results")).not.toHaveValue("");
+    await expect(page.getByRole("table", { name: "실험 결과 표" }).getByRole("row").nth(1)).toBeVisible();
   });
 }

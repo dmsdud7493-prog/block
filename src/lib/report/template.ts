@@ -13,6 +13,11 @@ export const reportContentSchema = z.object({
   materials: t(600),
   procedure: t(3000),
   results: t(2000),
+  /** 결과 표 — 실험 기록에서 옮겨 온 측정값·계산값(행: 회차·물질). 학생 화면과 교사 화면에서 표로 보여 준다 */
+  resultsTable: z.object({
+    columns: z.array(z.string().max(40)).max(12),
+    rows: z.array(z.array(z.string().max(80)).max(12)).max(60),
+  }).default({ columns: [], rows: [] }),
   interpretation: z.object({
     trend: t(1000),
     hypothesisVerdict: z.enum(["", "supported", "rejected", "unclear"]).default(""),
@@ -34,16 +39,16 @@ export interface SectionDef {
   guideline: string;
 }
 
+/** 보고서 8항목 — 변인 칸은 뺐다(ADR-P19). 변인 데이터는 예전 저장본 호환을 위해 스키마에만 남긴다 */
 export const SECTIONS: SectionDef[] = [
   { id: "title", title: "1. 제목", question: "무엇을 알아본 탐구인지 한 줄로 드러나나요?", starter: "~에 따른 ~의 변화", guideline: "6.1" },
   { id: "goal", title: "2. 탐구 목표", question: "이 실험으로 무엇을 알고 싶었나요?", starter: "이 실험의 목표는", guideline: "6.1" },
   { id: "hypothesis", title: "3. 가설", question: "실험 전에 예상한 것과 그 이유는 무엇이었나요?", starter: "~하면 ~할 것이다. 왜냐하면", guideline: "6.1" },
-  { id: "variables", title: "4. 변인", question: "무엇을 바꾸고, 무엇을 재고, 무엇을 같게 했나요?", starter: "조작 변인은", guideline: "6.1" },
-  { id: "materials", title: "5. 준비물", question: "실험에 쓴 기구와 물질을 빠짐없이 적었나요?", starter: "", guideline: "6.1" },
-  { id: "procedure", title: "6. 실험 과정", question: "다른 사람이 따라 할 수 있을 만큼 순서가 분명한가요?", starter: "", guideline: "6.2" },
-  { id: "results", title: "7. 결과", question: "표와 그래프에서 무엇을 읽을 수 있나요?", starter: "표를 보면", guideline: "6.2" },
-  { id: "interpretation", title: "8. 해석·결론", question: "가설은 지지되었나요? 근거가 되는 값은 어디에 있나요? 오차는 왜 생겼을까요?", starter: "가설은 (지지/기각)되었다. 근거는 표의", guideline: "6.3" },
-  { id: "reflection", title: "9. 느낀 점·성찰", question: "예상과 결과의 차이, 어려웠던 점, 더 알고 싶은 점, 생활 속 연결을 돌아봐요.", starter: "", guideline: "6.4" },
+  { id: "materials", title: "4. 준비물", question: "실험에 쓴 기구와 물질을 빠짐없이 적었나요?", starter: "", guideline: "6.1" },
+  { id: "procedure", title: "5. 실험 과정", question: "다른 사람이 따라 할 수 있을 만큼 순서가 분명한가요?", starter: "", guideline: "6.2" },
+  { id: "results", title: "6. 결과", question: "실험에서 잰 값과 계산한 값을 표로 정리했어요.", starter: "", guideline: "6.2" },
+  { id: "interpretation", title: "7. 해석·결론", question: "결과에서 알게 된 것, 내 예상이 맞았는지, 그렇게 생각한 까닭을 써 봐요.", starter: "표를 보면", guideline: "6.3" },
+  { id: "reflection", title: "8. 느낀 점·성찰", question: "예상과 결과의 차이, 어려웠던 점, 더 알고 싶은 점, 생활 속 연결을 돌아봐요.", starter: "", guideline: "6.4" },
 ];
 
 export const REFLECTION_QUESTIONS: { id: keyof ReportContent["reflection"]; label: string; starter: string }[] = [
@@ -63,10 +68,9 @@ export interface SubmitCheck { id: string; label: string; ok: boolean }
 export function submitChecklist(c: ReportContent): SubmitCheck[] {
   const reflections = REFLECTION_QUESTIONS.filter((q) => filled(c.reflection[q.id], 10)).length;
   return [
-    { id: "verdict", label: "결론에서 가설을 지지/기각/판단 보류 중 하나로 정했어요", ok: c.interpretation.hypothesisVerdict !== "" },
-    { id: "evidence", label: "결론의 근거(표·그래프의 값)를 적었어요", ok: filled(c.interpretation.evidence, 5) },
-    { id: "error", label: "오차가 생긴 까닭을 한 가지 이상 적었어요", ok: filled(c.interpretation.errorSources, 5) },
-    { id: "improve", label: "다음에 고칠 점(개선안)을 적었어요", ok: filled(c.interpretation.improvements, 5) },
+    { id: "evidence", label: "그렇게 생각한 까닭(표의 어떤 값을 보았는지)을 적었어요", ok: filled(c.interpretation.evidence, 5) },
+    { id: "error", label: "값이 조금씩 달라진 까닭(오차)을 한 가지 이상 적었어요", ok: filled(c.interpretation.errorSources, 5) },
+    { id: "improve", label: "다음에 더 잘하려면 어떻게 할지 적었어요", ok: filled(c.interpretation.improvements, 5) },
     { id: "reflection", label: `성찰 질문 4개 중 3개 이상 답했어요 (지금 ${reflections}개)`, ok: reflections >= 3 },
   ];
 }

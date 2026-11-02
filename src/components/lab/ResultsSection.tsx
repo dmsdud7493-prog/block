@@ -1,13 +1,14 @@
 "use client";
-/** 결과 영역 — 데이터 표 → (예측 확인 후) 그래프 → 예상과 비교 → 보고서로 */
+/** 결과 영역 — 데이터 표 → (예측 확인 후) 그래프 → 예상과 비교 → 보고서로. 밀도처럼 resultView가 "layers"면 그래프·비교 대신 한 비커 그림 */
 import dynamic from "next/dynamic";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import DataTable from "@/components/data/DataTable";
 import AfterExplain from "@/components/data/AfterExplain";
+import LayerResult from "@/components/data/LayerResult";
 import ReferencePanel from "@/components/data/ReferencePanel";
 import RunHistory from "./RunHistory";
 import type { LabController } from "./useLabController";
-import { afterExplained, latestRun, missingPrediction } from "./state";
+import { latestRun, missingPrediction, resultsDone } from "./state";
 
 const ResultChart = dynamic(() => import("@/components/data/ResultChart"), { ssr: false, loading: () => <p className="text-muted">그래프를 그리는 중…</p> });
 
@@ -21,13 +22,41 @@ function GraphGate({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }
   );
 }
 
-function ToReport({ ctl }: { ctl: LabController }) {
-  const ready = afterExplained(ctl.state);
+function ToReport({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }) {
+  const ready = resultsDone(ctl.state, catalog);
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap rounded-full bg-ok px-5 py-2 font-bold text-white shadow-[0_3px_0_#05613f] disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
-      {!ready ? <span className="text-sm text-muted">예상과 결과를 비교해 적으면 열려요.</span> : null}
+      {!ready ? <span className="text-sm text-muted">{catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인하면 열려요." : "예상과 결과를 비교해 적으면 열려요."}</span> : null}
     </div>
+  );
+}
+
+/** 밀도: 그래프·예상 비교 없이 계산값 확인 → 한 비커 그림 → 보고서로 */
+function LayersView({ catalog, ctl, liquids }: { catalog: AnyCatalog; ctl: LabController; liquids: string[] }) {
+  const { state } = ctl;
+  const okRun = [...state.runs].reverse().find((r) => r.ok);
+  return (
+    <>
+      {okRun ? <LayerResult catalog={catalog} run={okRun} calc={state.calc} liquids={liquids} /> : null}
+      <RunHistory runs={state.runs} />
+      {okRun ? <ToReport ctl={ctl} catalog={catalog} /> : null}
+    </>
+  );
+}
+
+/** 그래프형: 예측 확인 후 그래프 → 예상과 비교 → 보고서로 */
+function GraphView({ catalog, ctl }: { catalog: AnyCatalog; ctl: LabController }) {
+  const { state } = ctl;
+  const okRun = [...state.runs].reverse().find((r) => r.ok);
+  return (
+    <>
+      {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}
+      {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
+      {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
+      <RunHistory runs={state.runs} />
+      {state.graphOpened ? <ToReport ctl={ctl} catalog={catalog} /> : null}
+    </>
   );
 }
 
@@ -40,11 +69,9 @@ export default function ResultsSection({ catalog, ctl }: { catalog: AnyCatalog; 
     <section aria-label="실험 결과" className="space-y-3">
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
       {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u) => ctl.check(req, okRun.runNo, v, u)} /> : null}
-      {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}
-      {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
-      {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
-      <RunHistory runs={state.runs} />
-      {state.graphOpened ? <ToReport ctl={ctl} /> : null}
+      {catalog.resultView?.kind === "layers"
+        ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} />
+        : <GraphView catalog={catalog} ctl={ctl} />}
     </section>
   );
 }

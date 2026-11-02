@@ -58,3 +58,41 @@ test("밀도: 물과 식용유만 다루는 설계에서는 물·식용유 예�
   await expect(dialog.getByText("물과 식용유를 한 그릇에 담으면 어느 쪽이 위로 갈까요?")).toBeVisible();
   await expect(dialog.getByText(/철조각/)).toHaveCount(0);
 });
+
+test("밀도: 물·식용유 밀도를 맞게 계산하면 그래프 대신 한 비커 그림(물 아래, 식용유 위)이 나온다", async ({ page }) => {
+  await page.goto(`/demo/${D}`);
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  const set = (liq: string) => [
+    { action: "a1", inputs: [item(D, "cylinder"), item(D, "scale")] },
+    { action: "a2", inputs: [item(D, liq), qty("mL", 50)] },
+    { action: "a3", inputs: [item(D, liq)] },
+    { action: "a4", inputs: [item(D, liq)] },
+    { action: "a5" },
+  ];
+  await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), workspace(D, [...set("water"), ...set("oil")]));
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
+  await page.getByRole("button", { name: /실험 실행하기/ }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("식용유가 위로 간다").check();
+  await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("국 위에 기름이 뜨니까");
+  await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+
+  const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
+  await expect(table).toBeVisible({ timeout: 20_000 });
+  const layer = page.getByRole("region", { name: /한 비커에 담으면/ });
+  await expect(layer.getByText(/밀도를 모두 맞게 계산하면/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+  for (const name of ["물", "식용유"]) {
+    const row = table.getByRole("row").filter({ has: page.getByRole("rowheader", { name, exact: true }) });
+    const text = await row.getByRole("cell").filter({ hasText: "질량" }).innerText();
+    const mass = Number(/질량 ([\d.]+)/.exec(text)![1]);
+    const vol = Number(/부피 ([\d.]+)/.exec(text)![1]);
+    await row.getByLabel("밀도 값").fill((mass / vol).toFixed(2));
+    await row.getByLabel("밀도 단위").selectOption("g/mL");
+    await row.getByRole("button", { name: "확인" }).click();
+    await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
+  }
+  await expect(layer.getByRole("img", { name: "한 비커에 담으면 아래부터 물 → 식용유" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toBeEnabled();
+  await expect(page.locator("section[aria-labelledby=after-title]")).toHaveCount(0);
+});

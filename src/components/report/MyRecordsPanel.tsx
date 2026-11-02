@@ -18,6 +18,14 @@ function Predictions({ catalog, s }: { catalog: AnyCatalog; s: LabState }) {
   return <ul className="mt-1 space-y-1">{s.predictions.map((p) => <li key={p.target}>예상: {label(p.target, p.choice)} → {p.matched === true ? "같았음" : p.matched === false ? "달랐음" : "비교 전"}{p.rationaleAfter ? ` (${p.rationaleAfter})` : ""}</li>)}</ul>;
 }
 
+/** 계산 칸 이름 — "물의 밀도"처럼 (계산 요청에서 대상·항목을 찾는다) */
+function calcName(catalog: AnyCatalog, s: LabState, key: string): string {
+  const req = s.runs.flatMap((r) => r.calcRequests).find((r) => r.key === key);
+  if (!req) return key.split(".")[0];
+  const who = catalog.items.find((i) => i.id === req.subject)?.label ?? req.subject;
+  return `${who}의 ${req.label}`;
+}
+
 export default function MyRecordsPanel({ catalog, state }: { catalog: AnyCatalog; state: LabState }) {
   const steps = renderProgram(catalog, state.program.steps);
   const calcs = Object.values(state.calc);
@@ -26,8 +34,8 @@ export default function MyRecordsPanel({ catalog, state }: { catalog: AnyCatalog
       <h2 className="font-bold">🗂 내 기록 (보고서를 쓸 때 참고해요)</h2>
       <Block title={`최종 블록 절차 (${steps.length}개)`}><ol className="mt-1 list-inside list-decimal">{steps.map((t, i) => <li key={`${i}-${t}`}>{t}</li>)}</ol></Block>
       <Block title={`실행 기록 (${state.runs.length}회)`}><ul className="mt-1">{state.runs.map((r) => <li key={r.runNo}>{r.runNo}회차 · {r.ok ? "끝까지" : "멈춤"}{r.changedVars.length ? ` · 바꾼 변인: ${r.changedVars.join(", ")}` : ""}</li>)}</ul></Block>
-      <Block title="예상과 비교"><Predictions catalog={catalog} s={state} /></Block>
-      <Block title="계산 결과"><ul className="mt-1">{calcs.map((c) => <li key={c.key}>{c.key.split(".")[0]} · {c.value} {c.unit} · {c.correct ? "확인됨" : `도전 ${c.attempts}번`}</li>)}</ul></Block>
+      {catalog.resultView?.kind === "layers" ? null : <Block title="예상과 비교"><Predictions catalog={catalog} s={state} /></Block>}
+      <Block title="계산 결과"><ul className="mt-1">{calcs.map((c) => <li key={c.key}>{calcName(catalog, state, c.key)} · {c.value} {c.unit} · {c.correct ? "확인됨" : `도전 ${c.attempts}번`}</li>)}</ul></Block>
     </aside>
   );
 }

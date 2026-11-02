@@ -26,6 +26,17 @@ describe("submitChecklist (지침 6.3·6.4)", () => {
     const fails = submitChecklist({ ...r, reflection: { ...r.reflection, curious: "짧다" } }).filter((c) => !c.ok).map((c) => c.id);
     expect(fails).toEqual(["reflection"]);
   });
+  it("예상이 맞았는지(가설 판단)는 제출 조건이 아니다 — 첫 항목이 빠졌다 (ADR-P19)", () => {
+    const r = ready();
+    const checks = submitChecklist({ ...r, interpretation: { ...r.interpretation, hypothesisVerdict: "" } });
+    expect(checks.map((c) => c.id)).toEqual(["evidence", "error", "improve", "reflection"]);
+    expect(checks.every((c) => c.ok)).toBe(true);
+  });
+  it("보고서 항목에 변인 칸이 없고 번호가 1~8로 이어진다", async () => {
+    const { SECTIONS } = await import("@/lib/report/template");
+    expect(SECTIONS.map((s) => s.id)).not.toContain("variables");
+    expect(SECTIONS.map((s) => s.title.split(".")[0])).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
+  });
   it("스키마는 너무 긴 제목을 거부한다", () => {
     expect(reportContentSchema.safeParse({ title: "가".repeat(101) }).success).toBe(false);
   });
@@ -43,6 +54,30 @@ describe("transcribe (지침 6.2·5.4)", () => {
     expect(Object.values(r.reflection).every((v) => v === "")).toBe(true);
     expect(r.drafts).toContain("results");
     expect(r.drafts).not.toContain("interpretation");
+  });
+  it("결과는 회차·물질별 표로 옮긴다(맞힌 계산값 포함, 틀린 값은 빈칸)", () => {
+    const run = {
+      runNo: 1, ok: true, frames: [], series: [], diagnostics: [], changedVars: [], program: { experiment: "density", steps: [], variables: [] },
+      measurements: [
+        { key: "mass.water.t1", trial: 1, label: "질량", value: 50, unit: "g", subject: "water" },
+        { key: "volume.water.t1", trial: 1, label: "부피", value: 50, unit: "mL", subject: "water" },
+        { key: "mass.oil.t2", trial: 2, label: "질량", value: 46, unit: "g", subject: "oil" },
+        { key: "volume.oil.t2", trial: 2, label: "부피", value: 50, unit: "mL", subject: "oil" },
+      ],
+      calcRequests: [
+        { key: "density.water.t1", trial: 1, label: "밀도", unit: "g/mL", subject: "water", inputs: [] },
+        { key: "density.oil.t2", trial: 2, label: "밀도", unit: "g/mL", subject: "oil", inputs: [] },
+      ],
+    };
+    const calc = {
+      "density.water.t1": { key: "density.water.t1", runNo: 1, value: "1", unit: "g/mL", attempts: 1, correct: true, errorType: null, hint: null },
+      "density.oil.t2": { key: "density.oil.t2", runNo: 1, value: "1.1", unit: "g/mL", attempts: 1, correct: false, errorType: null, hint: null },
+    };
+    const s = { ...state, runs: [run], calc } as unknown as typeof state;
+    expect(transcribe(catalog, s).resultsTable).toEqual({
+      columns: ["회차", "물질", "질량(g)", "부피(mL)", "밀도(g/mL)"],
+      rows: [["1회", "물", "50", "50", "1"], ["2회", "식용유", "46", "50", "—"]],
+    });
   });
   it("저장된 보고서가 있으면 그대로 쓴다", () => {
     expect(initialReport(catalog, state, { title: "내 제목" }).title).toBe("내 제목");

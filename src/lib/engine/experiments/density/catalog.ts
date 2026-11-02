@@ -117,6 +117,7 @@ export const densityCatalog: ExperimentCatalog<DensityState> = {
     "물의 부피를 측정한다",
   ],
   predictionTargets: PREDICTIONS,
+  resultView: { kind: "layers", liquids: ["water", "oil"] },
   missions: [
     {
       id: "liquids", icon: "🛢️", title: "물과 식용유, 누가 위로 갈까? 둘의 밀도를 구해 봐",
