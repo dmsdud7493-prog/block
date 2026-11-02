@@ -29,6 +29,7 @@ function scenario(slug: string): { ws: object; name: string } {
 async function load(page: Page, state: object) {
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), state);
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
 }
 
 /** 열린 예측 창마다 첫 선택지 + 이유를 적어 저장한다. 곡선 그리기가 있으면 점 몇 개를 찍는다 */

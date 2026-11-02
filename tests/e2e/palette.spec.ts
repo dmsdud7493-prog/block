@@ -142,3 +142,21 @@ test("아래까지 복사한 묶음을 붙여넣으면 한 세트가 끝난 뒤 
   await bar.getByRole("button", { name: "📥 붙여넣기" }).click();
   await expect.poll(() => chainTypes(page)).toEqual(["a4", "a2", "a5", "a4", "a2", "a5", "a4", "a2", "a5"]);
 });
+
+test("창 높이가 낮아도(1280×600) 조립 칸을 내려 보면 블록 꾸러미 맨 아래 블록까지 보인다", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await page.goto("/demo/separation1");
+  await page.locator(".cat-action .blocklyToolboxCategory").click();
+  const fly = page.locator(".blocklyFlyout").first();
+  await expect(fly).toBeVisible();
+  // 조립 칸(가운데 열)을 맨 아래까지 내린다
+  await page.evaluate(() => { const c = document.querySelector("section[aria-label='블록 실험 설계']")?.parentElement; if (c) c.scrollTop = c.scrollHeight; });
+  const box = (await fly.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(600 + 1);
+  // 꾸러미를 끝까지 굴리면 마지막 행동 블록이 꾸러미 안에 보인다
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 30; i += 1) await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(400);
+  const lastBottom = await page.evaluate(() => Math.max(...[...document.querySelectorAll(".blocklyFlyout .blocklyBlockCanvas > g")].map((g) => g.getBoundingClientRect().bottom)));
+  expect(lastBottom).toBeLessThanOrEqual(box.y + box.height + 1);
+});

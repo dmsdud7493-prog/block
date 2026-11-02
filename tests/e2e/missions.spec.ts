@@ -23,6 +23,7 @@ test("밀도: 미션 카드가 보이고, 넷을 한 비커에 넣으면 밀도 
     { action: "a7", inputs: [item(D, "iron_small"), item(D, "beaker")] },
     { action: "a7", inputs: [item(D, "iron_big"), item(D, "beaker")] },
   ]));
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
   await page.getByRole("button", { name: /실험 실행하기/ }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("radio").first().check();
@@ -51,6 +52,7 @@ test("밀도: 물과 식용유만 다루는 설계에서는 물·식용유 예�
     { action: "a4", inputs: [item(D, "oil")] },
     { action: "a5" },
   ]));
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
   await page.getByRole("button", { name: /실험 실행하기/ }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("물과 식용유를 한 그릇에 담으면 어느 쪽이 위로 갈까요?")).toBeVisible();

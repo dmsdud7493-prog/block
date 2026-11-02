@@ -6,6 +6,7 @@ async function loadAndRun(page: Page, slug: string, state: object) {
   await page.goto(`/demo/${slug}`);
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), state);
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
   await page.getByRole("button", { name: /실험 실행하기/ }).click();
   const dialog = page.getByRole("dialog");
   if (await dialog.isVisible().catch(() => false)) {

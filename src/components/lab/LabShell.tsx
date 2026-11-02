@@ -91,11 +91,12 @@ function DesignPane({ slug, examples, missions, initial, diagnostics, activeBloc
   onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
-    <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-0 xl:rounded-none xl:border-0 xl:border-r">
+    <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-fit xl:overflow-visible xl:rounded-none xl:border-0 xl:border-r">
       <MissionBar progress={missions} />
       {missions.missions.length > 0 && missions.done[0] ? null : <ExampleSteps steps={examples} />}
       <BlockHelp />
-      <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-0">
+      {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}
+      <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-[480px]">
         <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
       </div>
     </section>
@@ -189,7 +190,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
       </LabHeader>
       {/* 넓은 화면: 조립 칸을 넉넉히(680px 이상) 두고, 화면이 좁으면 아래 가로 막대로 오른쪽 모니터까지 옮겨 본다 */}
       <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
-        <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col">{design}</div>
+        <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto">{design}</div>
         <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} /></div>
         <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
       </main>

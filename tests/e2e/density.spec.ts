@@ -23,6 +23,7 @@ const vars = [
 async function load(page: Page, state: object) {
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), state);
+  await page.waitForTimeout(500); // 블록 변경이 화면 상태에 반영될 때까지(200ms 디바운스)
 }
 
 async function predict(page: Page, choiceText: string) {
