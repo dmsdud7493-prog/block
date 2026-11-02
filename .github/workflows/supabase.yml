@@ -28,8 +28,20 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ github.ref_name == 'main' && secrets.PRODUCTION_DB_PASSWORD || secrets.STAGING_DB_PASSWORD }}
       PROJECT_ID: ${{ github.ref_name == 'main' && secrets.PRODUCTION_PROJECT_ID || secrets.STAGING_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      # 지금은 SQL을 Supabase SQL Editor에서 직접 적용한다(DEPLOY.md "DB 변경 적용 방식"). 키가 없으면 실패 대신 건너뛴다
+      - name: 키가 없으면 건너뛰기
+        id: gate
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$PROJECT_ID" ]; then
+            echo "Supabase 키가 없어 자동 적용을 건너뜁니다 — SQL Editor에서 직접 적용하세요."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v4
+      - if: steps.gate.outputs.skip != 'true'
+        uses: supabase/setup-cli@v1
         with: { version: latest }
-      - run: supabase link --project-ref "$PROJECT_ID"
-      - run: supabase db push
+      - if: steps.gate.outputs.skip != 'true'
+        run: supabase link --project-ref "$PROJECT_ID"
+      - if: steps.gate.outputs.skip != 'true'
+        run: supabase db push
