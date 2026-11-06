@@ -118,6 +118,11 @@ export const densityCatalog: ExperimentCatalog<DensityState> = {
   ],
   predictionTargets: PREDICTIONS,
   resultView: { kind: "layers", liquids: ["water", "oil"] },
+  reportActivities: [
+    { title: "액체(물·식용유)의 질량과 부피 측정하기", subjects: ["water", "oil"] },
+    { title: "금속(큰·작은 철조각)의 질량과 부피 측정하기", subjects: ["iron_big", "iron_small"] },
+    { title: "네 가지 물질을 한 비커에 넣어 보기", subjects: ["water", "oil", "iron_big", "iron_small"] },
+  ],
   missions: [
     {
       id: "liquids", icon: "🛢️", title: "물과 식용유, 누가 위로 갈까? 둘의 밀도를 구해 봐",

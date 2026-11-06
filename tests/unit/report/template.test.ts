@@ -32,10 +32,10 @@ describe("submitChecklist (지침 6.3·6.4)", () => {
     expect(checks.map((c) => c.id)).toEqual(["evidence", "error", "improve", "reflection"]);
     expect(checks.every((c) => c.ok)).toBe(true);
   });
-  it("보고서 항목에 변인 칸이 없고 번호가 1~8로 이어진다", async () => {
+  it("보고서 칸은 탐구 활동지 순서이고 변인 칸이 없다 (ADR-P19·P20)", async () => {
     const { SECTIONS } = await import("@/lib/report/template");
     expect(SECTIONS.map((s) => s.id)).not.toContain("variables");
-    expect(SECTIONS.map((s) => s.title.split(".")[0])).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
+    expect(SECTIONS.map((s) => s.title)).toEqual(["탐구 제목", "목표", "가설", "준비물", "과정", "자료 해석", "정리", "성찰"]);
   });
   it("스키마는 너무 긴 제목을 거부한다", () => {
     expect(reportContentSchema.safeParse({ title: "가".repeat(101) }).success).toBe(false);

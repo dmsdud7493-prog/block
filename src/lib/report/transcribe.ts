@@ -8,6 +8,7 @@ import { renderProgram } from "@/lib/engine/dsl/render";
 import { fmtNum } from "@/lib/engine/format";
 import { latestRun } from "@/components/lab/state";
 import { emptyReport, type ReportContent } from "./template";
+import { activitiesOf, dataOf } from "./activities";
 
 const opt = (c: AnyCatalog, id: string | null) => c.variableOptions.find((o) => o.id === id)?.label ?? "";
 const itemLabel = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
@@ -72,6 +73,8 @@ export function transcribe(c: AnyCatalog, s: LabState): ReportContent {
     procedure: renderProgram(c, s.program.steps).map((line, i) => `${i + 1}. ${line}`).join("\n"),
     results: resultsOf(c, s),
     resultsTable: resultsTableOf(c, s),
+    activities: activitiesOf(c, s),
+    data: dataOf(c, s),
     drafts: ["title", "goal", "hypothesis", "materials", "procedure", "results"],
   };
   return draft;
@@ -82,5 +85,8 @@ export function initialReport(c: AnyCatalog, s: LabState, saved: Partial<ReportC
   const hasSaved = saved && Object.keys(saved).length > 0;
   if (!hasSaved) return transcribe(c, s);
   const base = { ...emptyReport(), ...saved } as ReportContent;
-  return s.runs.length > 0 ? { ...base, resultsTable: resultsTableOf(c, s) } : base;
+  if (s.runs.length === 0) return base;
+  // 예전 보고서(활동 없이 과정 글만)는 활동 하나로 옮겨 보여 준다. 자료는 실험 기록에서 새로 만들고, 학생이 쓴 "알 수 있는 점"은 이어 받는다
+  const activities = base.activities.length > 0 ? base.activities : activitiesOf(c, s);
+  return { ...base, resultsTable: resultsTableOf(c, s), activities, data: dataOf(c, s, base.data.map((d) => d.note)) };
 }

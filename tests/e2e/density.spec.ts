@@ -80,9 +80,10 @@ test("밀도: 설계부터 보고서까지", async ({ page }) => {
   // S6: 보고서 — 기록이 초안으로 옮겨지고, 해석·성찰은 비어 있으며, 체크리스트가 채워져야 제출 조건 충족
   await report.click();
   await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
-  await expect(page.locator("#r-procedure")).toHaveValue(/1\. /);
-  // 6. 결과는 표로, 4. 변인 칸은 없다
-  const results = page.getByRole("table", { name: "실험 결과 표" });
+  // 활동지 모양: 과정은 활동 1(금속), 자료 해석은 자료 1 표, 변인 칸은 없다 (ADR-P20)
+  await expect(page.getByText("활동 1", { exact: true })).toBeVisible();
+  await expect(page.locator("#r-act-1")).toHaveValue(/^➊ /);
+  const results = page.getByRole("table", { name: /^자료 1 / });
   await expect(results.getByRole("row").filter({ hasText: "큰 철조각" })).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "밀도(g/mL)" })).toBeVisible();
   await expect(page.locator("#r-var-i")).toHaveCount(0);

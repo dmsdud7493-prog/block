@@ -7,6 +7,7 @@ import StepStepper from "@/components/inquiry/StepStepper";
 import CheckPanel from "@/components/inquiry/CheckPanel";
 import InquiryCards from "@/components/inquiry/InquiryCards";
 import MissionBar from "@/components/inquiry/MissionBar";
+import ReportReadOnly from "@/components/teacher/ReportReadOnly";
 import PredictionGate from "@/components/data/PredictionGate";
 import CalcCell from "@/components/data/CalcCell";
 import { densityCatalog } from "@/lib/engine/experiments/density/catalog";
@@ -22,6 +23,19 @@ describe("a11y", () => {
   it("CheckPanel", () => noViolations(<CheckPanel diagnostics={[{ blockId: "b1", severity: "error", code: "x", message: "빈 칸에 블록을 끼워 주세요.", guideline: "2.3" }]} />));
   it("InquiryCards", () => noViolations(<InquiryCards catalog={densityCatalog} program={{ experiment: "density", steps: [], variables: [] }} inquiry={{ problem: "", hypothesis: "" }} predictions={[]} onInquiry={() => undefined} />));
   it("MissionBar", () => noViolations(<MissionBar progress={{ missions: densityCatalog.missions ?? [], done: [true, false, false], current: 1 }} />));
+  it("ReportReadOnly — 교사 화면도 활동지 모양(과정 활동·자료 번호·정리)", async () => {
+    const content = {
+      title: "밀도 측정 탐구", activities: [{ title: "액체의 질량과 부피 측정하기", steps: "➊ 물을 붓는다" }],
+      data: [{ title: "액체 결과", columns: ["물질", "밀도(g/mL)"], rows: [["물", "1"]], observations: ["비커 속에서 아래부터 물 → 식용유 순서로 자리 잡았어요."], series: [], note: "물이 아래로 간다" }],
+      interpretation: { trend: "밀도가 다르다", hypothesisVerdict: "supported", evidence: "자료 1", errorSources: "눈금", improvements: "여러 번" },
+    };
+    const { container, getByText } = render(<ReportReadOnly content={content} aiAssisted={["results"]} />);
+    expect(getByText("활동 1")).toBeTruthy();
+    expect(getByText("물이 아래로 간다")).toBeTruthy();
+    expect(getByText("AI 도움")).toBeTruthy();
+    expect(container.querySelector("textarea")).toBeNull();
+    expect((await axe(container)).violations).toEqual([]);
+  });
   it("PredictionGate", () => noViolations(<PredictionGate target={densityCatalog.predictionTargets[0]} record={{ target: "same_density", choice: "", rationale: "", hintsUsed: 2 }} purpose="실험하기 전에" onHint={() => undefined} onSubmit={() => undefined} onCancel={() => undefined} />));
   it("CalcCell (힌트 표시 상태)", () => noViolations(<CalcCell request={{ key: "density.water.t1", trial: 1, label: "밀도", unit: "g/mL", subject: "water", inputs: [] }} entry={{ key: "density.water.t1", runNo: 1, value: "1.2", unit: "g/mL", attempts: 1, correct: false, errorType: "swapped", hint: "나누는 순서를 다시 확인해 볼까요?" }} onCheck={async () => undefined} />));
 });

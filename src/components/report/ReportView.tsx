@@ -8,7 +8,6 @@ import type { LabController } from "@/components/lab/useLabController";
 import { initialReport } from "@/lib/report/transcribe";
 import type { ReportContent } from "@/lib/report/template";
 import ReportForm from "./ReportForm";
-import ReflectionForm from "./ReflectionForm";
 import SubmitGate from "./SubmitGate";
 import MyRecordsPanel from "./MyRecordsPanel";
 import FeedbackBox, { type FeedbackData } from "./ReturnNoteBox";
@@ -39,7 +38,6 @@ function Editor({ r, readOnly, mode, onFocusSection }: { r: ReturnType<typeof us
   return (
     <div className="space-y-4">
       <ReportForm content={r.content} update={r.update} readOnly={readOnly} onFocusSection={onFocusSection} />
-      <ReflectionForm content={r.content} update={r.update} readOnly={readOnly} onFocusSection={onFocusSection} />
       <SubmitGate content={r.content} aiAssisted={r.aiAssisted} setAi={r.setAi} onSubmit={() => void r.submit()} error={r.submitError} mode={mode} locked={readOnly} />
     </div>
   );

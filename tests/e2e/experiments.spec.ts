@@ -79,7 +79,10 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
     }
     await page.getByRole("button", { name: /보고서 쓰러 가기/ }).click();
     await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
-    await expect(page.locator("#r-procedure")).toHaveValue(/1\. /);
-    await expect(page.getByRole("table", { name: "실험 결과 표" }).getByRole("row").nth(1)).toBeVisible();
+    // 활동지 모양 (ADR-P20): 과정 = 활동 1…, 자료 해석 = 자료 1… (표 또는 시간–온도 그래프)
+    await expect(page.locator("#r-act-1")).toHaveValue(/^➊ /);
+    await expect(page.getByText("자료 1", { exact: true })).toBeVisible();
+    await expect(page.locator("#r-data-1")).toBeVisible();
+    if (process.env.SHOTS) await page.locator("main").screenshot({ path: `/tmp/claude-0/ws-${slug}.png` });
   });
 }

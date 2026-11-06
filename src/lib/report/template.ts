@@ -1,5 +1,5 @@
 /**
- * 탐구 보고서 9항목 (plan §4.9, 지침 6.1). AI·화면이 주는 도움은 섹션당 안내 질문 1·시작어 1뿐 — 문장을 완성하지 않는다(지침 5.4).
+ * 탐구 보고서 — 교과서 탐구 활동지 모양(탐구 제목·목표·가설·준비물·과정(활동 1, 2…)·자료 해석(자료 1, 2…)·정리) (ADR-P20, 지침 6.1). AI·화면이 주는 도움은 섹션당 안내 질문 1·시작어 1뿐 — 문장을 완성하지 않는다(지침 5.4).
  */
 import { z } from "zod";
 
@@ -18,6 +18,17 @@ export const reportContentSchema = z.object({
     columns: z.array(z.string().max(40)).max(12),
     rows: z.array(z.array(z.string().max(80)).max(12)).max(60),
   }).default({ columns: [], rows: [] }),
+  /** 과정 — 활동별 제목과 순서(실험 기록에서 옮긴 초안, 학생이 고친다) */
+  activities: z.array(z.object({ title: t(120), steps: t(3000) })).max(8).default([]),
+  /** 자료 해석 — 자료 1, 2…: 활동별 결과 표·관찰·시간–온도 기록(실험 기록에서 늘 새로 만듦) + 학생이 쓴 "알 수 있는 점" */
+  data: z.array(z.object({
+    title: t(160),
+    columns: z.array(z.string().max(40)).max(12).default([]),
+    rows: z.array(z.array(z.string().max(80)).max(12)).max(60).default([]),
+    observations: z.array(z.string().max(300)).max(10).default([]),
+    series: z.array(z.object({ label: z.string().max(60), points: z.array(z.tuple([z.number(), z.number()])).max(80) })).max(6).default([]),
+    note: t(800),
+  })).max(8).default([]),
   interpretation: z.object({
     trend: t(1000),
     hypothesisVerdict: z.enum(["", "supported", "rejected", "unclear"]).default(""),
@@ -39,16 +50,16 @@ export interface SectionDef {
   guideline: string;
 }
 
-/** 보고서 8항목 — 변인 칸은 뺐다(ADR-P19). 변인 데이터는 예전 저장본 호환을 위해 스키마에만 남긴다 */
+/** 보고서 칸 — 교과서 탐구 활동지 순서. id는 저장 형식·AI 도움 표시와 맞춘다(변인 칸은 ADR-P19로 뺐다) */
 export const SECTIONS: SectionDef[] = [
-  { id: "title", title: "1. 제목", question: "무엇을 알아본 탐구인지 한 줄로 드러나나요?", starter: "~에 따른 ~의 변화", guideline: "6.1" },
-  { id: "goal", title: "2. 탐구 목표", question: "이 실험으로 무엇을 알고 싶었나요?", starter: "이 실험의 목표는", guideline: "6.1" },
-  { id: "hypothesis", title: "3. 가설", question: "실험 전에 예상한 것과 그 이유는 무엇이었나요?", starter: "~하면 ~할 것이다. 왜냐하면", guideline: "6.1" },
-  { id: "materials", title: "4. 준비물", question: "실험에 쓴 기구와 물질을 빠짐없이 적었나요?", starter: "", guideline: "6.1" },
-  { id: "procedure", title: "5. 실험 과정", question: "다른 사람이 따라 할 수 있을 만큼 순서가 분명한가요?", starter: "", guideline: "6.2" },
-  { id: "results", title: "6. 결과", question: "실험에서 잰 값과 계산한 값을 표로 정리했어요.", starter: "", guideline: "6.2" },
-  { id: "interpretation", title: "7. 해석·결론", question: "결과에서 알게 된 것, 내 예상이 맞았는지, 그렇게 생각한 까닭을 써 봐요.", starter: "표를 보면", guideline: "6.3" },
-  { id: "reflection", title: "8. 느낀 점·성찰", question: "예상과 결과의 차이, 어려웠던 점, 더 알고 싶은 점, 생활 속 연결을 돌아봐요.", starter: "", guideline: "6.4" },
+  { id: "title", title: "탐구 제목", question: "무엇을 알아본 탐구인지 한 줄로 드러나나요?", starter: "~에 따른 ~의 변화", guideline: "6.1" },
+  { id: "goal", title: "목표", question: "이 실험으로 무엇을 알고 싶었나요?", starter: "이 실험의 목표는", guideline: "6.1" },
+  { id: "hypothesis", title: "가설", question: "실험 전에 예상한 것과 그 이유는 무엇이었나요?", starter: "~하면 ~할 것이다. 왜냐하면", guideline: "6.1" },
+  { id: "materials", title: "준비물", question: "실험에 쓴 기구와 물질을 빠짐없이 적었나요?", starter: "", guideline: "6.1" },
+  { id: "procedure", title: "과정", question: "다른 사람이 따라 할 수 있을 만큼 순서가 분명한가요?", starter: "", guideline: "6.2" },
+  { id: "results", title: "자료 해석", question: "실험에서 얻은 자료를 번호를 붙여 정리했어요. 자료마다 알 수 있는 점을 써 봐요.", starter: "자료 1을 보면", guideline: "6.2" },
+  { id: "interpretation", title: "정리", question: "탐구 결과를 해석하고, 알게 된 것을 정리해요.", starter: "", guideline: "6.3" },
+  { id: "reflection", title: "성찰", question: "예상과 결과의 차이, 어려웠던 점, 더 알고 싶은 점, 생활 속 연결을 돌아봐요.", starter: "", guideline: "6.4" },
 ];
 
 export const REFLECTION_QUESTIONS: { id: keyof ReportContent["reflection"]; label: string; starter: string }[] = [
@@ -68,7 +79,7 @@ export interface SubmitCheck { id: string; label: string; ok: boolean }
 export function submitChecklist(c: ReportContent): SubmitCheck[] {
   const reflections = REFLECTION_QUESTIONS.filter((q) => filled(c.reflection[q.id], 10)).length;
   return [
-    { id: "evidence", label: "그렇게 생각한 까닭(표의 어떤 값을 보았는지)을 적었어요", ok: filled(c.interpretation.evidence, 5) },
+    { id: "evidence", label: "그렇게 생각한 까닭(자료의 어떤 값을 보았는지)을 적었어요", ok: filled(c.interpretation.evidence, 5) },
     { id: "error", label: "값이 조금씩 달라진 까닭(오차)을 한 가지 이상 적었어요", ok: filled(c.interpretation.errorSources, 5) },
     { id: "improve", label: "다음에 더 잘하려면 어떻게 할지 적었어요", ok: filled(c.interpretation.improvements, 5) },
     { id: "reflection", label: `성찰 질문 4개 중 3개 이상 답했어요 (지금 ${reflections}개)`, ok: reflections >= 3 },
