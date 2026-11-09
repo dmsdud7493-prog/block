@@ -20,7 +20,7 @@ function AiHelp({ aiAssisted, setAi, locked }: { aiAssisted: string[]; setAi: (v
   const toggle = (id: string) => setAi(aiAssisted.includes(id) ? aiAssisted.filter((x) => x !== id) : [...aiAssisted, id]);
   return (
     <fieldset className="mt-2 text-sm">
-      <legend className="font-semibold">AI 도우미의 도움을 받은 칸이 있다면 표시해 주세요 (솔직하게 적으면 돼요)</legend>
+      <legend className="font-semibold">랩메이트(AI)의 도움을 받은 칸이 있다면 표시해 주세요 (솔직하게 적으면 돼요)</legend>
       <div className="mt-1 flex flex-wrap gap-2">{SECTIONS.map((s) => <label key={s.id} className="tap flex items-center gap-1"><input type="checkbox" disabled={locked} checked={aiAssisted.includes(s.id)} onChange={() => toggle(s.id)} />{s.title.replace(/^\d+\.\s*/, "")}</label>)}</div>
     </fieldset>
   );

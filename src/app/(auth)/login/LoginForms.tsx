@@ -36,7 +36,7 @@ function AiNotice() {
     <div className="rounded-xl bg-[#eef7fc] p-3 text-sm">
       <p className="font-semibold">🤖 알아 두세요</p>
       <ul className="mt-1 list-inside list-disc text-muted">
-        <li>실험 도우미는 사람이 아닌 AI(Claude)예요. 틀린 말을 할 수도 있어요.</li>
+        <li>실험 짝꿍 랩메이트는 사람이 아닌 AI(Claude)예요. 틀린 말을 할 수도 있어요.</li>
         <li>AI와 나눈 대화, 실험 기록, 보고서는 선생님이 볼 수 있어요.</li>
         <li>이름·전화번호 같은 개인정보는 대화창에 쓰지 마세요.</li>
       </ul>

@@ -64,7 +64,7 @@ export default function PrivacyPage() {
       </section>
       <section aria-labelledby="p-ai" className="space-y-1">
         <h2 id="p-ai" className="text-xl font-bold">2. AI와 대화, 그리고 선생님의 열람</h2>
-        <p>실험 도우미는 사람이 아닌 AI(Claude)예요. 틀린 말을 할 수 있어요. 학생이 AI와 나눈 대화, 실험 기록, 보고서는 <strong>담당 선생님이 볼 수 있어요</strong>. 걱정되는 말(예: 위험하거나 괴로운 상황)이 감지되면 선생님 화면에 확인 표시가 떠요. 다른 반 선생님과 다른 학생은 볼 수 없어요.</p>
+        <p>실험 짝꿍 랩메이트(AI 실험 도우미)는 사람이 아닌 AI(Claude)예요. 틀린 말을 할 수 있어요. 학생이 AI와 나눈 대화, 실험 기록, 보고서는 <strong>담당 선생님이 볼 수 있어요</strong>. 걱정되는 말(예: 위험하거나 괴로운 상황)이 감지되면 선생님 화면에 확인 표시가 떠요. 다른 반 선생님과 다른 학생은 볼 수 없어요.</p>
       </section>
       <section aria-labelledby="p-transfer" className="space-y-2">
         <h2 id="p-transfer" className="text-xl font-bold">3. 개인정보의 국외 이전</h2>
