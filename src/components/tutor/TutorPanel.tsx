@@ -125,9 +125,9 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
 
   return (
     <section aria-labelledby="tutor-title" className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl bg-sky shadow-sm xl:rounded-none xl:shadow-none">
-      <div className="bg-nav-2 px-4 py-3 text-white">
+      <div className="border-b-2 border-[#4cbfe6] bg-[#2f6f9f] px-4 py-3 text-white">
         <h2 id="tutor-title" className="flex items-center gap-2 font-bold"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#2ecc71]" />🤖 랩메이트 <span className="rounded-full bg-[#ffbf00] px-1.5 text-xs font-extrabold text-[#2c3e50]">AI</span></h2>
-        <p className="mt-0.5 text-xs text-[#d6e4f0]">실험 같이 하는 AI 짝꿍이에요 · 틀린 말을 할 수도 있어요 · {mode === "session" ? "선생님이 대화를 볼 수 있어요" : "체험 모드 대화는 저장되지 않아요"}</p>
+        <p className="mt-0.5 text-xs text-[#e8f3fb]">실험 같이 하는 AI 짝꿍이에요 · 틀린 말을 할 수도 있어요 · {mode === "session" ? "선생님이 대화를 볼 수 있어요" : "체험 모드 대화는 저장되지 않아요"}</p>
       </div>
       <div className="px-3 pt-2"><HintLadderBadge level={lastHint} /></div>
       <ol ref={listRef} className="flex min-h-[200px] flex-1 flex-col gap-2.5 overflow-y-auto p-3" aria-live="polite" aria-label="대화">{msgs.map((m, i) => <Bubble key={i} m={m} />)}</ol>
