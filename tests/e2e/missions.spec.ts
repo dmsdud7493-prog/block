@@ -14,7 +14,7 @@ test("밀도: 미션 카드가 보이고, 넷을 한 비커에 넣으면 밀도 
   // 미션이 실험 계획을 대신하므로 '실험 계획' 꾸러미와 '실험 계획 세우기' 블록이 없다
   await expect(page.locator(".cat-design")).toHaveCount(0);
   await expect(page.getByText("실험 계획 세우기")).toHaveCount(0);
-  await expect(page.locator(".blocklyBlockCanvas .blocklyDraggable").filter({ hasText: "실험 절차" })).toHaveCount(1);
+  await expect(page.locator(".blocklyBlockCanvas .blocklyDraggable").filter({ hasText: "실험 과정" })).toHaveCount(1);
 
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), workspace(D, [

@@ -1,6 +1,6 @@
 /**
  * Blockly 작업 공간 → 엔진 Program 변환 (블록 id를 그대로 Step.blockId로 써서 진단을 블록에 되돌린다).
- * "🧪 실험 절차" 아래 블록만 절차, "🔬 변인 설계" 아래 블록만 변인 선언으로 읽는다.
+ * "🧪 실험 과정" 아래 블록만 절차, "🔬 변인 설계" 아래 블록만 변인 선언으로 읽는다.
  */
 import type * as Blockly from "blockly/core";
 import type { Program, SlotValue, Step, Unit, VariableDecl } from "@/lib/engine/types";

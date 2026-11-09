@@ -27,7 +27,7 @@ export type BlockJson = Record<string, unknown>;
 export function hatBlocks(): BlockJson[] {
   return [
     { type: T.designStart, message0: "🔬 실험 계획 세우기", nextStatement: "design", style: STYLE.hat, tooltip: "무엇을 바꿔 보고, 무엇을 재고, 무엇을 똑같이 맞출지 아래에 블록으로 정해요", deletable: false },
-    { type: T.procStart, message0: "🧪 실험 절차", nextStatement: "proc", style: STYLE.hat, tooltip: "실험 순서대로 행동 블록을 아래에 이어 붙여요", deletable: false },
+    { type: T.procStart, message0: "🧪 실험 과정", nextStatement: "proc", style: STYLE.hat, tooltip: "실험 순서대로 행동 블록을 아래에 이어 붙여요", deletable: false },
   ];
 }
 

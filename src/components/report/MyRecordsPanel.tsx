@@ -32,7 +32,7 @@ export default function MyRecordsPanel({ catalog, state }: { catalog: AnyCatalog
   return (
     <aside aria-label="내 실험 기록" className="space-y-2">
       <h2 className="font-bold">🗂 내 기록 (보고서를 쓸 때 참고해요)</h2>
-      <Block title={`최종 블록 절차 (${steps.length}개)`}><ol className="mt-1 list-inside list-decimal">{steps.map((t, i) => <li key={`${i}-${t}`}>{t}</li>)}</ol></Block>
+      <Block title={`최종 실험 과정 (${steps.length}개)`}><ol className="mt-1 list-inside list-decimal">{steps.map((t, i) => <li key={`${i}-${t}`}>{t}</li>)}</ol></Block>
       <Block title={`실행 기록 (${state.runs.length}회)`}><ul className="mt-1">{state.runs.map((r) => <li key={r.runNo}>{r.runNo}회차 · {r.ok ? "끝까지" : "멈춤"}{r.changedVars.length ? ` · 바꾼 변인: ${r.changedVars.join(", ")}` : ""}</li>)}</ul></Block>
       {catalog.resultView?.kind === "layers" ? null : <Block title="예상과 비교"><Predictions catalog={catalog} s={state} /></Block>}
       <Block title="계산 결과"><ul className="mt-1">{calcs.map((c) => <li key={c.key}>{calcName(catalog, state, c.key)} · {c.value} {c.unit} · {c.correct ? "확인됨" : `도전 ${c.attempts}번`}</li>)}</ul></Block>

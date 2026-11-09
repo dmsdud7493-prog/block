@@ -75,7 +75,7 @@ export default function InquiryCards({ catalog, program, inquiry, predictions, o
         <List items={vars} empty="무엇을 바꿔 보고, 재고, 똑같이 맞출지 블록으로 정해요." />
       </Card>
       <Card title="④ 절차" icon="🪜" tone="border-sun" filled={stepCount > 0}>
-        <p className="mt-1 text-sm">{stepCount > 0 ? `행동 블록 ${stepCount}개` : "실험 절차 아래에 블록을 이어 보세요."}</p>
+        <p className="mt-1 text-sm">{stepCount > 0 ? `행동 블록 ${stepCount}개` : "실험 과정 아래에 블록을 이어 보세요."}</p>
       </Card>
       <Card title="⑤ 예상" icon="🔮" tone="border-mint" filled={preds.length > 0}>
         <List items={preds} empty="실행 전에 결과를 예상해요." />
