@@ -128,7 +128,7 @@ export const separation2Catalog: ExperimentCatalog<Separation2State> = {
   reference: [SOLUBILITY_REFERENCE],
   missions: [
     {
-      id: "crystal", icon: "💎", title: "뜨거운 물에 녹인 혼합물을 식혀서 거른 뒤, 걸러 낸 붕산 결정의 질량을 구해 봐",
+      id: "crystal", icon: "💎", title: "붕산과 황산 구리(II)의 혼합물을 뜨거운 물에 녹여 식힌 뒤 거르고, 걸러 낸 붕산 결정의 질량을 구해 봐",
       cheer: "🏆 미션 성공! 황산 구리(II)는 왜 거름종이에 남지 않았을까? 용해도와 연결해 보고서에서 정리해 보자 ✨",
       done: { solved: ["boric_acid"] },
     },

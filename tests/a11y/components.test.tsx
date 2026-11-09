@@ -23,6 +23,13 @@ describe("a11y", () => {
   it("CheckPanel", () => noViolations(<CheckPanel diagnostics={[{ blockId: "b1", severity: "error", code: "x", message: "빈 칸에 블록을 끼워 주세요.", guideline: "2.3" }]} />));
   it("InquiryCards", () => noViolations(<InquiryCards catalog={densityCatalog} program={{ experiment: "density", steps: [], variables: [] }} inquiry={{ problem: "", hypothesis: "" }} predictions={[]} onInquiry={() => undefined} />));
   it("MissionBar", () => noViolations(<MissionBar progress={{ missions: densityCatalog.missions ?? [], done: [true, false, false], current: 1 }} />));
+  it("MissionBar — 미션이 하나면 번호·진행 수를 붙이지 않는다", async () => {
+    const one = { missions: [{ id: "m", icon: "🔥", title: "물과 에탄올의 혼합물을 가열해 봐", cheer: "", done: {} }], done: [false], current: 0 };
+    const { container, queryByText } = render(<MissionBar progress={one} />);
+    expect(queryByText("0/1")).toBeNull();
+    expect(container.textContent).not.toContain("①");
+    expect((await axe(container)).violations).toEqual([]);
+  });
   it("ReportReadOnly — 교사 화면도 활동지 모양(과정 활동·자료 번호·정리)", async () => {
     const content = {
       title: "밀도 측정 탐구", activities: [{ title: "액체의 질량과 부피 측정하기", steps: "➊ 물을 붓는다" }],
