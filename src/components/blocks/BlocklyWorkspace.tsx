@@ -31,8 +31,8 @@ function ensureBlocks(slug: string) {
   defined.add(slug);
 }
 
-/** '오늘의 미션'이 있는 실험은 미션 카드가 실험 계획을 대신하므로 '실험 계획 세우기' 블록을 두지 않는다(ADR-P18) */
-export const usesPlanBlocks = (catalog: AnyCatalog): boolean => !(catalog.missions?.length);
+/** 미션 카드가 실험 계획을 대신하므로 '실험 계획 세우기' 블록은 기본으로 두지 않는다(ADR-P18·P21). catalog.planBlocks로 다시 켤 수 있다 */
+export const usesPlanBlocks = (catalog: AnyCatalog): boolean => Boolean(catalog.planBlocks);
 
 const emptyWorkspace = (catalog: AnyCatalog) => (usesPlanBlocks(catalog)
   ? EMPTY_WORKSPACE

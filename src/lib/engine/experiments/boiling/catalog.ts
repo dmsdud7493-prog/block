@@ -135,6 +135,18 @@ export const boilingCatalog: ExperimentCatalog<BoilingState> = {
     "온도계를 스탠드에 고정한다",
   ],
   predictionTargets: PREDICTIONS,
+  missions: [
+    {
+      id: "water", icon: "💧", title: "물은 몇 ℃에서 끓을까? 물의 끓는점을 구해 봐",
+      cheer: "🎉 미션 ① 성공! 물의 끓는점을 구했네. 에탄올도 같은 온도에서 끓을까? 이제 미션 ② 차례야 💪",
+      done: { solved: ["water"] },
+    },
+    {
+      id: "ethanol", icon: "🧪", title: "에탄올의 끓는점도 구해서 물과 비교해 봐",
+      cheer: "🏆 미션 ② 성공! 두 액체의 끓는점은 같았어? 끓는점이 물질마다 다르다면 무엇을 알 수 있을까? 보고서에서 정리해 보자 ✨",
+      done: { solved: ["ethanol"] },
+    },
+  ],
   requiredSubjects: ["water", "ethanol"],
   initialState: initialBoilingState,
   reduce: reduceBoiling,

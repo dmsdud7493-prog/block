@@ -13,8 +13,8 @@ describe("변인 설계 블록 (지침 2.1)", () => {
   });
   it.each(Object.keys(CATALOGS))("%s 도구 상자에 변인 블록 3종만, '왜?' 칸 없음", (slug) => {
     const text = JSON.stringify(toolbox(CATALOGS[slug]!));
-    // '오늘의 미션'이 있는 실험은 실험 계획 꾸러미가 없다 (ADR-P18)
-    const planned = !CATALOGS[slug]!.missions?.length;
+    // 실험 계획 꾸러미는 기본으로 없다 — planBlocks로 켠 실험만 (ADR-P18·P21)
+    const planned = Boolean(CATALOGS[slug]!.planBlocks);
     ["independent", "dependent", "controlled"].forEach((r) => expect(text.includes(`var_${slug}_${r}`)).toBe(planned));
     ["experimental_group", "comparison_group", "method"].forEach((r) => expect(text).not.toContain(`var_${slug}_${r}`));
     expect(JSON.stringify(variableBlocks(CATALOGS[slug]!))).not.toContain("WHY");

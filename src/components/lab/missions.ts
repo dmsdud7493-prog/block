@@ -22,7 +22,7 @@ function eventSeen(s: LabState, want: NonNullable<MissionDef["done"]["event"]>):
   return s.runs.some((r) => r.frames.some((f) => {
     if (want.type && f.event.type !== want.type) return false;
     const settled = Array.isArray(f.event.settled) ? (f.event.settled as unknown[]) : [];
-    return want.settled.every((x) => settled.includes(x));
+    return (want.settled ?? []).every((x) => settled.includes(x));
   }));
 }
 

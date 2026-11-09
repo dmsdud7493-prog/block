@@ -126,6 +126,18 @@ export const separation2Catalog: ExperimentCatalog<Separation2State> = {
   ],
 
   reference: [SOLUBILITY_REFERENCE],
+  missions: [
+    {
+      id: "filter", icon: "🫗", title: "뜨거운 물에 녹인 혼합물을 식힌 다음 걸러 보자",
+      cheer: "🎉 미션 ① 성공! 거름종이 위에 무엇이 남았어? 이제 미션 ② 차례야 💪",
+      done: { event: { type: "filter" } },
+    },
+    {
+      id: "crystal", icon: "💎", title: "걸러 낸 붕산 결정은 몇 g일까? 결정의 질량을 구해 봐",
+      cheer: "🏆 미션 ② 성공! 황산 구리(II)는 왜 거름종이에 남지 않았을까? 용해도와 연결해 보고서에서 정리해 보자 ✨",
+      done: { solved: ["boric_acid"] },
+    },
+  ],
   requiredSubjects: ["boric_acid"],
   initialState: initialSeparation2State,
   reduce: reduceSeparation2,

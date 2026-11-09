@@ -76,7 +76,7 @@ export interface MissionDef {
   title: string;
   /** 미션을 마쳤을 때 튜터가 건네는 한마디(정답 수치는 넣지 않는다) */
   cheer: string;
-  done: { solved?: string[]; event?: { type?: string; settled: string[] } };
+  done: { solved?: string[]; event?: { type?: string; settled?: string[] } };
 }
 
 export interface ExperimentCatalog<S> {
@@ -96,6 +96,8 @@ export interface ExperimentCatalog<S> {
   reference?: ReferenceTable[];
   /** 오늘의 미션(순서대로 열린다). 없으면 미션 카드를 보이지 않는다 */
   missions?: MissionDef[];
+  /** '실험 계획 세우기'(변인 블록)를 쓸지 — 기본은 쓰지 않는다. 오늘의 미션이 실험 계획을 대신한다(ADR-P18·P21) */
+  planBlocks?: boolean;
   /** 보고서 '과정'의 활동 나누기 — 활동마다 다루는 물질. 없으면 측정 대상(requiredSubjects)마다 활동 하나 */
   reportActivities?: { title: string; subjects: string[] }[];
   /**

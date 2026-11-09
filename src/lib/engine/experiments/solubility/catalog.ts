@@ -128,6 +128,18 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
   ],
 
   /** 실험2(온도 변화)는 확장 과제라 완료 조건에 넣지 않는다 */
+  missions: [
+    {
+      id: "kno3", icon: "🧂", title: "질산 칼륨은 물 100 g에 얼마나 녹을까? 녹는 양을 구해 봐",
+      cheer: "🎉 미션 ① 성공! 질산 칼륨이 녹는 양을 구했네. 다른 물질도 똑같이 녹을까? 이제 미션 ② 황산 구리(II) 차례야 💪",
+      done: { solved: ["kno3"] },
+    },
+    {
+      id: "cuso4", icon: "💎", title: "황산 구리(II)도 같은 방법으로! 두 물질이 녹는 양을 비교해 봐",
+      cheer: "🏆 미션 ② 성공! 두 물질이 녹는 양은 같았어? 다르다면 왜일까? 보고서에서 정리해 보자 ✨",
+      done: { solved: ["cuso4"] },
+    },
+  ],
   requiredSubjects: ["kno3", "cuso4"],
   initialState: initialSolubilityState,
   reduce: reduceSolubility,

@@ -124,6 +124,18 @@ export const meltingCatalog: ExperimentCatalog<MeltingState> = {
     "비커를 핫플레이트 위에 올린다",
   ],
   predictionTargets: PREDICTIONS,
+  missions: [
+    {
+      id: "lauric", icon: "🧊", title: "로르산은 몇 ℃에서 녹을까? 로르산의 녹는점을 구해 봐",
+      cheer: "🎉 미션 ① 성공! 로르산의 녹는점을 구했네. 팔미트산도 같은 온도에서 녹을까? 이제 미션 ② 차례야 💪",
+      done: { solved: ["lauric_acid"] },
+    },
+    {
+      id: "palmitic", icon: "🕯️", title: "팔미트산의 녹는점도 구해서 로르산과 비교해 봐",
+      cheer: "🏆 미션 ② 성공! 두 물질의 녹는점은 같았어? 녹는 동안 온도는 어땠는지도 떠올려 봐. 보고서에서 정리해 보자 ✨",
+      done: { solved: ["palmitic_acid"] },
+    },
+  ],
   requiredSubjects: ["lauric_acid", "palmitic_acid"],
   initialState: initialMeltingState,
   reduce: reduceMelting,
