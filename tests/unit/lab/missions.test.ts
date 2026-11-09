@@ -33,11 +33,15 @@ describe("오늘의 미션 진행", () => {
     const later = missionProgress(densityCatalog, state({ runs: [run([], ALL), run(ALL)], calc: solved(ALL) }));
     expect(later).toMatchObject({ done: [true, true, true], current: 3 });
   });
-  it("여섯 실험 모두 미션이 있고, 이벤트만으로 끝나는 미션(증류 ① 가열)도 센다", async () => {
+  it("여섯 실험 모두 미션이 있다 — 혼합물 분리 두 실험은 미션 하나", async () => {
     const { CATALOGS } = await import("@/lib/engine/experiments");
-    for (const c of Object.values(CATALOGS)) expect(c!.missions?.length ?? 0).toBeGreaterThanOrEqual(2);
-    const { separation1Catalog } = await import("@/lib/engine/experiments/separation1/catalog");
+    for (const c of Object.values(CATALOGS)) expect(c!.missions?.length ?? 0).toBeGreaterThanOrEqual(1);
+    expect(CATALOGS.separation1!.missions).toHaveLength(1);
+    expect(CATALOGS.separation2!.missions).toHaveLength(1);
+  });
+  it("이벤트만으로 끝나는 미션도 센다(settled 없이 종류만)", () => {
+    const m = { id: "h", icon: "🔥", title: "가열", cheer: "", done: { event: { type: "heat" } } };
     const heated = { ...run([]), frames: [{ blockId: "b1", state: {}, event: { type: "heat", note: "" } }] } as unknown as RunRecord;
-    expect(missionProgress(separation1Catalog, state({ runs: [heated] }))).toMatchObject({ done: [true, false], current: 1 });
+    expect(missionProgress({ ...densityCatalog, missions: [m] }, state({ runs: [heated] })).done).toEqual([true]);
   });
 });

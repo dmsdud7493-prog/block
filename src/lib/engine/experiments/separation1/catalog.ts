@@ -155,13 +155,8 @@ export const separation1Catalog: ExperimentCatalog<Separation1State> = {
   predictionTargets,
   missions: [
     {
-      id: "heat", icon: "🔥", title: "물과 에탄올을 섞은 액체를 가열해 보자. 어떤 액체가 먼저 끓어 나올까?",
-      cheer: "🎉 미션 ① 성공! 혼합물을 가열했네. 시험관에 먼저 모인 액체는 무엇일까? 이제 미션 ② 차례야 💪",
-      done: { event: { type: "heat" } },
-    },
-    {
-      id: "collect", icon: "🌡️", title: "처음 모인 액체가 끓어 나온 온도를 구해 봐",
-      cheer: "🏆 미션 ② 성공! 그 온도는 물과 에탄올 중 어느 쪽의 끓는점에 가까웠어? 보고서에서 정리해 보자 ✨",
+      id: "distill", icon: "🔥", title: "물과 에탄올을 섞은 액체를 가열해서, 처음 모인 액체가 끓어 나온 온도를 구해 봐",
+      cheer: "🏆 미션 성공! 그 온도는 물과 에탄올 중 어느 쪽의 끓는점에 가까웠어? 먼저 모인 액체가 무엇인지 보고서에서 정리해 보자 ✨",
       done: { solved: ["ethanol"] },
     },
   ],
