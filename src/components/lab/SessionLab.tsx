@@ -13,7 +13,7 @@ import type { LabController } from "./useLabController";
 
 type Editing = "none" | "slots" | "all";
 
-export default function SessionLab({ view }: { view: SessionView }) {
+export default function SessionLab({ view, author }: { view: SessionView; author?: string }) {
   const backend = useMemo(() => sessionBackend(view.sessionId), [view.sessionId]);
   const catalog = getCatalog(view.slug);
   if (!catalog) return null;
@@ -21,7 +21,7 @@ export default function SessionLab({ view }: { view: SessionView }) {
   const atReport = ["submitted", "resubmitted", "returned"].includes(view.status);
   const tutor = (ctl: LabController, section: string | null) => <TutorPanel ctl={ctl} catalog={catalog} mode="session" sessionId={view.sessionId} initial={view.chat} hintLevelEditing={editing} reportSection={section} />;
   const saved = view.report ? { content: view.report.content as Partial<ReportContent>, aiAssisted: view.report.aiAssisted } : null;
-  const report = (ctl: LabController, back: () => void) => <ReportView ctl={ctl} catalog={catalog} mode="session" sessionId={view.sessionId} saved={saved} status={view.status} returnNote={returnNoteOf(view)} onBack={back} tutor={(section) => tutor(ctl, section)} />;
+  const report = (ctl: LabController, back: () => void) => <ReportView ctl={ctl} catalog={catalog} author={author} mode="session" sessionId={view.sessionId} saved={saved} status={view.status} returnNote={returnNoteOf(view)} onBack={back} tutor={(section) => tutor(ctl, section)} />;
   return (
     <LabShell
       slug={view.slug}

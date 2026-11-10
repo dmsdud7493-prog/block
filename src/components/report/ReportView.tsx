@@ -23,6 +23,8 @@ export interface ReportViewProps {
   /** 선생님이 반환한 루브릭·코멘트 (세션 모드, 반환 후에만) */
   returnNote?: FeedbackData | null;
   onBack: () => void;
+  /** 제출자 학번(번호) — 보고서 제목 아래, 인쇄물에도 */
+  author?: string;
   tutor: (section: string | null) => React.ReactNode;
 }
 
@@ -34,6 +36,16 @@ function StatusBar({ locked, submitted, saved, mode }: { locked: boolean; submit
   return <p className="text-xs text-muted" aria-live="polite">{mode === "session" ? SAVE_TEXT[saved] : "체험 모드 — 저장되지 않아요"}</p>;
 }
 
+/** 보고서 제목과 제출자(학번) — 인쇄물 맨 위 */
+function Title({ title, author }: { title: string; author?: string }) {
+  return (
+    <div className="print:w-full print:text-center">
+      <h1 className="text-xl font-bold print:text-2xl">📝 {title} 탐구 보고서</h1>
+      {author ? <p className="text-sm font-semibold text-muted print:mt-1 print:text-base print:text-ink">제출자: {author}</p> : null}
+    </div>
+  );
+}
+
 function Editor({ r, readOnly, mode, onFocusSection }: { r: ReturnType<typeof useReport>; readOnly: boolean; mode: "demo" | "session"; onFocusSection: (s: string) => void }) {
   return (
     <div className="space-y-4">
@@ -43,7 +55,7 @@ function Editor({ r, readOnly, mode, onFocusSection }: { r: ReturnType<typeof us
   );
 }
 
-export default function ReportView({ ctl, catalog, mode, sessionId, saved, status, returnNote = null, onBack, tutor }: ReportViewProps) {
+export default function ReportView({ ctl, catalog, mode, sessionId, saved, status, returnNote = null, onBack, tutor, author }: ReportViewProps) {
   const locked = status === "submitted" || status === "resubmitted";
   const initial = useMemo(() => initialReport(catalog, ctl.state, saved?.content ?? null), [catalog, ctl.state, saved]);
   const r = useReport(initial, { sessionId, locked, initialAi: saved?.aiAssisted ?? [] });
@@ -52,7 +64,7 @@ export default function ReportView({ ctl, catalog, mode, sessionId, saved, statu
   return (
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold print:w-full print:text-center print:text-2xl">📝 {catalog.title} 탐구 보고서</h1>
+        <Title title={catalog.title} author={author} />
         <div className="flex gap-2 print:hidden"><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={onBack}>← 실험으로 돌아가기</button><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={() => window.print()}>🖨 인쇄</button></div>
       </header>
       <div className="print:hidden"><StatusBar locked={locked} submitted={r.submitted} saved={r.saved} mode={mode} /></div>

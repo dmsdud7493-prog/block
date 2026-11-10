@@ -21,5 +21,6 @@ export default async function SessionPage({ params }: { params: Promise<{ sessio
   if (!user) redirect("/login");
   const view = await load(params);
   if (!view) notFound();
-  return <SessionLab view={view} />;
+  // 보고서 머리에 제출자(학번)를 적는다 — 학생 display_name은 학번/번호(실명 아님, 규칙 5)
+  return <SessionLab view={view} author={user.role === "student" ? user.displayName : undefined} />;
 }
