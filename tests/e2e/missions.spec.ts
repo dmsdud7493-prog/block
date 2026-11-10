@@ -97,5 +97,10 @@ test("밀도: 물·식용유 밀도를 맞게 계산하면 그래프 대신 한 
   await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
   await page.getByRole("button", { name: "🎯 미션 2 하러 가기" }).click();
   await expect(page.locator("#today-mission")).toBeFocused();
+  // 조립판이 비워져 '실험 과정' 머리 블록만 남는다(미션 1 기록은 실행 기록에 남는다)
+  const saved = await page.evaluate(() => (window as unknown as { __labSave: () => { blocks?: { blocks: { type: string; next?: unknown }[] } } }).__labSave());
+  expect(saved.blocks?.blocks).toHaveLength(1);
+  expect(saved.blocks?.blocks[0].next).toBeUndefined();
+  await expect(page.getByRole("list", { name: "실험 기록" }).getByRole("listitem").first()).toBeVisible();
   await expect(page.locator("section[aria-labelledby=after-title]")).toHaveCount(0);
 });

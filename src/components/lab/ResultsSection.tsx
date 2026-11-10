@@ -24,8 +24,9 @@ function GraphGate({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }
 }
 
 /** 다음 미션으로 — 블록 위 '오늘의 미션' 칸으로 옮겨 간다 */
-function NextMission({ n, numbered }: { n: number; numbered: boolean }) {
+function NextMission({ n, numbered, onStart }: { n: number; numbered: boolean; onStart: () => void }) {
   const go = () => {
+    onStart();
     const bar = document.getElementById("today-mission");
     bar?.scrollIntoView({ behavior: "smooth", block: "center" });
     bar?.focus({ preventScroll: true });
@@ -33,15 +34,15 @@ function NextMission({ n, numbered }: { n: number; numbered: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap btn-sun px-5 py-2" onClick={go}>🎯 미션{numbered ? ` ${n}` : ""} 하러 가기</button>
-      <span className="text-sm text-muted">블록을 고쳐서 다음 미션을 실행해 봐요. 보고서는 미션을 모두 마친 뒤 한 장으로 써요.</span>
+      <span className="text-sm text-muted">누르면 조립판이 비워져요. 새로 블록을 짜서 다음 미션을 실행해 봐요. 지난 미션 기록은 보고서에 그대로 남아요.</span>
     </div>
   );
 }
 
-function ToReport({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }) {
+function ToReport({ ctl, catalog, onNextMission }: { ctl: LabController; catalog: AnyCatalog; onNextMission: () => void }) {
   const p = missionProgress(catalog, ctl.state);
   if (p.missions.length > 0 && !allMissionsDone(p)) {
-    return p.current > 0 ? <NextMission n={p.current + 1} numbered={p.missions.length > 1} /> : <p className="text-sm text-muted">🎯 오늘의 미션을 마치면 다음 단계가 열려요.</p>;
+    return p.current > 0 ? <NextMission n={p.current + 1} numbered={p.missions.length > 1} onStart={onNextMission} /> : <p className="text-sm text-muted">🎯 오늘의 미션을 마치면 다음 단계가 열려요.</p>;
   }
   const ready = reportReady(ctl.state, catalog);
   return (
@@ -53,20 +54,20 @@ function ToReport({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog })
 }
 
 /** 밀도: 그래프·예상 비교 없이 계산값 확인 → 한 비커 그림 → 보고서로 */
-function LayersView({ catalog, ctl, liquids }: { catalog: AnyCatalog; ctl: LabController; liquids: string[] }) {
+function LayersView({ catalog, ctl, liquids, onNext }: { catalog: AnyCatalog; ctl: LabController; liquids: string[]; onNext: () => void }) {
   const { state } = ctl;
   const okRun = [...state.runs].reverse().find((r) => r.ok);
   return (
     <>
       {okRun ? <LayerResult catalog={catalog} run={okRun} calc={state.calc} liquids={liquids} /> : null}
       <RunHistory runs={state.runs} />
-      {okRun ? <ToReport ctl={ctl} catalog={catalog} /> : null}
+      {okRun ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
     </>
   );
 }
 
 /** 그래프형: 예측 확인 후 그래프 → 예상과 비교 → 보고서로 */
-function GraphView({ catalog, ctl }: { catalog: AnyCatalog; ctl: LabController }) {
+function GraphView({ catalog, ctl, onNext }: { catalog: AnyCatalog; ctl: LabController; onNext: () => void }) {
   const { state } = ctl;
   const okRun = [...state.runs].reverse().find((r) => r.ok);
   return (
@@ -75,12 +76,12 @@ function GraphView({ catalog, ctl }: { catalog: AnyCatalog; ctl: LabController }
       {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
       {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
       <RunHistory runs={state.runs} />
-      {state.graphOpened ? <ToReport ctl={ctl} catalog={catalog} /> : null}
+      {state.graphOpened ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
     </>
   );
 }
 
-export default function ResultsSection({ catalog, ctl }: { catalog: AnyCatalog; ctl: LabController }) {
+export default function ResultsSection({ catalog, ctl, onNextMission }: { catalog: AnyCatalog; ctl: LabController; onNextMission: () => void }) {
   const { state } = ctl;
   const run = latestRun(state);
   if (!run) return null;
@@ -90,8 +91,8 @@ export default function ResultsSection({ catalog, ctl }: { catalog: AnyCatalog; 
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
       {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u) => ctl.check(req, okRun.runNo, v, u)} /> : null}
       {catalog.resultView?.kind === "layers"
-        ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} />
-        : <GraphView catalog={catalog} ctl={ctl} />}
+        ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} onNext={onNextMission} />
+        : <GraphView catalog={catalog} ctl={ctl} onNext={onNextMission} />}
     </section>
   );
 }

@@ -65,6 +65,8 @@ export interface BlocklyWorkspaceProps {
   onProgramChange: (program: Program, state: object) => void;
   /** 누른 블록 id와, 그 블록이 들어 있는 행동(문장) 블록 id — 빈칸 속 준비물을 눌러도 그 행동을 찾는다 */
   onBlockClick?: (blockId: string, stepId: string) => void;
+  /** 값이 바뀔 때마다 조립판을 처음 상태(실험 과정 머리 블록만)로 비운다 — 다음 미션 시작 */
+  resetSignal?: number;
 }
 
 function applyDiagnostics(ws: Blockly.WorkspaceSvg, diags: Diagnostic[]) {
@@ -227,6 +229,17 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       setWsState(null);
     };
   }, [slug, initialState, readOnly, setSelId]);
+
+  useEffect(() => {
+    const ws = wsRef.current;
+    const catalog = getCatalog(slug);
+    if (!ws || !catalog || !props.resetSignal) return;
+    ws.clear();
+    Blockly.serialization.workspaces.load(emptyWorkspace(catalog), ws);
+    relayoutWorkspace(ws);
+    ws.scrollCenter();
+    setSelId(null);
+  }, [props.resetSignal, slug, setSelId]);
 
   useEffect(() => {
     if (wsRef.current) applyDiagnostics(wsRef.current, props.diagnostics);

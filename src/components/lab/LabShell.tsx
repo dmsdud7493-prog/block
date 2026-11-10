@@ -90,8 +90,8 @@ function BlockHelp() {
   );
 }
 
-function DesignPane({ slug, examples, missions, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick }: {
-  slug: string; examples: string[]; missions: MissionProgress; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
+function DesignPane({ slug, examples, missions, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick, reset }: {
+  slug: string; examples: string[]; missions: MissionProgress; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null; reset: number;
   onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
@@ -101,7 +101,7 @@ function DesignPane({ slug, examples, missions, initial, diagnostics, activeBloc
       <BlockHelp />
       {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-[480px]">
-        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
+        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} resetSignal={reset} />
       </div>
     </section>
   );
@@ -157,6 +157,9 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const runError: Diagnostic | null = run && !run.ok ? run.diagnostics.find((d) => d.severity === "error") ?? null : null;
   const gate = catalog.predictionTargets.find((t) => t.id === state.gateTarget);
   const st = stepperState(state, catalog);
+  // 다음 미션: 조립판을 비워 새로 짠다(지난 미션 기록은 실행 기록에 남아 보고서에 쓰인다)
+  const [reset, setReset] = useState(0);
+  const nextMission = useCallback(() => setReset((n) => n + 1), []);
   const runCtl = useRun(ctl, settings);
   const missions = useMemo(() => missionProgress(catalog, state), [catalog, state]);
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);
@@ -174,7 +177,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   };
 
   const stepper = <div className="min-w-0 flex-1"><StepStepper phase={state.phase} done={st.done} locked={st.locked} onSelect={(p) => dispatch({ type: "phase", phase: p })} /></div>;
-  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} />;
+  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} reset={reset} />;
   const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} play={play} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
 
   if (state.phase === "report" && report) {
@@ -195,7 +198,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
       {/* 넓은 화면: 조립 칸을 넉넉히(680px 이상) 두고, 화면이 좁으면 아래 가로 막대로 오른쪽 모니터까지 옮겨 본다 */}
       <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
         <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto">{design}</div>
-        <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} /></div>
+        <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} onNextMission={nextMission} /></div>
         <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
       </main>
       {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.runs.length ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
