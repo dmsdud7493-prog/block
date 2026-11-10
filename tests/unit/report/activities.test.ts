@@ -58,3 +58,37 @@ describe("활동 나누기", () => {
     expect(activitiesOf(densityCatalog, s)).toHaveLength(1);
   });
 });
+
+describe("미션별 보고서(미션을 마친 실행들을 한 장으로)", () => {
+  /** 미션마다 블록을 바꿔 따로 실행한 기록 — 실행 번호와 계산값이 실행마다 붙는다 */
+  function multiRun(parts: ReturnType<typeof S>[][]): LabState {
+    const runs = parts.map((steps, i) => {
+      const program = prog("density", steps);
+      const r = simulate(program, densityCatalog, src);
+      return { runNo: i + 1, ok: r.ok, program, frames: r.frames, measurements: r.measurements, calcRequests: r.calcRequests, series: r.series, diagnostics: [], changedVars: [] } as unknown as RunRecord;
+    });
+    const calc = Object.fromEntries(runs.flatMap((run) => run.calcRequests.map((c) => [c.key, { key: c.key, runNo: run.runNo, value: "1", unit: "g/mL", attempts: 1, correct: true, errorType: null, hint: null }])));
+    return { ...initialLabState("density"), program: runs[runs.length - 1].program, runs, calc } as LabState;
+  }
+  const oilThenWater = [S("a6", E("beaker"), E("oil"), Q(50, "mL")), S("a6", E("beaker"), E("water"), Q(50, "mL")), S("a7", E("iron_big"), E("beaker")), S("a7", E("iron_small"), E("beaker"))];
+
+  it("미션 1·2·3을 따로 실행해도 과정은 미션 순서대로 활동 1·2·3, 자료도 셋", () => {
+    const s = multiRun([[...liquid("water"), ...liquid("oil")], [...iron("iron_big"), ...iron("iron_small")], oilThenWater]);
+    const acts = activitiesOf(densityCatalog, s);
+    expect(acts.map((a) => a.title)).toEqual(densityCatalog.reportActivities!.map((a) => a.title));
+    expect(acts[0].steps).toContain("식용유");
+    expect(acts[1].steps).toContain("철조각");
+    expect(acts[1].steps).not.toContain("식용유");
+    const data = dataOf(densityCatalog, s);
+    expect(data.map((d) => d.title)).toEqual(densityCatalog.reportActivities!.map((a) => `${a.title} 결과`));
+    expect(data[1].rows.map((r) => r[1])).toEqual(["큰 철조각", "작은 철조각"]);
+  });
+
+  it("식용유 위에 물을 부으면 물이 가라앉는 장면(sink)으로 표시하고 오래 보여 준다", () => {
+    const s = multiRun([oilThenWater]);
+    const ev = s.runs[0].frames.map((f) => f.event).find((e) => e.sink);
+    expect(ev?.sink).toBe("water");
+    expect(ev?.hold).toBe(2);
+    expect(ev?.note).toMatch(/물이 식용유를 뚫고 아래로 가라앉았어요/);
+  });
+});

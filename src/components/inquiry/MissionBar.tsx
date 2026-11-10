@@ -23,7 +23,7 @@ export default function MissionBar({ progress }: { progress: MissionProgress }) 
   if (missions.length === 0) return null;
   const all = current >= missions.length;
   return (
-    <section aria-label="오늘의 미션" className="rounded-lg border-2 border-sun bg-[#fffbea] px-4 py-2.5 text-base leading-relaxed shadow-sm">
+    <section id="today-mission" tabIndex={-1} aria-label="오늘의 미션" className="scroll-mt-4 outline-none focus-visible:ring-4 focus-visible:ring-sun rounded-lg border-2 border-sun bg-[#fffbea] px-4 py-2.5 text-base leading-relaxed shadow-sm">
       <h3 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg text-nav">
         🎯 오늘의 미션
         {missions.length > 1 ? <span className="ml-auto rounded-full bg-white px-2 font-sans text-sm font-bold text-muted">{done.filter(Boolean).length}/{missions.length}</span> : null}

@@ -78,16 +78,46 @@ const pouringInto = (ev: SimEvent | null, c: "cylinder" | "beaker") => (ev?.type
 
 const LIQ_LABEL: Record<string, string> = { water: "물", oil: "식용유" };
 
-/** 비커 속 층 — 밀도 순서(아래→위)로 쌓인 액체와 바닥에 가라앉은 철조각. 위층부터 그려 아래층이 앞에 온다 */
-function BeakerLayers({ b }: { b: DensityState["bkr"] }) {
+/** 비커 속 층 — 밀도 순서(아래→위)로 쌓인 액체와 바닥에 가라앉은 철조각. 위층부터 그려 아래층이 앞에 온다.
+ *  sink: 이번에 부은 액체가 먼저 있던 액체를 뚫고 가라앉는 중 — 방울이 떨어지고 층이 천천히 자리를 바꾼다 */
+function BeakerLayers({ b, sink, sinkKey }: { b: DensityState["bkr"]; sink: string | null; sinkKey?: string }) {
   const liquids = b.layers.filter((k) => (b.liquids[k] ?? 0) > 0);
   const tops = liquids.reduce<number[]>((acc, k) => [...acc, (acc[acc.length - 1] ?? 0) + (b.liquids[k] ?? 0) / BKR_MAX], []);
   const span = BKR.h - 6;
+  const slow = sink ? "lab-sink" : undefined;
   return (
     <g>
-      {liquids.map((k, i) => ({ k, i })).reverse().map(({ k, i }) => <Liquid key={k} w={BKR.w} h={BKR.h} level={tops[i]} liquid={k} top={6} />)}
+      {liquids.map((k, i) => ({ k, i })).reverse().map(({ k, i }) => <Liquid key={k} w={BKR.w} h={BKR.h} level={tops[i]} liquid={k} top={6} className={slow} />)}
+      {sink ? <SinkDrops key={sinkKey} liquid={sink} from={BKR.h - span * (tops[tops.length - 1] ?? 0) + 4} to={BKR.h - 8} /> : null}
       {b.solids.map((id, i) => <g key={id} className="lab-appear"><IronPiece x={10 + i * 22} y={BKR.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
       {liquids.length > 1 ? liquids.map((k, i) => <text key={`t-${k}`} x={BKR.w - 6} y={BKR.h - span * ((tops[i] + (tops[i - 1] ?? 0)) / 2) + 3} textAnchor="end" fontSize="8" fontWeight="700" fill="#334155">{LIQ_LABEL[k]}</text>) : null}
+    </g>
+  );
+}
+
+const DROPS = [{ x: 0.42, d: 0.45 }, { x: 0.55, d: 0.7 }, { x: 0.36, d: 0.95 }, { x: 0.6, d: 1.2 }, { x: 0.48, d: 1.45 }, { x: 0.4, d: 1.7 }];
+
+const Drop = ({ x, y, fall, delay, fill }: { x: number; y: number; fall: number; delay: number; fill: string }) => (
+  <ellipse className="lab-sink-drop" cx={x} cy={y} rx="3.4" ry="4.2" fill={fill} stroke="#1d6fa8" strokeWidth="0.8"
+    style={{ ["--fall" as string]: `${fall}px`, animationDelay: `calc(${delay}s / var(--lab-speed, 1))` }} />
+);
+
+/** 가라앉는 방울 — 위층 액체 표면에서 바닥까지 하나씩 떨어진다(물줄기가 위층을 뚫고 내려가는 모습) */
+function SinkDrops({ liquid, from, to }: { liquid: string; from: number; to: number }) {
+  const fill = liquid === "oil" ? "#e8b923" : "#5fb3ee";
+  return (
+    <g aria-hidden="true">
+      {DROPS.map((p) => <Drop key={p.d} x={BKR.w * p.x} y={from} fall={Math.max(0, to - from)} delay={p.d} fill={fill} />)}
+    </g>
+  );
+}
+
+/** 가라앉는 중이라는 말풍선 */
+function SinkCaption({ liquid, w }: { liquid: string; w: number }) {
+  return (
+    <g className="lab-appear" aria-hidden="true">
+      <rect x={w / 2 - 50} y={6} width="100" height="15" rx="7.5" fill="#ffffff" opacity="0.92" stroke="#2563eb" strokeWidth="0.8" />
+      <text x={w / 2} y={16.5} textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#1d4ed8">⬇ {liquid === "oil" ? "식용유가" : "물이"} 아래로 가라앉아요</text>
     </g>
   );
 }
@@ -98,10 +128,12 @@ function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   const x = onScale ? SPOT.scaleX + SPOT.bkrScale - BKR.w / 2 + 22 : SPOT.bkrFloor;
   const y = onScale ? BENCH_Y - 34 - BKR.h + 1 : BENCH_Y - BKR.h;
   const pourLiquid = ev?.type === "pour" ? String(ev.liquid) : ev?.type === "transfer" ? String(ev.liquid) : null;
+  const sink = typeof ev?.sink === "string" && pouringInto(ev, "beaker") ? ev.sink : null;
   return (
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
-      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} />} />
+      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} />} />
+      {sink ? <SinkCaption key={`c-${ev?.note}`} liquid={sink} w={BKR.w} /> : null}
       {pouringInto(ev, "beaker") ? <PourWithHand key={ev?.note} x={BKR.w / 2} y1={-22} y2={BKR.h - 6} color={pourLiquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={pourLiquid} /> : null}
       {ev?.type === "dropSolid" && ev.container === "beaker" ? <IronTweezers key={ev.note} x={BKR.w / 2 - 6} y={10} solid={String(ev.name)} /> : null}
     </g>

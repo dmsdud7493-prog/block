@@ -19,7 +19,9 @@ function variablesOf(c: AnyCatalog, s: LabState): ReportContent["variables"] {
 }
 
 function materialsOf(c: AnyCatalog, s: LabState): string {
-  const ids = s.program.steps.flatMap((st) => st.slots).flatMap((v) => (v && v.kind === "equip" ? [v.id] : []));
+  // 미션마다 블록을 바꿔 여러 번 실행했어도 쓴 준비물을 모두 모은다
+  const programs = [...s.runs.filter((r) => r.ok).map((r) => r.program), s.program];
+  const ids = programs.flatMap((p) => p.steps).flatMap((st) => st.slots).flatMap((v) => (v && v.kind === "equip" ? [v.id] : []));
   return [...new Set(ids)].map((id) => itemLabel(c, id)).join(", ");
 }
 

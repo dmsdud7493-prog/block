@@ -2,6 +2,7 @@
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { CalcEntry, InquiryText, LabState, Phase, PredictionRecord, RunRecord } from "./types";
 import type { Diagnostic, Program } from "@/lib/engine/types";
+import { allMissionsDone, missionProgress } from "./missions";
 
 export type LabAction =
   | { type: "program"; program: Program; blockly: object; diagnostics: Diagnostic[] }
@@ -95,6 +96,13 @@ export function resultsDone(s: LabState, catalog: AnyCatalog): boolean {
   if (catalog.resultView?.kind !== "layers") return afterExplained(s);
   const ok = [...s.runs].reverse().find((r) => r.ok);
   return Boolean(ok && ok.calcRequests.length > 0 && ok.calcRequests.every((c) => s.calc[c.key]?.correct));
+}
+
+/** 보고서를 열 수 있는가 — 미션이 있는 실험은 미션을 모두 마쳐야 한다(보고서는 미션을 모아 한 장으로). 그래프형은 예상과 비교까지 */
+export function reportReady(s: LabState, catalog: AnyCatalog): boolean {
+  const p = missionProgress(catalog, s);
+  if (p.missions.length === 0) return resultsDone(s, catalog);
+  return allMissionsDone(p) && (catalog.resultView?.kind === "layers" || afterExplained(s));
 }
 
 /** 지침 3.3: 결과를 본 뒤 차이 설명을 모두 했는가 */

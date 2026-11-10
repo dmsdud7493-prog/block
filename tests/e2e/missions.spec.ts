@@ -93,6 +93,9 @@ test("밀도: 물·식용유 밀도를 맞게 계산하면 그래프 대신 한 
     await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
   }
   await expect(layer.getByRole("img", { name: "한 비커에 담으면 아래부터 물 → 식용유" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toBeEnabled();
+  // 미션 ①만 마쳤으니 보고서 대신 다음 미션으로 — 보고서는 미션을 모두 마친 뒤 한 장으로
+  await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "🎯 미션 2 하러 가기" }).click();
+  await expect(page.locator("#today-mission")).toBeFocused();
   await expect(page.locator("section[aria-labelledby=after-title]")).toHaveCount(0);
 });

@@ -83,7 +83,20 @@ function withSettle(out: Out, cont: ContainerId): Out {
   if (out.error || cont !== "beaker" || !out.event) return out;
   const layers = out.state.bkr.layers;
   if (layers.length < 2) return out;
-  return { ...out, event: { ...out.event, settled: layers, note: `${out.event.note} 비커 속에서 아래부터 ${josaLayers(layers)} 순서로 자리 잡았어요.` } };
+  const sink = sinkingOf(out);
+  const sinkNote = sink ? fixJosa(` ${L(sink.liquid)}이(가) ${L(sink.above)}을(를) 뚫고 아래로 가라앉았어요.`) : "";
+  // 부은 액체가 먼저 있던 액체 아래로 가라앉는 장면은 화면에 조금 더 오래 보여 준다(hold)
+  const extra = sink ? { sink: sink.liquid, hold: 2 } : {};
+  return { ...out, event: { ...out.event, ...extra, settled: layers, note: `${out.event.note}${sinkNote} 비커 속에서 아래부터 ${josaLayers(layers)} 순서로 자리 잡았어요.` } };
+}
+
+/** 이번에 부은 액체가 이미 있던 액체 아래로 들어갔는가 — 그 위에 남은 액체(맨 위)와 함께 */
+function sinkingOf(out: Out): { liquid: string; above: string } | null {
+  const ev = out.event;
+  const poured = ev?.type === "pour" || ev?.type === "transfer" ? String(ev.liquid) : null;
+  const liquids = out.state.bkr.layers.filter((k) => (out.state.bkr.liquids[k] ?? 0) > 0);
+  const at = poured ? liquids.indexOf(poured) : -1;
+  return poured && at >= 0 && at < liquids.length - 1 ? { liquid: poured, above: liquids[liquids.length - 1] } : null;
 }
 
 function totalMass(s: DensityState, item: ContainerId, ctx: ReduceContext): number {

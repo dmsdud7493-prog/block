@@ -36,56 +36,86 @@ async function predict(page: Page, choiceText: string) {
   await dialog.getByRole("button", { name: "예상 저장하기" }).click();
 }
 
-test("밀도: 설계부터 보고서까지", async ({ page }) => {
+const liquidSteps = (liq: string) => [
+  { action: "a1", inputs: [item(D, "cylinder"), item(D, "scale")] },
+  { action: "a2", inputs: [item(D, liq), qty("mL", 50)] },
+  { action: "a3", inputs: [item(D, liq)] },
+  { action: "a4", inputs: [item(D, liq)] },
+  { action: "a5" },
+];
+const togetherSteps = [
+  { action: "a6", inputs: [item(D, "beaker"), item(D, "oil"), qty("mL", 50)] },
+  { action: "a6", inputs: [item(D, "beaker"), item(D, "water"), qty("mL", 50)] },
+  { action: "a7", inputs: [item(D, "iron_big"), item(D, "beaker")] },
+  { action: "a7", inputs: [item(D, "iron_small"), item(D, "beaker")] },
+];
+
+async function answerAll(page: Page) {
+  const dialog = page.getByRole("dialog");
+  for (let i = 0; i < 4 && (await dialog.isVisible().catch(() => false)); i += 1) {
+    await dialog.getByRole("radio").first().check();
+    await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 무거운 게 가라앉으니까");
+    await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+    await page.waitForTimeout(300);
+  }
+}
+
+/** 표에서 이 물질의 질량·부피를 읽어 밀도를 맞게 입력한다 */
+async function solve(page: Page, name: string) {
+  const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
+  const row = table.getByRole("row").filter({ has: page.getByRole("rowheader", { name, exact: true }) });
+  const text = await row.getByRole("cell").filter({ hasText: "질량" }).innerText();
+  const mass = Number(/질량 ([\d.]+)/.exec(text)![1]);
+  const vol = Number(/부피 ([\d.]+)/.exec(text)![1]);
+  await row.getByLabel("밀도 값").fill((mass / vol).toFixed(2));
+  await row.getByLabel("밀도 단위").selectOption("g/mL");
+  await row.getByRole("button", { name: "확인" }).click();
+  await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
+}
+
+test("밀도: 설계부터 보고서까지 — 미션 셋을 마치면 보고서 한 장(활동 1·2·3)", async ({ page }) => {
   await page.goto("/demo/density");
-  await load(page, workspace(D, [...ironSteps("iron_big"), ...ironSteps("iron_small")], vars));
+  await load(page, workspace(D, [...liquidSteps("water"), ...liquidSteps("oil"), ...ironSteps("iron_big"), ...ironSteps("iron_small"), ...togetherSteps], vars));
   await expect(page.getByText("점검 결과: 지금은 걸리는 곳이 없어요.")).toBeVisible();
 
   await page.getByRole("button", { name: /실험 실행하기/ }).click();
-  await predict(page, "두 철조각의 밀도는 같다");
+  await answerAll(page);
 
   const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
-  await expect(table).toBeVisible({ timeout: 20_000 });
-  const row = table.getByRole("row").filter({ hasText: "큰 철조각" });
-  const text = await row.locator("td").nth(1).innerText();
+  await expect(table).toBeVisible({ timeout: 40_000 });
+  const row = table.getByRole("row").filter({ has: page.getByRole("rowheader", { name: "큰 철조각", exact: true }) });
+  const text = await row.getByRole("cell").filter({ hasText: "질량" }).innerText();
   const mass = Number(/질량 ([\d.]+)/.exec(text)![1]);
   const vol = Number(/부피 ([\d.]+)/.exec(text)![1]);
 
-  const input = row.getByLabel("밀도 값");
-  await input.fill((vol / mass).toFixed(2));
+  // 나누는 순서를 거꾸로 하면 오류 유형만 안내한다(정답값은 보이지 않음)
+  await row.getByLabel("밀도 값").fill((vol / mass).toFixed(2));
   await row.getByLabel("밀도 단위").selectOption("g/mL");
   await row.getByRole("button", { name: "확인" }).click();
   await expect(row.getByText(/나누는 순서/)).toBeVisible();
   await expect(row.getByText(/틀렸|오답/)).toHaveCount(0);
+  await solve(page, "큰 철조각");
 
-  await input.fill((mass / vol).toFixed(2));
-  await row.getByRole("button", { name: "확인" }).click();
-  await expect(row.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
-
-  // 밀도는 그래프·예상과 결과 비교가 없다. 계산값을 모두 맞혀야 보고서가 열린다
+  // 밀도는 그래프·예상과 결과 비교가 없다. 미션을 모두 마치기 전에는 보고서가 열리지 않는다
   await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
   await expect(page.locator("section[aria-labelledby=after-title]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
+  for (const name of ["작은 철조각", "물", "식용유"]) await solve(page, name);
   const report = page.getByRole("button", { name: /보고서 쓰러 가기/ });
-  await expect(report).toBeDisabled();
-  const small = table.getByRole("row").filter({ hasText: "작은 철조각" });
-  const t2 = await small.locator("td").nth(1).innerText();
-  const m2 = Number(/질량 ([\d.]+)/.exec(t2)![1]);
-  const v2 = Number(/부피 ([\d.]+)/.exec(t2)![1]);
-  await small.getByLabel("밀도 값").fill((m2 / v2).toFixed(2));
-  await small.getByLabel("밀도 단위").selectOption("g/mL");
-  await small.getByRole("button", { name: "확인" }).click();
-  await expect(small.getByText("✓ 좋아요! 계산이 맞아요.")).toBeVisible();
   await expect(report).toBeEnabled();
 
   // S6: 보고서 — 기록이 초안으로 옮겨지고, 해석·성찰은 비어 있으며, 체크리스트가 채워져야 제출 조건 충족
   await report.click();
   await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
-  // 활동지 모양: 과정은 활동 1(금속), 자료 해석은 자료 1 표, 변인 칸은 없다 (ADR-P20)
-  await expect(page.getByText("활동 1", { exact: true })).toBeVisible();
+  // 활동지 모양: 과정은 미션 순서대로 활동 1(액체)·2(금속)·3(한 비커), 자료 해석도 자료 1·2·3, 변인 칸은 없다 (ADR-P20)
+  await expect(page.getByText("활동 3", { exact: true })).toBeVisible();
   await expect(page.locator("#r-act-1")).toHaveValue(/^➊ /);
-  const results = page.getByRole("table", { name: /^자료 1 / });
+  await expect(page.locator("#r-act-1")).toHaveValue(/식용유/);
+  await expect(page.locator("#r-act-2")).toHaveValue(/철조각/);
+  const results = page.getByRole("table", { name: /^자료 2 / });
   await expect(results.getByRole("row").filter({ hasText: "큰 철조각" })).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "밀도(g/mL)" })).toBeVisible();
+  await expect(page.getByText(/물이 식용유를 뚫고 아래로 가라앉았어요|아래부터 .*물 → 식용유/).first()).toBeVisible();
   await expect(page.locator("#r-var-i")).toHaveCount(0);
   await expect(page.locator("#r-evidence")).toHaveValue("");
   const gate = page.locator("section[aria-labelledby=submit-title]");

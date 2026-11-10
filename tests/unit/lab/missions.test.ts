@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { densityCatalog } from "@/lib/engine/experiments/density/catalog";
 import { missionProgress } from "@/components/lab/missions";
-import { initialLabState } from "@/components/lab/state";
+import { initialLabState, reportReady } from "@/components/lab/state";
 import type { LabState, RunRecord } from "@/components/lab/types";
 
 const req = (subject: string) => ({ key: `density.${subject}.t1`, trial: 1, label: "밀도", unit: "g/mL", subject, inputs: [] });
@@ -43,5 +43,11 @@ describe("오늘의 미션 진행", () => {
     const m = { id: "h", icon: "🔥", title: "가열", cheer: "", done: { event: { type: "heat" } } };
     const heated = { ...run([]), frames: [{ blockId: "b1", state: {}, event: { type: "heat", note: "" } }] } as unknown as RunRecord;
     expect(missionProgress({ ...densityCatalog, missions: [m] }, state({ runs: [heated] })).done).toEqual([true]);
+  });
+  it("보고서는 미션을 모두 마쳐야 열린다 — 미션 ①만 마치면 아직 잠김", () => {
+    const one = state({ runs: [run(["water", "oil"])], calc: solved(["water", "oil"]) });
+    expect(reportReady(one, densityCatalog)).toBe(false);
+    const all = state({ runs: [run(ALL, ALL)], calc: solved(ALL) });
+    expect(reportReady(all, densityCatalog)).toBe(true);
   });
 });

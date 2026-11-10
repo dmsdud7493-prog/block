@@ -9,6 +9,7 @@ import type { Step } from "@/lib/engine/types";
 import { renderProgram } from "@/lib/engine/dsl/render";
 import { splitTrials } from "@/lib/engine/rules/variables";
 import { fixJosa, fmtNum } from "@/lib/engine/format";
+import { missionRuns } from "@/components/lab/missions";
 import type { ReportContent } from "./template";
 
 export interface ActivityDef { title: string; subjects: string[] }
@@ -40,8 +41,7 @@ function pickActivity(defs: ActivityDef[], measured: Set<string>, used: Set<stri
 interface Group { def: ActivityDef; trials: number[]; steps: Step[] }
 
 /** 회차를 활동으로 묶는다(처음 나온 순서대로) */
-function groupTrials(c: AnyCatalog, steps: Step[], run: RunRecord | null): Group[] {
-  const defs = activityDefs(c);
+function groupTrials(c: AnyCatalog, steps: Step[], run: RunRecord | null, defs: ActivityDef[] = activityDefs(c)): Group[] {
   const trials = splitTrials(steps, c.isTrialEnd).filter((t) => t.length > 0);
   const measuredIn = (n: number) => new Set([...(run?.measurements ?? []).filter((m) => m.trial === n).map((m) => m.subject), ...(run?.calcRequests ?? []).filter((r) => r.trial === n).map((r) => r.subject)]);
   const picks = trials.reduce<number[]>((acc, t, i) => [...acc, pickActivity(defs, measuredIn(i + 1), equipOf(t), acc[acc.length - 1] ?? 0)], []);
@@ -92,8 +92,37 @@ function seriesOf(c: AnyCatalog, run: RunRecord, trials: number[]): DataItem["se
 
 const lastOkRun = (s: LabState): RunRecord | null => [...s.runs].reverse().find((r) => r.ok) ?? s.runs[s.runs.length - 1] ?? null;
 
-/** 과정 — 활동별 제목과 ➊➋… 순서 */
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
+/** 미션마다 활동 하나 — 제목은 같은 물질을 다루는 기본 활동 제목, 없으면 미션 문장 */
+export function missionDefs(c: AnyCatalog): ActivityDef[] {
+  const defs = activityDefs(c);
+  return (c.missions ?? []).map((m) => {
+    const subjects = m.done.solved?.length ? m.done.solved : m.done.event?.settled ?? [];
+    return { title: defs.find((d) => sameSet(d.subjects, subjects))?.title ?? m.title, subjects };
+  });
+}
+
+interface MissionPart { def: ActivityDef; run: RunRecord; trials: number[]; steps: Step[] }
+
+/** 미션을 모두 마쳤으면 미션 순서대로(미션 1 → 과정의 활동 1) 그 미션을 마친 실행에서 해당 회차만 골라 낸다 */
+function missionParts(c: AnyCatalog, s: LabState): MissionPart[] | null {
+  const runs = missionRuns(c, s);
+  if (!runs) return null;
+  const defs = missionDefs(c);
+  return runs.map((run, i) => {
+    const g = groupTrials(c, run.program.steps, run, defs).find((x) => x.def === defs[i]);
+    const all = splitTrials(run.program.steps, c.isTrialEnd).map((_, k) => k + 1);
+    return { def: defs[i], run, trials: g?.trials ?? all, steps: g?.steps ?? run.program.steps };
+  });
+}
+
+const stepsText = (c: AnyCatalog, steps: Step[]) => renderProgram(c, steps).map((line, i) => `${stepMark(i)} ${line}`).join("\n");
+
+/** 과정 — 활동별 제목과 ➊➋… 순서. 미션이 있는 실험은 미션을 모두 마친 뒤 미션 순서대로 한데 모은다 */
 export function activitiesOf(c: AnyCatalog, s: LabState): ReportContent["activities"] {
+  const parts = missionParts(c, s);
+  if (parts) return parts.slice(0, 8).map((m) => ({ title: m.def.title, steps: stepsText(c, m.steps) }));
   const run = lastOkRun(s);
   const steps = run?.program.steps ?? s.program.steps;
   return groupTrials(c, steps, run).slice(0, 8).map((g) => ({
@@ -106,12 +135,12 @@ export function activitiesOf(c: AnyCatalog, s: LabState): ReportContent["activit
 export function dataOf(c: AnyCatalog, s: LabState, notes: string[] = []): ReportContent["data"] {
   const run = lastOkRun(s);
   if (!run) return [];
-  const groups = groupTrials(c, run.program.steps, run);
-  const items = groups.map((g) => ({
+  const parts = missionParts(c, s) ?? groupTrials(c, run.program.steps, run).map((g) => ({ ...g, run }));
+  const items = parts.map((g) => ({
     title: `${g.def.title} 결과`,
-    ...tableOf(c, s, run, g.trials),
-    observations: observationsOf(run, g.steps),
-    series: seriesOf(c, run, g.trials),
+    ...tableOf(c, s, g.run, g.trials),
+    observations: observationsOf(g.run, g.steps),
+    series: seriesOf(c, g.run, g.trials),
   })).filter((d) => d.rows.length > 0 || d.observations.length > 0 || d.series.length > 0);
   return items.slice(0, 8).map((d, i) => ({ ...d, note: notes[i] ?? "" }));
 }

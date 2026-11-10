@@ -86,3 +86,19 @@ test("실행한 뒤 블록 하나를 누르면 그 행동만 다시 실행한다
   await page.locator('g[data-id="mass1"] > .blocklyPath').first().click({ position: { x: 6, y: 12 }, force: true });
   await expect(items).toHaveCount(1);
 });
+
+test("밀도: 식용유가 든 비커에 물을 부으면 물방울이 식용유를 뚫고 가라앉는 장면이 오래 보인다", async ({ page }) => {
+  const D = "density";
+  await loadAndRun(page, D, workspace(D, [
+    { action: "a6", inputs: [item(D, "beaker"), item(D, "oil"), qty("mL", 50)] },
+    { action: "a6", inputs: [item(D, "beaker"), item(D, "water"), qty("mL", 50)] },
+  ]));
+  const drops = page.locator(".monitor-screen .lab-sink-drop");
+  await expect(drops.first()).toBeAttached({ timeout: 10_000 });
+  await expect(page.locator(".monitor-screen").getByText("⬇ 물이 아래로 가라앉아요")).toBeAttached();
+  // 층이 천천히 자리를 바꾼다(가라앉는 장면에서만 느린 전환)
+  await expect(page.locator(".monitor-screen .lab-liquid.lab-sink")).toHaveCount(2);
+  // 보통 단계(1.6초)보다 오래 머문다 — 2.4초 뒤에도 아직 그 장면
+  await page.waitForTimeout(2400);
+  await expect(drops.first()).toBeAttached();
+});

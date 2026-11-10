@@ -1,6 +1,6 @@
 /**
  * 실험 5종 정상 경로 (plan S8 수용 기준):
- * 설계(프로토타입 정답 순서 블록) → 예측 → 실행 → 측정값 표 → 그래프 전 예측 → 그래프 → 예상과 비교 → 보고서 초안.
+ * 설계(프로토타입 정답 순서 블록) → 예측 → 실행 → 측정값 표 → 그래프 전 예측 → 그래프 → 예상과 비교 → (미션을 마치기 전이라) 보고서는 잠김.
  * 표에 보이는 측정값이 서버 simulate() 결과(/api/demo/run 응답)와 정확히 같은지 비교한다(골든 ↔ UI 일치).
  */
 import fs from "node:fs";
@@ -52,7 +52,7 @@ async function answerGates(page: Page) {
 }
 
 for (const slug of ["melting", "boiling", "solubility", "separation1", "separation2"]) {
-  test(`${slug}: 설계 → 예측 → 실행 → 표 → 그래프 → 보고서 초안`, async ({ page }) => {
+  test(`${slug}: 설계 → 예측 → 실행 → 표 → 그래프 → 보고서 잠김(미션 전)`, async ({ page }) => {
     const { ws, name } = scenario(slug);
     test.info().annotations.push({ type: "scenario", description: name });
     await page.goto(`/demo/${slug}`);
@@ -77,12 +77,10 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
       await box.getByRole("textbox").fill("예상과 결과를 비교해 보니 이렇게 달랐다");
       await box.getByRole("button", { name: "저장" }).click();
     }
-    await page.getByRole("button", { name: /보고서 쓰러 가기/ }).click();
-    await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
-    // 활동지 모양 (ADR-P20): 과정 = 활동 1…, 자료 해석 = 자료 1… (표 또는 시간–온도 그래프)
-    await expect(page.locator("#r-act-1")).toHaveValue(/^➊ /);
-    await expect(page.getByText("자료 1", { exact: true })).toBeVisible();
-    await expect(page.locator("#r-data-1")).toBeVisible();
+    // 보고서는 오늘의 미션을 모두 마친 뒤 한 장으로 쓴다 — 계산값을 아직 안 맞혔으니 보고서 버튼 대신 미션 안내
+    await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
+    await expect(page.getByText("🎯 오늘의 미션을 마치면 다음 단계가 열려요.")).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "탐구 단계" }).getByRole("button", { name: /보고서/ })).toBeDisabled();
     if (process.env.SHOTS) await page.locator("main").screenshot({ path: `/tmp/claude-0/ws-${slug}.png` });
   });
 }

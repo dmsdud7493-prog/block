@@ -8,7 +8,8 @@ import LayerResult from "@/components/data/LayerResult";
 import ReferencePanel from "@/components/data/ReferencePanel";
 import RunHistory from "./RunHistory";
 import type { LabController } from "./useLabController";
-import { latestRun, missingPrediction, resultsDone } from "./state";
+import { latestRun, missingPrediction, reportReady } from "./state";
+import { allMissionsDone, missionProgress } from "./missions";
 
 const ResultChart = dynamic(() => import("@/components/data/ResultChart"), { ssr: false, loading: () => <p className="text-muted">그래프를 그리는 중…</p> });
 
@@ -22,8 +23,27 @@ function GraphGate({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }
   );
 }
 
+/** 다음 미션으로 — 블록 위 '오늘의 미션' 칸으로 옮겨 간다 */
+function NextMission({ n, numbered }: { n: number; numbered: boolean }) {
+  const go = () => {
+    const bar = document.getElementById("today-mission");
+    bar?.scrollIntoView({ behavior: "smooth", block: "center" });
+    bar?.focus({ preventScroll: true });
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button type="button" className="tap btn-sun px-5 py-2" onClick={go}>🎯 미션{numbered ? ` ${n}` : ""} 하러 가기</button>
+      <span className="text-sm text-muted">블록을 고쳐서 다음 미션을 실행해 봐요. 보고서는 미션을 모두 마친 뒤 한 장으로 써요.</span>
+    </div>
+  );
+}
+
 function ToReport({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }) {
-  const ready = resultsDone(ctl.state, catalog);
+  const p = missionProgress(catalog, ctl.state);
+  if (p.missions.length > 0 && !allMissionsDone(p)) {
+    return p.current > 0 ? <NextMission n={p.current + 1} numbered={p.missions.length > 1} /> : <p className="text-sm text-muted">🎯 오늘의 미션을 마치면 다음 단계가 열려요.</p>;
+  }
+  const ready = reportReady(ctl.state, catalog);
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap rounded-full bg-ok px-5 py-2 font-bold text-white shadow-[0_3px_0_#05613f] disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
