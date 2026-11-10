@@ -180,8 +180,8 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   if (state.phase === "report" && report) {
     return (
       <div className="min-h-screen">
-        <LabHeader title={catalog.title} goal={catalog.goal} badge={badge} asHeading={false}>{stepper}</LabHeader>
-        <main id="main" className="mx-auto max-w-6xl p-3">{report(ctl, () => dispatch({ type: "phase", phase: "interpret" }))}</main>
+        <div className="print:hidden"><LabHeader title={catalog.title} goal={catalog.goal} badge={badge} asHeading={false}>{stepper}</LabHeader></div>
+        <main id="main" className="mx-auto max-w-6xl p-3 print:max-w-none print:p-0">{report(ctl, () => dispatch({ type: "phase", phase: "interpret" }))}</main>
       </div>
     );
   }

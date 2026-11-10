@@ -10,7 +10,7 @@ const ready = () => {
   return {
     ...c,
     interpretation: { trend: "", hypothesisVerdict: "supported" as const, evidence: "표의 밀도 값", errorSources: "눈금 오차", improvements: "여러 번 잰다" },
-    reflection: { diff: "예상과 달리 밀도가 같았다", hardest: "변인 통제가 어려웠다", curious: "다른 금속도 재 보고 싶다", realLife: "" },
+    reflection: { diff: "", hardest: "변인 통제가 어려웠다", curious: "다른 금속도 재 보고 싶다", realLife: "물에 뜨는 기름에서 볼 수 있다" },
   };
 };
 
@@ -18,7 +18,7 @@ describe("submitChecklist (지침 6.3·6.4)", () => {
   it("빈 보고서는 모든 조건이 미충족", () => {
     expect(submitChecklist(emptyReport()).every((c) => !c.ok)).toBe(true);
   });
-  it("성찰 3개(10자 이상)와 결론 4요소를 채우면 통과", () => {
+  it("성찰 3개(10자 이상, 탐구 결과 해석과 겹치던 1번 질문은 뺐다)와 결론 요소를 채우면 통과", () => {
     expect(submitChecklist(ready()).every((c) => c.ok)).toBe(true);
   });
   it("성찰이 2개면 reflection 조건만 실패", () => {
@@ -36,6 +36,10 @@ describe("submitChecklist (지침 6.3·6.4)", () => {
     const { SECTIONS } = await import("@/lib/report/template");
     expect(SECTIONS.map((s) => s.id)).not.toContain("variables");
     expect(SECTIONS.map((s) => s.title)).toEqual(["탐구 제목", "목표", "가설", "준비물", "과정", "자료 해석", "정리", "성찰"]);
+  });
+  it("성찰 질문은 셋 — '예상과 결과가 같거나 달랐던 이유'는 탐구 결과 해석에서만 묻는다", async () => {
+    const { REFLECTION_QUESTIONS } = await import("@/lib/report/template");
+    expect(REFLECTION_QUESTIONS.map((q) => q.id)).toEqual(["hardest", "curious", "realLife"]);
   });
   it("스키마는 너무 긴 제목을 거부한다", () => {
     expect(reportContentSchema.safeParse({ title: "가".repeat(101) }).success).toBe(false);

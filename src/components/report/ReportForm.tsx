@@ -68,7 +68,7 @@ function DataBlock({ d, i, p }: { d: ReportContent["data"][number]; i: number; p
   const n = i + 1;
   const setNote = (v: string) => p.update((c) => ({ ...c, data: c.data.map((x, j) => (j === i ? { ...x, note: v } : x)) }));
   return (
-    <li className="space-y-2 rounded-lg border border-line bg-white p-2">
+    <li className="space-y-2 rounded-lg border border-line bg-white p-2 print:break-inside-avoid">
       <p className="font-bold"><Badge text={`자료 ${n}`} />{d.title}</p>
       {d.rows.length ? <ResultsTable table={{ columns: d.columns, rows: d.rows }} caption={`자료 ${n} ${d.title}`} /> : null}
       {d.observations.map((o) => <p key={o} className="rounded bg-[#f4f8ff] px-2 py-1 text-sm">👀 관찰: {o}</p>)}
@@ -87,7 +87,7 @@ function DataAnalysis({ p }: { p: Props }) {
   }
   return (
     <>
-      {p.readOnly ? null : <p className="text-xs text-muted">📋 {sec("results").question}</p>}
+      {p.readOnly ? null : <p className="text-xs text-muted print:hidden">📋 {sec("results").question}</p>}
       <ol className="space-y-3">{data.map((d, i) => <DataBlock key={`${i}-${d.title}`} d={d} i={i} p={p} />)}</ol>
     </>
   );
@@ -100,11 +100,15 @@ const VERDICTS: { id: ReportContent["interpretation"]["hypothesisVerdict"]; labe
 ];
 
 function VerdictChoice({ value, readOnly, onPick }: { value: string; readOnly: boolean; onPick: (v: string) => void }) {
+  const chosen = VERDICTS.find((v) => v.id === value)?.label;
   return (
-    <fieldset className="text-sm">
+    <>
+    <p className="hidden text-sm print:block"><span className="font-semibold">실험 전 내 예상(가설)이 맞았나요?</span> {chosen ?? ""}</p>
+    <fieldset className="text-sm print:hidden">
       <legend className="mb-1 text-sm font-semibold">실험 전 내 예상(가설)이 맞았나요?</legend>
       <div className="flex flex-wrap gap-x-4 gap-y-1">{VERDICTS.map((v) => <label key={v.id} className="tap flex items-center gap-1"><input type="radio" name="verdict" checked={value === v.id} disabled={readOnly} onChange={() => onPick(v.id)} />{v.label}</label>)}</div>
     </fieldset>
+    </>
   );
 }
 
@@ -139,7 +143,7 @@ function Summary({ p }: { p: Props }) {
 
 export default function ReportForm(p: Props) {
   return (
-    <div className="rounded-xl border-2 border-[#bfe3f5] bg-[#fbfdff] px-4 py-1 print:border-0">
+    <div className="rounded-xl border-2 border-[#bfe3f5] bg-[#fbfdff] px-4 py-1 print:rounded-none print:border print:border-[#bfe3f5] print:bg-white">
       <Simple k="title" rows={1} p={p} />
       <Simple k="goal" rows={2} p={p} />
       <Simple k="hypothesis" p={p} />

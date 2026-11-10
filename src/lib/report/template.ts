@@ -63,7 +63,6 @@ export const SECTIONS: SectionDef[] = [
 ];
 
 export const REFLECTION_QUESTIONS: { id: keyof ReportContent["reflection"]; label: string; starter: string }[] = [
-  { id: "diff", label: "예상과 결과는 어떻게 같거나 달랐나요? 그 이유는 무엇일까요?", starter: "나는 ~라고 예상했는데, 실제로는" },
   { id: "hardest", label: "실험하면서 가장 어려웠던 점과 그것을 어떻게 해결했나요?", starter: "가장 어려웠던 것은" },
   { id: "curious", label: "더 알아보고 싶은 점이나 바꿔서 해 보고 싶은 실험은 무엇인가요?", starter: "다음에는 ~을(를) 바꿔서" },
   { id: "realLife", label: "이번에 배운 물질의 특성을 생활 속 어디에서 볼 수 있나요?", starter: "생활 속에서" },
@@ -82,6 +81,6 @@ export function submitChecklist(c: ReportContent): SubmitCheck[] {
     { id: "evidence", label: "그렇게 생각한 까닭(자료의 어떤 값을 보았는지)을 적었어요", ok: filled(c.interpretation.evidence, 5) },
     { id: "error", label: "값이 조금씩 달라진 까닭(오차)을 한 가지 이상 적었어요", ok: filled(c.interpretation.errorSources, 5) },
     { id: "improve", label: "다음에 더 잘하려면 어떻게 할지 적었어요", ok: filled(c.interpretation.improvements, 5) },
-    { id: "reflection", label: `성찰 질문 4개 중 3개 이상 답했어요 (지금 ${reflections}개)`, ok: reflections >= 3 },
+    { id: "reflection", label: `성찰 질문 ${REFLECTION_QUESTIONS.length}개에 모두 답했어요 (지금 ${reflections}개)`, ok: reflections >= REFLECTION_QUESTIONS.length },
   ];
 }

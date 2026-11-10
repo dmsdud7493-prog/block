@@ -17,7 +17,7 @@ interface Props {
 
 function Meta({ guide, draft }: { guide?: string; draft?: boolean }) {
   return (
-    <span className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+    <span className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted print:hidden">
       {guide ? <span>❓ {guide}</span> : null}
       {draft ? <span className="rounded bg-amber-100 px-1 font-semibold text-amber-900">초안 · 실험 기록에서 옮겼어요. 내 말로 고쳐 주세요</span> : null}
     </span>
@@ -28,21 +28,32 @@ function Meta({ guide, draft }: { guide?: string; draft?: boolean }) {
 function ReadView({ id, label, value, ariaLabel }: { id: string; label: string; value: string; ariaLabel?: string }) {
   return (
     <div className="space-y-1">
-      {label ? <p className="text-sm font-semibold" id={`${id}-label`}>{label}</p> : null}
-      <p id={id} aria-labelledby={label ? `${id}-label` : undefined} aria-label={label ? undefined : ariaLabel} className="min-h-[2rem] whitespace-pre-wrap rounded border border-dashed border-line bg-white p-2 text-sm">{value.trim() || "—"}</p>
+      {label ? <p className="text-sm font-semibold" id={`${id}-label`}><LabelText label={label} /></p> : null}
+      <p id={id} aria-labelledby={label ? `${id}-label` : undefined} aria-label={label ? undefined : ariaLabel} className="min-h-[2rem] whitespace-pre-wrap rounded border border-dashed border-line bg-white p-2 text-sm print:min-h-0 print:border-0 print:p-0">{value.trim() || "—"}</p>
     </div>
   );
 }
+
+/** 칸 이름 — 괄호 속 도움말("(자료 몇 번의…)")은 인쇄할 때 뺀다 */
+function LabelText({ label }: { label: string }) {
+  const at = label.indexOf(" (");
+  if (at < 0) return <>{label}</>;
+  return <>{label.slice(0, at)}<span className="print:hidden">{label.slice(at)}</span></>;
+}
+
+/** 인쇄용 — 학생이 쓴 글만 */
+const PrintText = ({ value }: { value: string }) => <p className="hidden min-h-[1.5rem] whitespace-pre-wrap text-sm leading-relaxed print:block">{value.trim()}</p>;
 
 export default function SectionField({ id, label, value, onChange, guide, starter, draft, rows = 3, readOnly, maxLength = 1000, ariaLabel }: Props) {
   if (readOnly) return <ReadView id={id} label={label} value={value} ariaLabel={ariaLabel} />;
   const insertStarter = () => onChange(value.trim() ? `${value}\n${starter}` : `${starter} `);
   return (
     <div className="space-y-1">
-      {label ? <label htmlFor={id} className="block text-sm font-semibold">{label}</label> : null}
+      {label ? <label htmlFor={id} className="block text-sm font-semibold"><LabelText label={label} /></label> : null}
       <Meta guide={guide} draft={draft} />
-      <textarea id={id} aria-label={label ? undefined : ariaLabel} rows={rows} value={value} readOnly={readOnly} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} className="w-full rounded border border-line p-2 text-sm read-only:bg-slate-50" />
-      {starter && !readOnly ? <button type="button" className="tap rounded border border-line px-2 text-xs" onClick={insertStarter}>✏️ 시작어 넣기: “{starter}”</button> : null}
+      <textarea id={id} aria-label={label ? undefined : ariaLabel} rows={rows} value={value} readOnly={readOnly} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} className="w-full rounded border border-line p-2 text-sm read-only:bg-slate-50 print:hidden" />
+      <PrintText value={value} />
+      {starter && !readOnly ? <button type="button" className="tap rounded border border-line px-2 text-xs print:hidden" onClick={insertStarter}>✏️ 시작어 넣기: “{starter}”</button> : null}
     </div>
   );
 }

@@ -190,3 +190,9 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   100% { opacity: 0; transform: translateY(var(--fall, 60px)); }
 }
 @media (prefers-reduced-motion: reduce) { .lab-sink-drop { display: none; } }
+
+/* 인쇄 — 제출용 보고서만: 흰 바탕, A4 여백 */
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  html, body { background: #ffffff !important; }
+}

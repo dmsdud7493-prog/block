@@ -38,7 +38,7 @@ function Editor({ r, readOnly, mode, onFocusSection }: { r: ReturnType<typeof us
   return (
     <div className="space-y-4">
       <ReportForm content={r.content} update={r.update} readOnly={readOnly} onFocusSection={onFocusSection} />
-      <SubmitGate content={r.content} aiAssisted={r.aiAssisted} setAi={r.setAi} onSubmit={() => void r.submit()} error={r.submitError} mode={mode} locked={readOnly} />
+      <div className="print:hidden"><SubmitGate content={r.content} aiAssisted={r.aiAssisted} setAi={r.setAi} onSubmit={() => void r.submit()} error={r.submitError} mode={mode} locked={readOnly} /></div>
     </div>
   );
 }
@@ -52,12 +52,12 @@ export default function ReportView({ ctl, catalog, mode, sessionId, saved, statu
   return (
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">📝 {catalog.title} 탐구 보고서</h1>
-        <div className="flex gap-2"><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={onBack}>← 실험으로 돌아가기</button><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={() => window.print()}>🖨 인쇄</button></div>
+        <h1 className="text-xl font-bold print:w-full print:text-center print:text-2xl">📝 {catalog.title} 탐구 보고서</h1>
+        <div className="flex gap-2 print:hidden"><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={onBack}>← 실험으로 돌아가기</button><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={() => window.print()}>🖨 인쇄</button></div>
       </header>
-      <StatusBar locked={locked} submitted={r.submitted} saved={r.saved} mode={mode} />
-      {returnNote ? <FeedbackBox data={returnNote} /> : null}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="print:hidden"><StatusBar locked={locked} submitted={r.submitted} saved={r.saved} mode={mode} /></div>
+      {returnNote ? <div className="print:hidden"><FeedbackBox data={returnNote} /></div> : null}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] print:block">
         <Editor r={r} readOnly={readOnly} mode={mode} onFocusSection={setSection} />
         <div className="space-y-3 print:hidden"><MyRecordsPanel catalog={catalog} state={ctl.state} />{tutor(section)}</div>
       </div>

@@ -119,16 +119,27 @@ test("밀도: 설계부터 보고서까지 — 미션 셋을 마치면 보고서
   await expect(page.locator("#r-var-i")).toHaveCount(0);
   await expect(page.locator("#r-evidence")).toHaveValue("");
   const gate = page.locator("section[aria-labelledby=submit-title]");
-  await expect(gate.getByText(/아직: 성찰 질문 4개 중 3개 이상/)).toBeVisible();
+  await expect(gate.getByText(/아직: 성찰 질문 3개에 모두/)).toBeVisible();
   await expect(gate.getByText(/가설을 지지/)).toHaveCount(0);
   await page.getByLabel("⭕ 내 예상이 맞았어요").check();
   await page.locator("#r-evidence").fill("표의 밀도 7.9 g/mL 두 값");
   await page.locator("#r-error").fill("눈금을 읽을 때 오차");
   await page.locator("#r-improve").fill("여러 번 재서 평균");
-  for (const id of ["diff", "hardest", "curious"]) await page.locator(`#r-ref-${id}`).fill("예상과 결과를 비교하며 생각한 점");
-  await expect(gate.getByText(/완료: 성찰 질문 4개 중 3개 이상/)).toBeVisible();
+  for (const id of ["hardest", "curious", "realLife"]) await page.locator(`#r-ref-${id}`).fill("예상과 결과를 비교하며 생각한 점");
+  await expect(gate.getByText(/완료: 성찰 질문 3개에 모두/)).toBeVisible();
   await expect(gate.getByRole("button", { name: "제출하기" })).toBeDisabled();
   await expect(gate.getByText(/체험 모드에서는 제출되지 않아요/)).toBeVisible();
+
+  // 인쇄: 제목부터 학생이 쓴 글만 — 버튼·도움말·시작어·초안 표시·제출 칸은 보이지 않는다
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /실험으로 돌아가기/ })).toBeHidden();
+  await expect(page.getByRole("button", { name: /인쇄/ })).toBeHidden();
+  await expect(page.getByRole("button", { name: /시작어 넣기/ }).first()).toBeHidden();
+  await expect(page.getByText(/초안 · 실험 기록에서 옮겼어요/).first()).toBeHidden();
+  await expect(gate).toBeHidden();
+  await expect(page.locator("p:visible", { hasText: /^여러 번 재서 평균$/ })).toHaveCount(1);
+  await expect(page.getByRole("navigation", { name: "탐구 단계" })).toBeHidden();
 });
 
 test("예측 없이 실행 API를 부르면 403 (지침 3.1 서버 가드)", async ({ request }) => {

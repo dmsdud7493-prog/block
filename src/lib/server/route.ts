@@ -31,7 +31,7 @@ export function handler<S extends z.ZodType, R>(
 const GATE_MESSAGES: Partial<Record<string, string>> = {
   prediction_required: "실행하기 전에 결과를 먼저 예상해 주세요.",
   consent_required: "보호자 동의서가 확인되면 실험을 시작할 수 있어요. 선생님께 알려 주세요.",
-  reflection_required: "제출하기 전에 결론과 성찰 질문(3개 이상)을 채워 주세요.",
+  reflection_required: "제출하기 전에 결론과 성찰 질문 3개를 모두 채워 주세요.",
   late_not_allowed: "마감이 지나 제출할 수 없어요. 선생님께 여쭤 보세요.",
   session_locked: "제출한 실험은 고칠 수 없어요. 선생님이 돌려주면 다시 고칠 수 있어요.",
   forbidden: "이 작업을 할 권한이 없어요.",

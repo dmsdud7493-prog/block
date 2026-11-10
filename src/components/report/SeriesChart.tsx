@@ -8,7 +8,7 @@ const COLORS = ["#1d4ed8", "#b45309", "#047857", "#7c3aed", "#be123c", "#0e7490"
 
 function Table({ series }: { series: Series }) {
   return (
-    <details className="text-xs">
+    <details className="text-xs print:hidden">
       <summary className="cursor-pointer font-semibold">표로 보기</summary>
       {series.map((s) => <p key={s.label} className="mt-1"><b>{s.label}</b>: {s.points.map(([t, v]) => `${t}초 ${v}℃`).join(" · ")}</p>)}
     </details>
