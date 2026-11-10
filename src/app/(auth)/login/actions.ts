@@ -48,6 +48,13 @@ function domainAllowed(email: string): boolean {
   return list.some((d) => domain === d || domain.endsWith(`.${d}`));
 }
 
+/** 관리자 키 모양만(값은 절대 남기지 않음) — 가입 실패 진단용 */
+function keyShape(): string {
+  const k = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const kind = k.trim().startsWith("eyJ") ? "jwt" : k.trim().startsWith("sb_secret_") ? "sb_secret" : "other";
+  return `${kind} len=${k.length} ascii=${/^[\x21-\x7e]*$/.test(k.trim())} padded=${k !== k.trim()}`;
+}
+
 export async function signupTeacher(_prev: AuthState, form: FormData): Promise<AuthState> {
   if (!isSupabaseConfigured()) return NOT_READY;
   const email = String(form.get("email") ?? "").trim();
@@ -58,7 +65,7 @@ export async function signupTeacher(_prev: AuthState, form: FormData): Promise<A
   try {
     const { error } = await createAdminClient().auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: "teacher" }, user_metadata: { display_name: name || "선생님" } });
     if (error) {
-      console.error("[signupTeacher] createUser failed", { name: error.name, status: error.status, code: error.code });
+      console.error("[signupTeacher] createUser failed", { name: error.name, status: error.status, code: error.code, message: error.message.slice(0, 200), keyShape: keyShape() });
       return { error: error.code === "email_exists" ? "이미 가입한 이메일이에요. '이미 가입했어요'를 눌러 로그인해 주세요." : "가입하지 못했어요. 잠시 후 다시 시도하고, 계속되면 관리자에게 알려 주세요." };
     }
     const supabase = await createClient();
