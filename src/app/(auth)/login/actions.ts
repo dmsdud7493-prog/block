@@ -57,7 +57,10 @@ export async function signupTeacher(_prev: AuthState, form: FormData): Promise<A
   if (password.length < 10) return { error: "비밀번호는 10자 이상으로 정해 주세요." };
   try {
     const { error } = await createAdminClient().auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: "teacher" }, user_metadata: { display_name: name || "선생님" } });
-    if (error) return { error: "가입하지 못했어요. 이미 가입한 이메일인지 확인해 주세요." };
+    if (error) {
+      console.error("[signupTeacher] createUser failed", { name: error.name, status: error.status, code: error.code });
+      return { error: error.code === "email_exists" ? "이미 가입한 이메일이에요. '이미 가입했어요'를 눌러 로그인해 주세요." : "가입하지 못했어요. 잠시 후 다시 시도하고, 계속되면 관리자에게 알려 주세요." };
+    }
     const supabase = await createClient();
     await supabase.auth.signInWithPassword({ email, password });
   } catch {

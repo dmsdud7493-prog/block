@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_URL } from "./env";
 
 export function createAdminClient() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(); // 붙여 넣을 때 섞인 줄바꿈·공백 제거
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY missing");
   return createClient(SUPABASE_URL, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
