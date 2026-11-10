@@ -63,10 +63,17 @@ export async function signupTeacher(_prev: AuthState, form: FormData): Promise<A
   if (!domainAllowed(email)) return { error: "학교(교육청) 이메일로만 교사 가입을 할 수 있어요. 관리자에게 도메인 등록을 요청하세요." };
   if (password.length < 10) return { error: "비밀번호는 10자 이상으로 정해 주세요." };
   try {
-    const { error } = await createAdminClient().auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: "teacher" }, user_metadata: { display_name: name || "선생님" } });
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: "teacher" }, user_metadata: { display_name: name || "선생님" } });
     if (error) {
       console.error("[signupTeacher] createUser failed", { name: error.name, status: error.status, code: error.code, message: error.message.slice(0, 200), keyShape: keyShape() });
       return { error: error.code === "email_exists" ? "이미 가입한 이메일이에요. '이미 가입했어요'를 눌러 로그인해 주세요." : "가입하지 못했어요. 잠시 후 다시 시도하고, 계속되면 관리자에게 알려 주세요." };
+    }
+    // profiles 행은 트리거가 app_metadata가 붙기 전에 만들어 기본값 student가 된다 → 교사로 바로잡는다
+    const { error: roleError } = await admin.from("profiles").update({ role: "teacher" }).eq("id", data.user.id);
+    if (roleError) {
+      console.error("[signupTeacher] role update failed", { code: roleError.code });
+      return { error: "가입은 됐지만 교사 권한을 주지 못했어요. 관리자에게 알려 주세요." };
     }
     const supabase = await createClient();
     await supabase.auth.signInWithPassword({ email, password });
