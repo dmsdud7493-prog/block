@@ -40,7 +40,7 @@ function Card({ a, canStart }: { a: AssignmentItem; canStart: boolean }) {
         <span className="font-display text-xl text-nav">{a.title}</span>
       </p>
       {m.hook ? <p className="mt-2 font-bold text-ink">“{m.hook}”</p> : null}
-      <p className="mt-1 text-sm text-muted">{a.className} · 마감 {due}</p>
+      <p className="mt-1 text-sm text-muted">{a.className} · {a.dueAt ? `마감 ${due}` : due}</p>
       <p className="mt-1 text-sm font-semibold text-ink">{a.status ? STATUS[a.status] : "✨ 아직 시작 안 함"}</p>
       <button type="button" className="tap btn-sun mt-3 w-fit px-6" disabled={!canStart && !a.sessionId} onClick={() => void open()}>{a.sessionId ? "이어 하기 ▶" : "시작하기 ▶"}</button>
       {msg ? <p role="alert" className="mt-1 text-sm text-err">{msg}</p> : null}
