@@ -1,4 +1,4 @@
-/** 오늘의 미션 — 무엇을 알아낼지 보여 주고, 마치면 ✅와 튜터 응원이 나온다 (밀도) */
+/** 오늘의 미션 — 무엇을 알아낼지 보여 주고, 마치면 "완료"와 튜터 응원이 나온다 (밀도) */
 import { expect, test } from "@playwright/test";
 import { item, qty, workspace } from "./workspace";
 
