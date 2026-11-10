@@ -34,7 +34,7 @@ export function selectedIn(ws: Blockly.WorkspaceSvg | null): Blockly.BlockSvg | 
 }
 
 function Btn({ onClick, disabled, children, label }: { onClick: () => void; disabled: boolean; children: React.ReactNode; label?: string }) {
-  return <button type="button" className="tap btn-pill px-3 text-sm disabled:cursor-not-allowed disabled:border-[#c5ccd6] disabled:text-[#6b7785]" disabled={disabled} onClick={onClick} aria-label={label}>{children}</button>;
+  return <button type="button" className="btn-pill h-8 min-w-8 border-[1.5px] px-2.5 text-xs disabled:cursor-not-allowed disabled:border-[#c5ccd6] disabled:text-[#6b7785]" disabled={disabled} onClick={onClick} aria-label={label}>{children}</button>;
 }
 
 export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws: Blockly.WorkspaceSvg | null; selId: string | null; onSelect: (id: string | null) => void; msg: string; setMsg: (m: string) => void }) {
@@ -77,7 +77,7 @@ export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws:
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b border-line bg-white/95 px-2 py-1.5" role="toolbar" aria-label="블록 편집">
+    <div className="flex flex-wrap items-center gap-1 border-b border-line bg-white/95 px-2 py-1" role="toolbar" aria-label="블록 편집">
       <Btn onClick={remove} disabled={!removable}>🗑 삭제</Btn>
       <Btn onClick={() => copy(false)} disabled={!sel || !sel.isDeletable()}>📋 복사</Btn>
       <Btn onClick={() => copy(true)} disabled={!sel || !isStatement || !sel.isDeletable()} label="고른 블록부터 아래까지 복사">📋 아래까지 복사</Btn>
