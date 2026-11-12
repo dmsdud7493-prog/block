@@ -79,6 +79,20 @@ describe("S7 채점·이벤트 경계", () => {
     await grade(req({ ...body, action: "draft" }));
     await grade(req(body));
     expect(rpcMock.mock.calls.map((c) => c[0])).toEqual(["app_save_grade_draft", "app_return_submission"]);
+    expect(rpcMock.mock.calls[1][1]).toMatchObject({ p_allow_revision: true });
+  });
+  it("final(확정하고 끝내기)은 고칠 기회 없이 채점만 공개 — p_allow_revision false", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: "2026-10-27T00:00:00Z", error: null });
+    await grade(req({ ...body, action: "final" }));
+    expect(rpcMock.mock.calls.at(-1)?.[1]).toMatchObject({ p_allow_revision: false });
+  });
+  it("2번째 제출을 다시 돌려주려 하면 409와 한 번만 안내(revision_limit)", async () => {
+    user.current = { id: "t1", role: "teacher", displayName: "교사", consentOnFile: true };
+    rpcMock.mockResolvedValue({ data: null, error: { message: "revision_limit", details: null } });
+    const res = await grade(req(body));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.message).toContain("한 번만");
   });
   it("학생 브라우저가 서버 전용 이벤트(제출·플래그)를 보내면 422", async () => {
     const res = await events(req({ sessionId: SID, events: [{ type: "report_submitted", payload: {} }] }));

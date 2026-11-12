@@ -16,7 +16,7 @@ export interface AssignmentItem {
   status: string | null;
 }
 
-const STATUS: Record<string, string> = { in_progress: "🏃 하는 중", submitted: "📮 제출함", returned: "💌 선생님이 돌려줌 · 고쳐서 다시 내요", resubmitted: "📮 다시 제출함" };
+const STATUS: Record<string, string> = { in_progress: "🏃 하는 중", submitted: "📮 제출함", returned: "💌 선생님이 돌려줌 · 한 번 고쳐서 다시 내요", resubmitted: "📮 다시 제출함", graded: "🏁 채점 완료 · 선생님 의견 보기" };
 
 function Card({ a, canStart }: { a: AssignmentItem; canStart: boolean }) {
   const { push: navigate } = useRouter();

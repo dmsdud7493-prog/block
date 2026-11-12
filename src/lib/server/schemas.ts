@@ -104,7 +104,8 @@ export const rubricSchema = z.object({
 });
 export const gradeSchema = z.object({
   submissionId: uuid,
-  action: z.enum(["draft", "return"]),
+  /** draft=초안, return=한 번 더 고치게 돌려주기, final=확정하고 끝내기 */
+  action: z.enum(["draft", "return", "final"]),
   rubric: rubricSchema,
   feedback: z.string().max(2000),
   reason: z.string().max(200).optional(),

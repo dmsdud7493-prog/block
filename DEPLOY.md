@@ -25,12 +25,13 @@ git checkout -b develop && git push -u origin develop               # develop = 
 - `.github/workflows/ci.yml`: PR마다 lint·타입·단위·DB(Postgres 16)·E2E·하네스 verify
 - `.github/workflows/supabase.yml`: `develop`/`main`에 마이그레이션이 바뀌면 해당 Supabase 프로젝트에 `db push` (키가 없으면 건너뜀)
   - **지금 쓰는 DB 변경 적용 방식 (2026-11-02 결정)**: 운영 프로젝트(matter-lab, `tbdeayaiqjkmtkymmccv`)는 마이그레이션을 SQL Editor에 직접 붙여 넣어 적용해 왔고 `supabase_migrations` 기록표가 없다. 그래서 GitHub 키는 넣지 않고, 새 마이그레이션은 Claude가 브라우저로 SQL Editor를 열어 붙여 넣은 뒤 **교사 확인("실행해")을 받고** 실행한다. 적용 기록은 아래 표에 남긴다.
-  - 자동 적용으로 바꾸려면 먼저 기록표를 만들고 이미 적용한 0001~0011을 `supabase migration repair --status applied`로 표시한 뒤 키를 넣는다(안 하면 0001부터 다시 실행하려다 멈춘다).
+  - 자동 적용으로 바꾸려면 먼저 기록표를 만들고 이미 적용한 0001~0012를 `supabase migration repair --status applied`로 표시한 뒤 키를 넣는다(안 하면 0001부터 다시 실행하려다 멈춘다).
 
   | 마이그레이션 | 운영(matter-lab) 적용 | 방법 |
   |---|---|---|
   | 0001~0010 | 적용됨(초기 배포) | SQL Editor |
   | 0011_report_no_verdict | 2026-11-02 적용·`report_ready` 확인 쿼리 true | SQL Editor(Claude, 교사 확인 후 실행) |
+  | 0012_revision_once | (적용 대기) 고쳐 내기 한 번·끝내기/돌려주기 선택 — 코드 배포보다 먼저 적용 | SQL Editor(Claude, 교사 확인 후 실행) |
   - 저장소 **Settings → Secrets and variables → Actions**에 추가:
     `SUPABASE_ACCESS_TOKEN`, `STAGING_PROJECT_ID`, `PRODUCTION_PROJECT_ID`, `STAGING_DB_PASSWORD`, `PRODUCTION_DB_PASSWORD`
 

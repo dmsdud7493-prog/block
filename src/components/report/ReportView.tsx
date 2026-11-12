@@ -30,7 +30,8 @@ export interface ReportViewProps {
 
 const SAVE_TEXT = { idle: "", saving: "저장 중…", saved: "자동 저장됨", error: "저장하지 못했어요 · 연결을 확인해 주세요" };
 
-function StatusBar({ locked, submitted, saved, mode }: { locked: boolean; submitted: { late: boolean } | null; saved: keyof typeof SAVE_TEXT; mode: string }) {
+function StatusBar({ locked, graded, submitted, saved, mode }: { locked: boolean; graded: boolean; submitted: { late: boolean } | null; saved: keyof typeof SAVE_TEXT; mode: string }) {
+  if (locked && graded) return <p role="status" className="rounded bg-emerald-100 p-2 text-sm font-semibold text-emerald-900">🏁 선생님이 채점을 마쳤어요. 아래 피드백을 확인해요.</p>;
   if (submitted) return <p role="status" className="rounded bg-emerald-100 p-2 text-sm font-semibold text-emerald-900">✅ 제출했어요{submitted.late ? " (마감 뒤 제출)" : ""}. 선생님이 확인하면 피드백이 와요.</p>;
   if (locked) return <p role="status" className="rounded bg-slate-100 p-2 text-sm">제출한 보고서예요. 선생님이 돌려주면 다시 고칠 수 있어요.</p>;
   return <p className="text-xs text-muted" aria-live="polite">{mode === "session" ? SAVE_TEXT[saved] : "체험 모드 — 저장되지 않아요"}</p>;
@@ -67,7 +68,7 @@ export default function ReportView({ ctl, catalog, mode, sessionId, saved, statu
         <Title title={catalog.title} author={author} />
         <div className="flex gap-2 print:hidden"><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={onBack}>← 실험으로 돌아가기</button><button type="button" className="tap rounded border border-line px-3 text-sm" onClick={() => window.print()}>🖨 인쇄</button></div>
       </header>
-      <div className="print:hidden"><StatusBar locked={locked} submitted={r.submitted} saved={r.saved} mode={mode} /></div>
+      <div className="print:hidden"><StatusBar locked={locked} graded={Boolean(returnNote)} submitted={r.submitted} saved={r.saved} mode={mode} /></div>
       {returnNote ? <div className="print:hidden"><FeedbackBox data={returnNote} /></div> : null}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] print:block">
         <Editor r={r} readOnly={readOnly} mode={mode} onFocusSection={setSection} />

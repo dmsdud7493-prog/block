@@ -60,7 +60,7 @@ describe("LiveBoard 정렬", () => {
 describe("RubricGrader", () => {
   it("4항목을 모두 고르기 전에는 돌려주기가 꺼져 있다", () => {
     render(<RubricGrader detail={detail} />);
-    const btn = screen.getByRole("button", { name: "확정하고 돌려주기" });
+    const btn = screen.getByRole("button", { name: /확정하고 끝내기/ });
     expect((btn as HTMLButtonElement).disabled).toBe(true);
     ["탐구 설계", "자료 분석·해석", "증거 기반 결론", "성찰"].forEach((t) => {
       const group = screen.getByRole("group", { name: new RegExp(`^${t}`) });
@@ -73,6 +73,16 @@ describe("RubricGrader", () => {
     expect(screen.queryByText(/조작·종속·통제/)).toBeNull();
     expect(screen.getByRole("group", { name: /증거 기반 결론 · 정리 1·2/ })).toBeTruthy();
     expect(screen.getByText(/주장–증거–추론/)).toBeTruthy();
+  });
+  it("끝내기와 한 번 더 고치게 돌려주기 — 2번째 제출은 돌려주기가 꺼진다", () => {
+    const { unmount } = render(<RubricGrader detail={detail} />);
+    expect(screen.getByRole("button", { name: /한 번 더 고치게 돌려주기/ })).toBeTruthy();
+    unmount();
+    render(<RubricGrader detail={{ ...detail, version: 2, status: "resubmitted" }} />);
+    ["탐구 설계", "자료 분석·해석", "증거 기반 결론", "성찰"].forEach((t) => fireEvent.click(screen.getByRole("group", { name: new RegExp(`^${t}`) }).querySelector("input")!));
+    expect((screen.getByRole("button", { name: /한 번 더 고치게 돌려주기/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /확정하고 끝내기/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByText(/이미 한 번 고쳐 낸 보고서예요/)).toBeTruthy();
   });
   it("코멘트 뱅크 문장을 넣을 수 있다", () => {
     render(<RubricGrader detail={detail} />);

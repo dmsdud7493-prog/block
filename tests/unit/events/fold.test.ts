@@ -26,6 +26,11 @@ describe("foldSession", () => {
     const events = [ev("1", "calc_checked", 21, { key: "k", correct: false }), ev("1", "calc_checked", 22, { key: "k", correct: true })];
     expect(foldSession(info("1"), events, opts).openCalcWrong).toEqual({});
   });
+  it("끝내기로 채점(final)하면 '제출함' 단계에 머물고, 고치게 돌려주면 '보고서' 단계로", () => {
+    const sub = ev("1", "report_submitted", 30);
+    expect(foldSession(info("1", { status: "submitted" }), [sub, ev("1", "report_returned", 35, { final: true })], opts).step).toBe("submitted");
+    expect(foldSession(info("1", { status: "returned" }), [sub, ev("1", "report_returned", 35, { final: false })], opts).step).toBe("report");
+  });
   it("제출한 세션은 활동 중이 아니다", () => {
     expect(foldSession(info("1", { status: "submitted" }), [], opts).active).toBe(false);
   });

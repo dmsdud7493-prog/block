@@ -109,7 +109,8 @@ function applyCounters(a: Acc, e: EventRow): Acc {
 }
 
 function applyEvent(a: Acc, e: EventRow): Acc {
-  const next = STEP_OF_EVENT[e.event_type as EventType];
+  // 끝내기로 채점한 반환(final)은 학생이 고칠 일이 없으니 '제출함' 단계에 머문다
+  const next = e.event_type === "report_returned" && e.payload?.final === true ? "submitted" : STEP_OF_EVENT[e.event_type as EventType];
   const moved = next && next !== a.step ? { step: next, stepSince: e.ts } : {};
   return applyCounters({ ...a, ...moved, lastActivity: e.ts > a.lastActivity ? e.ts : a.lastActivity }, e);
 }

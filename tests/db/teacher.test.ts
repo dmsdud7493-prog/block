@@ -48,10 +48,10 @@ describe("채점 초안 (교사만 보임)", () => {
 
 describe("반환 → 재편집 → 재제출 → 재채점 (지침 6.3, R11)", () => {
   it("루브릭 4항목이 모두 있어야 반환된다", async () => {
-    expect(await errorOf(svc("select public.app_return_submission($1, $2, $3, '', null)", [T, sub, { data: "mid" }]))).toContain("invalid_rubric");
+    expect(await errorOf(svc("select public.app_return_submission($1, $2, $3, '', null, true)", [T, sub, { data: "mid" }]))).toContain("invalid_rubric");
   });
   it("반환하면 세션이 returned, 감사 로그·이벤트가 남고 초안은 지워진다", async () => {
-    await svc("select public.app_return_submission($1, $2, $3, '근거 값을 더 써 보자', null)", [T, sub, FULL]);
+    await svc("select public.app_return_submission($1, $2, $3, '근거 값을 더 써 보자', null, true)", [T, sub, FULL]);
     const st = (await pool.query("select status from public.sessions where id = $1", [sess])).rows[0].status;
     expect(st).toBe("returned");
     const audit = (await pool.query("select reason from public.grade_audit_log where submission_id = $1", [sub])).rows;
@@ -62,14 +62,22 @@ describe("반환 → 재편집 → 재제출 → 재채점 (지침 6.3, R11)", (
     expect(r.rows[0].rubric_scores).toEqual(FULL);
   });
   it("반환 중에는 다시 반환할 수 없다(not_submitted)", async () => {
-    expect(await errorOf(svc("select public.app_return_submission($1, $2, $3, '', null)", [T, sub, FULL]))).toContain("not_submitted");
+    expect(await errorOf(svc("select public.app_return_submission($1, $2, $3, '', null, true)", [T, sub, FULL]))).toContain("not_submitted");
   });
   it("학생이 고쳐서 다시 내면 resubmitted·version 2, 재채점은 regrade로 기록", async () => {
     await svc("select public.app_save_report($1, $2, $3, '{}')", [S, sess, READY]);
     expect((await svc("select * from public.app_submit_report($1, $2)", [S, sess])).rows[0].version).toBe(2);
-    await svc("select public.app_return_submission($1, $2, $3, '잘 고쳤어요', null)", [T, sub, { ...FULL, interpretation: "high" }]);
+    // 고쳐 내기는 한 번만 — 2번째 제출은 다시 돌려줄 수 없고 끝내기만 된다 (ADR-P25)
+    expect(await errorOf(svc("select public.app_return_submission($1, $2, $3, '', null, true)", [T, sub, FULL]))).toContain("revision_limit");
+    await svc("select public.app_return_submission($1, $2, $3, '잘 고쳤어요', null, false)", [T, sub, { ...FULL, interpretation: "high" }]);
     const audit = (await pool.query("select reason from public.grade_audit_log where submission_id = $1 order by id", [sub])).rows;
     expect(audit.map((a) => a.reason)).toEqual(["first_return", "regrade"]);
+    // 끝내기: 세션은 resubmitted 그대로(학생은 고칠 수 없음), 루브릭·코멘트는 학생에게 공개
+    expect((await pool.query("select status from public.sessions where id = $1", [sess])).rows[0].status).toBe("resubmitted");
+    const r = await asUser(S, (q) => q("select teacher_feedback, returned_at from public.submissions where id = $1", [sub]));
+    expect(r.rows[0].teacher_feedback).toBe("잘 고쳤어요");
+    expect(r.rows[0].returned_at).not.toBeNull();
+    expect(await errorOf(svc("select public.app_save_report($1, $2, $3, '{}')", [S, sess, READY]))).toContain("session_locked");
   });
 });
 
@@ -93,8 +101,12 @@ describe("격리·무결성", () => {
 
 describe("재제출하면 이전 반환 표시가 지워진다 (0009)", () => {
   it("학생 화면에 지난 점수가 '현재'로 보이지 않는다", async () => {
+    // 위 테스트에서 이미 2번째 제출까지 했으니 3번째는 막힌다(고쳐 내기 한 번, 0012)
     await pool.query("update public.sessions set status = 'returned' where id = $1", [sess]);
     await svc("select public.app_save_report($1, $2, $3, '{}')", [S, sess, READY]);
+    expect(await errorOf(svc("select * from public.app_submit_report($1, $2)", [S, sess]))).toContain("revision_limit");
+    // 첫 반환 뒤 다시 내는 경우(version 1 → 2)에는 이전 반환 표시가 지워진다
+    await pool.query("update public.submissions set version = 1, returned_at = now(), rubric_scores = $2 where id = $1", [sub, FULL]);
     await svc("select * from public.app_submit_report($1, $2)", [S, sess]);
     const r = (await pool.query("select returned_at, rubric_scores from public.submissions where id = $1", [sub])).rows[0];
     expect([r.returned_at, r.rubric_scores]).toEqual([null, null]);

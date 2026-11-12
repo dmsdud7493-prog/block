@@ -1,7 +1,9 @@
 "use client";
 /**
  * T-05 루브릭 채점 (지침 6.3, R11 교사 최종 판단, SUMMATIVE).
- * - 초안 저장: 교사만 보임 / 확정·돌려주기: 학생에게 루브릭·코멘트가 보이고 보고서를 다시 고칠 수 있다
+ * - 초안 저장: 교사만 보임
+ * - 확정하고 끝내기: 학생에게 루브릭·코멘트가 보이고 채점이 끝난다(고칠 수 없음)
+ * - 한 번 더 고치게 돌려주기: 학생이 보고서를 한 번 고쳐 다시 낼 수 있다. 다시 낸 보고서(2번째 제출)는 끝내기만 된다 (ADR-P25)
  * - 모든 성적 변경은 서버에서 감사 로그(grade_audit_log)에 남는다
  */
 import { useState } from "react";
@@ -10,6 +12,11 @@ import type { SubmissionDetail } from "@/lib/teacherTypes";
 import { useAction } from "./useAction";
 
 const LEVELS: RubricLevel[] = ["high", "mid", "low"];
+const DONE = {
+  draft: "초안을 저장했어요 (학생에게는 아직 안 보여요).",
+  final: "채점을 끝냈어요. 학생에게 루브릭과 코멘트가 보여요(보고서는 더 고칠 수 없어요).",
+  return: "학생에게 돌려줬어요. 학생이 보고서를 한 번 고쳐 다시 낼 수 있어요.",
+};
 const REASON_LABEL: Record<string, string> = { first_return: "처음 돌려줌", regrade: "다시 채점" };
 
 function Item({ id, value, onPick }: { id: (typeof RUBRIC)[number]["id"]; value: string | undefined; onPick: (v: RubricLevel) => void }) {
@@ -40,10 +47,11 @@ export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
   const act = useAction<{ saved: boolean; returnedAt: string | null }>("/api/grade");
   const canReturn = detail.status === "submitted" || detail.status === "resubmitted";
   const complete = RUBRIC.every((r) => rubric[r.id]);
-  const send = (action: "draft" | "return") => {
+  const canRevise = detail.version < 2;
+  const send = (action: "draft" | "return" | "final") => {
     setDone(null);
     void act.run({ submissionId: detail.submissionId, action, rubric, feedback: comment, reason: reason || undefined })
-      .then((r) => setDone(r ? (action === "draft" ? "초안을 저장했어요 (학생에게는 아직 안 보여요)." : "학생에게 돌려줬어요. 학생이 보고서를 고쳐 다시 낼 수 있어요.") : null));
+      .then((r) => setDone(r ? DONE[action] : null));
   };
   return (
     <section aria-labelledby="grade-title" className="space-y-3 rounded-lg border-2 border-brand bg-panel p-3">
@@ -55,10 +63,12 @@ export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
       {detail.returnedAt ? <label className="block text-sm font-semibold">다시 채점하는 까닭 (기록에 남아요)<input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} className="tap mt-1 block w-full rounded border border-line px-2 font-normal" /></label> : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={act.busy} onClick={() => send("draft")} className="tap rounded border border-brand px-3 font-semibold text-brand">초안 저장</button>
-        <button type="button" disabled={act.busy || !complete || !canReturn} onClick={() => send("return")} className="tap rounded bg-brand px-4 font-bold text-white disabled:opacity-50">확정하고 돌려주기</button>
+        <button type="button" disabled={act.busy || !complete || !canReturn} onClick={() => send("final")} className="tap rounded bg-brand px-4 font-bold text-white disabled:opacity-50">✅ 확정하고 끝내기</button>
+        <button type="button" disabled={act.busy || !complete || !canReturn || !canRevise} onClick={() => send("return")} className="tap rounded border-2 border-ok bg-white px-4 font-bold text-ok disabled:opacity-50">↩️ 한 번 더 고치게 돌려주기</button>
       </div>
+      <p className="text-xs text-muted">{canRevise ? "끝내기: 채점이 끝나고 학생은 보고서를 고칠 수 없어요. 돌려주기: 학생이 한 번만 고쳐 다시 낼 수 있어요(다시 낸 보고서는 끝내기만 돼요)." : "이미 한 번 고쳐 낸 보고서예요. '확정하고 끝내기'로 채점을 마쳐 주세요."}</p>
       {!canReturn ? <p className="text-sm text-muted">학생이 고치는 중이에요. 다시 제출하면 채점할 수 있어요.</p> : null}
-      {!complete && canReturn ? <p className="text-sm text-muted">4항목을 모두 골라야 돌려줄 수 있어요.</p> : null}
+      {!complete && canReturn ? <p className="text-sm text-muted">4항목을 모두 골라야 확정할 수 있어요.</p> : null}
       <p className="text-xs text-muted">채점 기준 근거: NRC(2012) 과학 실천, 주장–증거–추론(McNeill et al., 2006), 과학 글쓰기 발견법(Keys et al., 1999), 실험 보고서 범용 루브릭(Timmerman et al., 2011)</p>
       <p aria-live="polite" className="text-sm text-ok">{done}</p>
       {act.error ? <p role="alert" className="text-sm text-err">{act.error}</p> : null}

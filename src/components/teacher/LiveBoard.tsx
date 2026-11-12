@@ -10,6 +10,8 @@ import { STEP_LABEL } from "@/lib/events/types";
 
 type Col = "studentNo" | "step" | "dwellSec" | "runs" | "calc" | "pred" | "ai" | "status";
 
+/** 끝내기로 채점을 마친 제출(제출 상태인데 채점 공개 시각이 제출 뒤)은 '채점 완료' */
+const statusLabel = (f: StudentFold) => ((f.status === "submitted" || f.status === "resubmitted") && f.returnedAt && f.returnedAt >= (f.submittedAt ?? "") ? "🏁 채점 완료" : STATUS_LABEL[f.status]);
 const STATUS_LABEL: Record<StudentFold["status"], string> = { in_progress: "진행 중", submitted: "제출", returned: "돌려줌(고치는 중)", resubmitted: "재제출" };
 const STEP_ORDER = Object.keys(STEP_LABEL);
 const maxWrong = (f: StudentFold) => Math.max(0, ...Object.values(f.openCalcWrong));
@@ -56,7 +58,7 @@ function Row({ f, subId }: { f: StudentFold; subId?: string }) {
       <td className="px-2 py-1 tabular-nums">✓{f.calcCorrect}{wrong ? ` · 재시도 ${wrong}` : ""}</td>
       <td className="px-2 py-1 tabular-nums">같음 {f.predictionsMatched} · 다름 {f.predictionsMismatched}</td>
       <td className="px-2 py-1 tabular-nums">{f.aiReplies}{f.flagged ? <span className="ml-1 text-err">🚩{f.flagged}</span> : null}</td>
-      <td className="px-2 py-1">{subId ? <Link className="underline" href={`/dashboard/submissions/${subId}`}>{STATUS_LABEL[f.status]}</Link> : STATUS_LABEL[f.status]}{f.late ? " · 마감 뒤" : ""}</td>
+      <td className="px-2 py-1">{subId ? <Link className="underline" href={`/dashboard/submissions/${subId}`}>{statusLabel(f)}</Link> : statusLabel(f)}{f.late ? " · 마감 뒤" : ""}</td>
     </tr>
   );
 }

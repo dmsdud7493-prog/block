@@ -20,13 +20,21 @@ async function queryAssignments(studentId: string): Promise<AssignmentItem[]> {
   const db = await createClient();
   const [{ data: asg }, { data: sess }] = await Promise.all([
     db.from("assignments").select("id, due_at, allow_late, classes(name), experiments(slug, title)").order("created_at", { ascending: false }),
-    db.from("sessions").select("id, assignment_id, status").eq("student_id", studentId),
+    db.from("sessions").select("id, assignment_id, status, submissions(returned_at)").eq("student_id", studentId),
   ]);
   return (asg ?? []).map((a) => {
     const exp = a.experiments as unknown as { slug: string; title: string };
     const s = (sess ?? []).find((x) => x.assignment_id === a.id);
-    return { id: a.id, title: exp.title, slug: exp.slug, className: (a.classes as unknown as { name: string }).name, dueAt: a.due_at, allowLate: a.allow_late, sessionId: s?.id ?? null, status: s?.status ?? null };
+    return { id: a.id, title: exp.title, slug: exp.slug, className: (a.classes as unknown as { name: string }).name, dueAt: a.due_at, allowLate: a.allow_late, sessionId: s?.id ?? null, status: gradedStatus(s) };
   });
+}
+
+/** 끝내기로 채점한 보고서(제출 상태 + 채점 공개됨)는 "graded"로 보여 준다 */
+function gradedStatus(s: { status: string; submissions: unknown } | undefined): string | null {
+  if (!s) return null;
+  const sub = Array.isArray(s.submissions) ? s.submissions[0] : s.submissions;
+  const returned = Boolean((sub as { returned_at?: string | null } | null)?.returned_at);
+  return returned && (s.status === "submitted" || s.status === "resubmitted") ? "graded" : s.status;
 }
 
 function StudentHeader({ name }: { name: string }) {
