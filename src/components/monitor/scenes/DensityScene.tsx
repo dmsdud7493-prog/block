@@ -116,13 +116,12 @@ function SinkDrops({ liquid, from, to }: { liquid: string; from: number; to: num
   );
 }
 
-/** 비커 왼쪽 옆 말풍선(두 줄) — 비커 속을 가리지 않게 비커 밖에 띄우고, 꼬리로 비커 안을 가리킨다 */
+/** 비커 왼쪽 옆 말풍선(두 줄) — 비커 속을 가리지 않게 비커 밖에 띄운다 */
 function SideCaption({ lines, delay = 0 }: { lines: [string, string]; delay?: number }) {
   const w = Math.max(...lines.map((t) => t.length)) * 8.4 + 12;
   return (
     <g className="lab-appear" aria-hidden="true" style={{ animationDelay: `calc(${delay}s / var(--lab-speed, 1))` }}>
       <rect x={-w - 8} y={-14} width={w} height="28" rx="7" fill="#ffffff" opacity="0.96" stroke="#2563eb" strokeWidth="0.9" />
-      <path d="M -8 4 L 10 14" stroke="#2563eb" strokeWidth="0.9" fill="none" />
       {lines.map((t, i) => <text key={t} x={-w / 2 - 8} y={-3 + i * 11} textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#1d4ed8">{t}</text>)}
     </g>
   );
