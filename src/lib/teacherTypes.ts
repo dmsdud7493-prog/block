@@ -36,6 +36,8 @@ export interface SessionDetail {
   calc: { key: string; value: number | null; unit: string | null; is_correct: boolean; error_type: string | null; attempt: number; created_at: string }[];
   predictions: { target: string; choice: string; rationale: string; matched: boolean | null; rationale_after: string | null; hints_used: number }[];
   chat: ChatLine[];
+  /** 작성 중인 보고서(제출 전에도 교사가 읽기만 할 수 있다) */
+  report: { content: Record<string, unknown>; aiAssisted: string[]; updatedAt: string } | null;
 }
 
 export interface SubmissionDetail {

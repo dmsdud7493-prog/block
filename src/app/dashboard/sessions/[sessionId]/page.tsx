@@ -8,7 +8,8 @@ import SessionTabs, { type TabId } from "@/components/teacher/SessionTabs";
 export const metadata: Metadata = { title: "학생 기록" };
 
 interface Props { params: Promise<{ sessionId: string }>; searchParams: Promise<{ tab?: string }> }
-const TAB_IDS: TabId[] = ["blocks", "runs", "predictions", "chat"];
+const TAB_IDS: TabId[] = ["blocks", "runs", "predictions", "report", "chat"];
+const STATUS_LABEL: Record<string, string> = { in_progress: "진행 중", submitted: "제출함", returned: "돌려줌(고치는 중)", resubmitted: "다시 제출함" };
 
 async function load({ params, searchParams }: Props) {
   try {
@@ -28,7 +29,7 @@ export default async function SessionPage(props: Props) {
     <main id="main" className="mx-auto max-w-5xl space-y-3 p-4">
       <p className="text-sm"><Link className="underline" href={`/dashboard/classes/${detail.classId}/live`}>← 실시간 보드</Link></p>
       <h1 className="text-2xl font-bold">{detail.studentNo} · {detail.title}</h1>
-      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR")} · 상태 {detail.status}{detail.submissionId ? <> · <Link className="underline" href={`/dashboard/submissions/${detail.submissionId}`}>보고서 채점하기</Link></> : null}</p>
+      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR")} · 상태 {STATUS_LABEL[detail.status] ?? detail.status}{detail.submissionId ? <> · <Link className="underline" href={`/dashboard/submissions/${detail.submissionId}`}>보고서 채점하기</Link></> : null}</p>
       <SessionTabs detail={detail} initial={tab} />
     </main>
   );

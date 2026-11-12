@@ -101,14 +101,16 @@ export async function sessionDetail(sessionId: string): Promise<SessionDetail | 
     const head = (await db.from("sessions").select("id, student_id, class_id, status, current_step, started_at, assignments(due_at, experiments(slug, title)), submissions(id)").eq("id", sessionId).maybeSingle()).data as unknown as SessionHead | null;
     if (!head) return null;
     const exp = one(one(head.assignments)?.experiments ?? null);
-    const [no, prog, runs, calc, preds, chat] = await Promise.all([
+    const [no, prog, runs, calc, preds, chat, report] = await Promise.all([
       studentNo(db, head.class_id, head.student_id),
       db.from("block_programs").select("program").eq("session_id", sessionId).order("version", { ascending: false }).limit(1).maybeSingle(),
       db.from("runs").select("run_no, ok, program, measurements, calc_requests, series, diagnostics, changed_vars, created_at").eq("session_id", sessionId).order("run_no"),
       db.from("measurements").select("key, value, unit, is_correct, error_type, attempt, created_at").eq("session_id", sessionId).order("created_at"),
       db.from("predictions").select("target, choice, rationale, matched, rationale_after, hints_used").eq("session_id", sessionId),
       db.from("chat_messages").select("role, content, flagged, created_at").eq("session_id", sessionId).order("created_at"),
+      db.from("reports").select("content, ai_assisted_sections, updated_at").eq("session_id", sessionId).maybeSingle(),
     ]);
+    const rep = report.data as { content: Record<string, unknown>; ai_assisted_sections: string[]; updated_at: string } | null;
     return {
       sessionId, classId: head.class_id, studentNo: no, slug: exp?.slug ?? "", title: exp?.title ?? "", status: head.status,
       currentStep: head.current_step, startedAt: head.started_at, submissionId: one(head.submissions)?.id ?? null,
@@ -117,6 +119,7 @@ export async function sessionDetail(sessionId: string): Promise<SessionDetail | 
       calc: (calc.data ?? []) as SessionDetail["calc"],
       predictions: (preds.data ?? []) as SessionDetail["predictions"],
       chat: (chat.data ?? []) as ChatLine[],
+      report: rep && Object.keys(rep.content ?? {}).length > 0 ? { content: rep.content, aiAssisted: rep.ai_assisted_sections ?? [], updatedAt: rep.updated_at } : null,
     };
   } catch {
     return null;
