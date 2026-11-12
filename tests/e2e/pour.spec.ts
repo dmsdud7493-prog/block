@@ -102,3 +102,24 @@ test("밀도: 식용유가 든 비커에 물을 부으면 물방울이 식용유
   await page.waitForTimeout(2400);
   await expect(drops.first()).toBeAttached();
 });
+
+test("밀도 미션 ②: 철조각을 넣으면 핀셋에서 놓인 조각은 손에서 사라지고, 결과 칸은 두 철조각 비교를 묻는다", async ({ page }) => {
+  const D = "density";
+  const iron = (x: string) => [
+    { action: "a4", inputs: [item(D, x)] },
+    { action: "a2", inputs: [item(D, "water"), qty("mL", 50)] },
+    { action: "a7", inputs: [item(D, x), item(D, "cylinder")] },
+    { action: "a8", inputs: [item(D, "cylinder")] },
+    { action: "a5" },
+  ];
+  await loadAndRun(page, D, workspace(D, [...iron("iron_big"), ...iron("iron_small")]));
+  const tip = page.locator(".monitor-screen .lab-tip-release");
+  await tip.first().waitFor({ state: "attached", timeout: 15_000 });
+  await page.getByRole("button", { name: /일시정지/ }).click();
+  await page.waitForTimeout(2000);
+  expect(await tip.evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity))).toEqual(["0"]);
+  await page.getByRole("button", { name: /이어 보기/ }).click();
+  await expect(page.getByRole("heading", { name: "🔩 큰 철조각과 작은 철조각의 밀도는 어떨까?" })).toBeVisible({ timeout: 40_000 });
+  await expect(page.getByRole("heading", { name: /한 비커에 담으면/ })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: /실행 기록/ })).toHaveCount(0);
+});

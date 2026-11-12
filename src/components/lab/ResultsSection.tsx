@@ -6,7 +6,6 @@ import DataTable from "@/components/data/DataTable";
 import AfterExplain from "@/components/data/AfterExplain";
 import LayerResult from "@/components/data/LayerResult";
 import ReferencePanel from "@/components/data/ReferencePanel";
-import RunHistory from "./RunHistory";
 import type { LabController } from "./useLabController";
 import { latestRun, missingPrediction, reportReady } from "./state";
 import { allMissionsDone, missionProgress } from "./missions";
@@ -60,7 +59,6 @@ function LayersView({ catalog, ctl, liquids, onNext }: { catalog: AnyCatalog; ct
   return (
     <>
       {okRun ? <LayerResult catalog={catalog} run={okRun} calc={state.calc} liquids={liquids} /> : null}
-      <RunHistory runs={state.runs} />
       {okRun ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
     </>
   );
@@ -75,7 +73,6 @@ function GraphView({ catalog, ctl, onNext }: { catalog: AnyCatalog; ctl: LabCont
       {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}
       {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
       {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
-      <RunHistory runs={state.runs} />
       {state.graphOpened ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
     </>
   );

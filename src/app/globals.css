@@ -196,3 +196,9 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   @page { size: A4; margin: 14mm 12mm; }
   html, body { background: #ffffff !important; }
 }
+
+/* 밀도: 핀셋에서 철조각을 놓으면 손에서는 사라지고(35% 무렵), 그 조각이 떨어져 바닥에 닿는다 */
+.lab-tip-release { animation: lab-tip-release calc(1.5s / var(--lab-speed, 1)) linear both; }
+@keyframes lab-tip-release { 0%, 34% { opacity: 1; } 38%, 100% { opacity: 0; } }
+.lab-drop-in { animation: lab-drop-in calc(.45s / var(--lab-speed, 1)) cubic-bezier(.5, 0, 1, 1) calc(.55s / var(--lab-speed, 1)) both; }
+@keyframes lab-drop-in { from { opacity: 0; transform: translateY(-46px); } 12% { opacity: 1; } to { opacity: 1; transform: none; } }

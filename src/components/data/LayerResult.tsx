@@ -1,6 +1,7 @@
 "use client";
 /**
- * 두 액체를 한 비커에 담은 모습 (밀도 결과) — 학생이 맞게 계산한 밀도로 아래(큰 값)·위(작은 값) 층을 그린다.
+ * 밀도 결과 칸 — 미션 ①은 두 액체를 한 비커에 담은 모습(학생이 맞게 계산한 밀도로 아래·위 층),
+ * 미션 ②는 크기가 다른 두 철조각의 밀도 비교.
  * 정답값은 쓰지 않는다(규칙 3): 두 액체의 계산값을 모두 맞혀야 그림이 나타나고, 그 값으로 순서를 정한다.
  */
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
@@ -64,7 +65,8 @@ function Settled({ layers }: { layers: Layer[] }) {
   );
 }
 
-export default function LayerResult({ catalog, run, calc, liquids }: { catalog: AnyCatalog; run: RunRecord; calc: Record<string, CalcEntry>; liquids: string[] }) {
+/** 미션 ①(액체): 두 액체를 한 비커에 담은 모습 */
+function LiquidCard({ catalog, run, calc, liquids }: { catalog: AnyCatalog; run: RunRecord; calc: Record<string, CalcEntry>; liquids: string[] }) {
   const layers = solved(catalog, run, calc, liquids);
   const names = liquids.map((id) => catalog.items.find((i) => i.id === id)?.label ?? id).join("과 ");
   const ready = layers.length === liquids.length;
@@ -73,5 +75,56 @@ export default function LayerResult({ catalog, run, calc, liquids }: { catalog: 
       <h3 id="layer-title" className="font-bold text-nav">🫙 {fixJosa(`${names}을(를)`)} 한 비커에 담으면?</h3>
       {ready ? <Settled layers={layers} /> : <p className="mt-1 text-sm text-muted">표에서 {names}의 밀도를 모두 맞게 계산하면 한 비커에 담았을 때의 모습이 나타나요.</p>}
     </section>
+  );
+}
+
+/** 고체 하나 — 크기는 실제 크기 차이대로, 아래에 학생이 맞힌 밀도 */
+function Piece({ l, size, x }: { l: Layer; size: number; x: number }) {
+  return (
+    <g>
+      <rect x={x - size / 2} y={110 - size} width={size} height={size} rx="4" fill="#9aa5b1" stroke="#4b5563" strokeWidth="2" />
+      <text x={x} y="132" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1e293b">{l.label}</text>
+      <text x={x} y="150" textAnchor="middle" fontSize="13" fill="#334155">{l.shown} g/mL</text>
+    </g>
+  );
+}
+
+function Compare({ pieces }: { pieces: Layer[] }) {
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-3">
+      <svg viewBox="0 0 300 160" className="h-auto w-full max-w-[360px]" role="img" aria-label={pieces.map((p) => `${p.label} ${p.shown} g/mL`).join(", ")}>
+        {pieces.map((p, i) => <Piece key={p.id} l={p} size={i === 0 ? 70 : 40} x={i === 0 ? 85 : 220} />)}
+      </svg>
+      <p className="min-w-[180px] flex-1 text-sm leading-relaxed">크기는 다르지만 밀도는 어떤가요? 두 값을 비교해 보고, 보고서의 <b>‘알 수 있는 점’</b>에 써 봐요.</p>
+    </div>
+  );
+}
+
+/** 미션 ②(같은 물질, 크기만 다른 고체): 두 조각의 밀도 비교 — 결론은 학생이 쓴다 */
+function SolidCard({ catalog, run, calc, solids }: { catalog: AnyCatalog; run: RunRecord; calc: Record<string, CalcEntry>; solids: string[] }) {
+  const pieces = solved(catalog, run, calc, solids);
+  const names = solids.map((id) => catalog.items.find((i) => i.id === id)?.label ?? id).join("과 ");
+  const ready = pieces.length === solids.length && pieces.length > 1;
+  return (
+    <section aria-labelledby="solid-title" className="rounded-xl border-2 border-[#4c97ff] bg-[#f4f8ff] p-3">
+      <h3 id="solid-title" className="font-bold text-nav">🔩 {fixJosa(`${names}의`)} 밀도는 어떨까?</h3>
+      {ready ? <Compare pieces={pieces} /> : <p className="mt-1 text-sm text-muted">표에서 {names}의 밀도를 모두 맞게 계산하면 두 조각을 비교한 그림이 나타나요.</p>}
+    </section>
+  );
+}
+
+/**
+ * 결과 칸 — 마지막 실행에서 다룬 물질에 맞춰 보여 준다(미션마다 다른 질문).
+ * 액체를 쟀으면 한 비커 그림, 고체를 쟀으면 두 조각 비교(둘 다면 둘 다), 밀도를 재지 않은 실행(네 물질을 한 비커에)은 모니터 장면으로 충분해 숨긴다.
+ */
+export default function LayerResult({ catalog, run, calc, liquids }: { catalog: AnyCatalog; run: RunRecord; calc: Record<string, CalcEntry>; liquids: string[] }) {
+  const subjects = [...new Set(run.calcRequests.map((r) => r.subject))];
+  const liq = liquids.filter((id) => subjects.includes(id));
+  const solids = subjects.filter((id) => !liquids.includes(id));
+  return (
+    <>
+      {liq.length > 0 ? <LiquidCard catalog={catalog} run={run} calc={calc} liquids={liquids} /> : null}
+      {solids.length > 0 ? <SolidCard catalog={catalog} run={run} calc={calc} solids={solids} /> : null}
+    </>
   );
 }

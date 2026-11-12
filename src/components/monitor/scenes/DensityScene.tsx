@@ -31,10 +31,10 @@ function scaleText(s: DensityState, ev: SimEvent | null): string {
 const solidSize = (id: string) => (id === "iron_big" ? 16 : 10);
 
 /** 눈금실린더 속 철조각 — 바닥에 가라앉아 있다 */
-function SolidsInCylinder({ solids }: { solids: string[] }) {
+function SolidsInCylinder({ solids, ev }: { solids: string[]; ev: SimEvent | null }) {
   return (
     <g>
-      {solids.map((id, i) => <g key={id} className="lab-appear"><IronPiece x={6 + i * 15} y={CYL.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
+      {solids.map((id, i) => <g key={id} className={solidClass(ev, id, "cylinder")}><IronPiece x={6 + i * 15} y={CYL.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
     </g>
   );
 }
@@ -61,7 +61,7 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
       {onScale ? null : <FloorShadow cx={CYL.w / 2} w={CYL.w + 26} y={CYL.h + 7} />}
       <Cylinder x={0} y={0} w={CYL.w} h={CYL.h} level={level} liquid={s.cyl.liquid} label="눈금실린더" max={CYL_MAX}
-        inside={<SolidsInCylinder solids={s.cyl.solids} />} />
+        inside={<SolidsInCylinder solids={s.cyl.solids} ev={ev} />} />
       {reading && level > 0 ? <EyeLine y={surface} /> : null}
       {pouringInto(ev, "cylinder") ? <PourWithHand key={ev?.note} x={CYL.w / 2} y1={-24} y2={CYL.h - 4} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={s.cyl.liquid} /> : null}
       {ev?.type === "dropSolid" && ev.container !== "beaker" ? <IronTweezers key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
@@ -71,7 +71,11 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
 
 /** 핀셋으로 집은 철조각(있으면)을 (x, y)에 넣는 손 */
 const IronTweezers = ({ x, y, solid }: { x: number; y: number; solid?: string | null }) =>
-  <TweezerHand x={x} y={y} tip={solid ? <IronPiece x={-solidSize(solid) / 2} y={0} s={solidSize(solid)} /> : null} />;
+  <TweezerHand x={x} y={y} tip={solid ? <g className="lab-tip-release"><IronPiece x={-solidSize(solid) / 2} y={0} s={solidSize(solid)} /></g> : null} />;
+
+/** 넣는 중인 철조각은 핀셋에서 놓인 뒤 떨어져 바닥에 닿고(lab-drop-in), 이미 있던 것은 그대로 */
+const solidClass = (ev: SimEvent | null, id: string, here: "cylinder" | "beaker") =>
+  ev?.type === "dropSolid" && String(ev.name) === id && (here === "beaker") === (ev.container === "beaker") ? "lab-drop-in" : "lab-appear";
 
 /** 이번 단계가 이 그릇에 액체를 붓는 단계인가 */
 const pouringInto = (ev: SimEvent | null, c: "cylinder" | "beaker") => (ev?.type === "pour" && ev.container === c) || (ev?.type === "transfer" && ev.to === c);
@@ -80,7 +84,7 @@ const LIQ_LABEL: Record<string, string> = { water: "물", oil: "식용유" };
 
 /** 비커 속 층 — 밀도 순서(아래→위)로 쌓인 액체와 바닥에 가라앉은 철조각. 위층부터 그려 아래층이 앞에 온다.
  *  sink: 이번에 부은 액체가 먼저 있던 액체를 뚫고 가라앉는 중 — 방울이 떨어지고 층이 천천히 자리를 바꾼다 */
-function BeakerLayers({ b, sink, sinkKey }: { b: DensityState["bkr"]; sink: string | null; sinkKey?: string }) {
+function BeakerLayers({ b, sink, sinkKey, ev }: { b: DensityState["bkr"]; sink: string | null; sinkKey?: string; ev: SimEvent | null }) {
   const liquids = b.layers.filter((k) => (b.liquids[k] ?? 0) > 0);
   const tops = liquids.reduce<number[]>((acc, k) => [...acc, (acc[acc.length - 1] ?? 0) + (b.liquids[k] ?? 0) / BKR_MAX], []);
   const span = BKR.h - 6;
@@ -89,7 +93,7 @@ function BeakerLayers({ b, sink, sinkKey }: { b: DensityState["bkr"]; sink: stri
     <g>
       {liquids.map((k, i) => ({ k, i })).reverse().map(({ k, i }) => <Liquid key={k} w={BKR.w} h={BKR.h} level={tops[i]} liquid={k} top={6} className={slow} />)}
       {sink ? <SinkDrops key={sinkKey} liquid={sink} from={BKR.h - span * (tops[tops.length - 1] ?? 0) + 4} to={BKR.h - 8} /> : null}
-      {b.solids.map((id, i) => <g key={id} className="lab-appear"><IronPiece x={10 + i * 22} y={BKR.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
+      {b.solids.map((id, i) => <g key={id} className={solidClass(ev, id, "beaker")}><IronPiece x={10 + i * 22} y={BKR.h - 4 - solidSize(id) * 1.3} s={solidSize(id)} label={SOLID_LABEL[id]} /></g>)}
       {liquids.length > 1 ? liquids.map((k, i) => <text key={`t-${k}`} x={BKR.w - 6} y={BKR.h - span * ((tops[i] + (tops[i - 1] ?? 0)) / 2) + 3} textAnchor="end" fontSize="8" fontWeight="700" fill="#334155">{LIQ_LABEL[k]}</text>) : null}
     </g>
   );
@@ -132,7 +136,7 @@ function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   return (
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
-      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} />} />
+      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} ev={ev} />} />
       {sink ? <SinkCaption key={`c-${ev?.note}`} liquid={sink} w={BKR.w} /> : null}
       {pouringInto(ev, "beaker") ? <PourWithHand key={ev?.note} x={BKR.w / 2} y1={-22} y2={BKR.h - 6} color={pourLiquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={pourLiquid} /> : null}
       {ev?.type === "dropSolid" && ev.container === "beaker" ? <IronTweezers key={ev.note} x={BKR.w / 2 - 6} y={10} solid={String(ev.name)} /> : null}
