@@ -17,6 +17,8 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
+import { LAB_RENDERER, equalizeActionWidths, registerLabRenderer } from "./labRenderer";
+import { lockHeads, pinHeadSoon } from "./pinHead";
 
 const defined = new Set<string>();
 
@@ -25,6 +27,7 @@ function ensureBlocks(slug: string) {
   // 끼우기 쉽게: 블록을 빈칸 근처(기본 28 → 56)에만 놓아도 쏙 들어가게
   Blockly.config.snapRadius = 56;
   Blockly.config.connectingSnapRadius = 72;
+  registerLabRenderer();
   if (!catalog || defined.has(slug)) return;
   registerAutoWrap();
   Blockly.common.defineBlocksWithJsonArray(allBlockJson(catalog));
@@ -99,6 +102,9 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
     flyout.autoClose = false;
     // 블록 꾸러미는 작게(작업판 배율의 85%) — 긴 문장형 행동 블록이 조립 화면을 덮지 않게
     flyout.getFlyoutScale = () => ws.scale * FLYOUT_RATIO;
+    // 닫아 둔(autoClose=false) 꾸러미도 Blockly는 폭만큼 자리를 비워 둔다 — 닫혔으면 폭 0으로 알려 조립판이 다시 왼쪽까지 넓어지게
+    const fullWidth = flyout.getWidth.bind(flyout);
+    flyout.getWidth = () => (flyout.isVisible() ? fullWidth() : 0);
   }
   tb.selectItemByPosition(0);
   // 꾸러미가 열리고 닫힐 때 조립판 크기를 다시 계산한다
@@ -107,6 +113,27 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
     if (e.type !== Blockly.Events.TOOLBOX_ITEM_SELECT) return;
     ws.getParentSvg().parentElement?.classList.toggle("palette-closed", !(e as Blockly.Events.ToolboxItemSelect).newItem);
     requestAnimationFrame(() => Blockly.svgResize(ws));
+    // 꾸러미가 열리면 머리 블록이 꾸러미 오른쪽으로 비켜 서고, 닫히면 다시 왼쪽 위로
+    pinHeadSoon(ws);
+  });
+}
+
+/** 확대·축소하거나 ⌖(가운데로) 단추를 눌러도 머리 블록은 왼쪽 위 자리로 돌아온다 */
+function keepHeadOnZoom(ws: Blockly.WorkspaceSvg) {
+  ws.addChangeListener((e: Blockly.Events.Abstract) => {
+    if (e.type !== Blockly.Events.VIEWPORT_CHANGE) return;
+    const v = e as Blockly.Events.ViewportChange;
+    if (v.oldScale !== undefined && v.scale !== v.oldScale) pinHeadSoon(ws);
+  });
+  ws.getParentSvg().querySelector(".blocklyZoomReset")?.addEventListener("pointerup", () => setTimeout(() => pinHeadSoon(ws), 0));
+}
+
+/** 행동 블록 줄바꿈을 다시 정하고, 다 그린 뒤 행동 블록 폭을 가장 넓은 것에 맞춘다 */
+function relayout(ws: Blockly.WorkspaceSvg) {
+  relayoutWorkspace(ws);
+  void Blockly.renderManagement.finishQueuedRenders().then(() => {
+    // 그 사이 작업판이 닫혔으면(페이지 이동) 할 일이 없다
+    if (ws.getParentSvg()?.isConnected) equalizeActionWidths(ws);
   });
 }
 
@@ -121,14 +148,23 @@ function stepOf(ws: Blockly.WorkspaceSvg, id: string): string {
 function exposeForE2E(ws: Blockly.WorkspaceSvg) {
   if (process.env.NEXT_PUBLIC_E2E !== "1") return;
   const w = window as unknown as { __labLoad?: (state: object) => void; __labSlot?: (blockId: string, input: string) => { x: number; y: number } | null; __labSave?: () => object };
-  w.__labLoad = (state: object) => Blockly.serialization.workspaces.load(state, ws);
+  w.__labLoad = (state: object) => {
+    Blockly.serialization.workspaces.load(state, ws);
+    relayout(ws);
+    lockHeads(ws);
+    pinHeadSoon(ws);
+  };
   w.__labSave = () => Blockly.serialization.workspaces.save(ws);
+  (window as unknown as { __labWs?: unknown }).__labWs = ws;
   // 빈칸(값 입력) 연결점의 화면 좌표 — 끌어 넣기 E2E가 정확한 자리에 놓을 수 있게
   w.__labSlot = (blockId: string, input: string) => {
     const c = ws.getBlockById(blockId)?.getInput(input)?.connection as Blockly.RenderedConnection | null | undefined;
     if (!c) return null;
-    const p = Blockly.utils.svgMath.wsToScreenCoordinates(ws, new Blockly.utils.Coordinate(c.x, c.y));
-    return { x: p.x, y: p.y };
+    // 블록 화면 자리 + (연결점 − 블록 원점) × 배율 — 화면을 굴린 뒤에도 실제로 보이는 자리
+    const block = c.getSourceBlock() as Blockly.BlockSvg;
+    const at = block.getRelativeToSurfaceXY();
+    const r = block.getSvgRoot().getBoundingClientRect();
+    return { x: r.left + (c.x - at.x) * ws.scale, y: r.top + (c.y - at.y) * ws.scale };
   };
 }
 
@@ -136,11 +172,12 @@ function injectOptions(catalog: NonNullable<ReturnType<typeof getCatalog>>, read
   return {
     toolbox: readOnly ? undefined : toolbox(catalog),
     readOnly,
-    renderer: "zelos",
+    renderer: LAB_RENDERER,
     theme: labTheme,
     trashcan: !readOnly,
     zoom: { controls: true, wheel: false, startScale: 0.8, maxScale: 1.6, minScale: 0.5 },
-    move: { scrollbars: true, drag: true, wheel: true },
+    // 빈 곳·머리 블록을 끌어도 조립판이 미끄러지지 않게(머리 블록 고정) — 긴 순서는 휠·스크롤 막대로 본다
+    move: { scrollbars: true, drag: false, wheel: true },
     grid: { spacing: 20, length: 1, colour: "#c9ced6", snap: true },
     sounds: false,
     // 학교 망에서 외부 CDN이 막혀도 아이콘이 보이도록 자체 호스팅 (R13)
@@ -198,10 +235,13 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     if (!usesPlanBlocks(catalog) && !readOnly) dropPlanBlocks(ws);
     wsRef.current = ws;
     setWsState(ws);
-    relayoutWorkspace(ws);
+    relayout(ws);
     if (!readOnly) {
       setupPalette(ws);
+      lockHeads(ws);
+      keepHeadOnZoom(ws);
     }
+    pinHeadSoon(ws);
     exposeForE2E(ws);
 
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -213,13 +253,16 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       }
       if (e.isUiEvent) return;
       // 빈칸에 블록을 끼우거나 빼면 행동 블록 줄바꿈을 다시 정한다
-      requestAnimationFrame(() => relayoutWorkspace(ws));
+      requestAnimationFrame(() => relayout(ws));
       if (timer) clearTimeout(timer);
       timer = setTimeout(emit, 200);
     });
     emit();
     // 화면 칸 크기가 바뀌면(창 크기·결과 영역 열림) 작업 공간도 다시 맞춘다
-    const resize = new ResizeObserver(() => Blockly.svgResize(ws));
+    const resize = new ResizeObserver(() => {
+      Blockly.svgResize(ws);
+      pinHeadSoon(ws);
+    });
     resize.observe(host);
     return () => {
       resize.disconnect();
@@ -236,8 +279,9 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
     if (!ws || !catalog || !props.resetSignal) return;
     ws.clear();
     Blockly.serialization.workspaces.load(emptyWorkspace(catalog), ws);
-    relayoutWorkspace(ws);
-    ws.scrollCenter();
+    relayout(ws);
+    lockHeads(ws);
+    pinHeadSoon(ws);
     setSelId(null);
   }, [props.resetSignal, slug, setSelId]);
 

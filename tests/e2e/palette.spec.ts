@@ -98,6 +98,7 @@ async function openEquip(page: import("@playwright/test").Page) {
   const open = await page.locator(".blocklyFlyout g.item_density_cylinder").first().isVisible().catch(() => false);
   if (!open) await page.locator(".cat-equip .blocklyToolboxCategory").click();
   await expect(page.locator(".blocklyFlyout g.item_density_cylinder").first()).toBeVisible();
+  await page.waitForTimeout(150); // 꾸러미가 열린 뒤 머리 블록 자리 맞춤(다음 두 그리기)이 끝날 때까지
 }
 
 async function loadDensity(page: import("@playwright/test").Page, action: object) {
@@ -106,6 +107,7 @@ async function loadDensity(page: import("@playwright/test").Page, action: object
   await page.evaluate((a) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
     blocks: { languageVersion: 0, blocks: [{ type: "proc_start", x: 24, y: 200, deletable: false, next: { block: a } }] },
   }), action);
+  await page.waitForTimeout(150); // 불러온 뒤 머리 블록 자리 맞춤이 끝날 때까지
 }
 
 type SlotFn = { __labSlot: (id: string, input: string) => { x: number; y: number } };
@@ -159,4 +161,57 @@ test("창 높이가 낮아도(1280×600) 조립 칸을 내려 보면 블록 꾸�
   await page.waitForTimeout(400);
   const lastBottom = await page.evaluate(() => Math.max(...[...document.querySelectorAll(".blocklyFlyout .blocklyBlockCanvas > g")].map((g) => g.getBoundingClientRect().bottom)));
   expect(lastBottom).toBeLessThanOrEqual(box.y + box.height + 1);
+});
+
+/** 조립판 왼쪽 끝에서 '실험 과정' 머리 블록까지의 거리(px) */
+const headLeft = (page: import("@playwright/test").Page) => page.evaluate(() => {
+  const host = document.querySelector('[aria-label*="블록 실험 설계"]')!;
+  const svg = host.querySelector("svg.blocklySvg")!.getBoundingClientRect();
+  const head = host.querySelector(".blocklyBlockCanvas g.proc_start")!.getBoundingClientRect();
+  return { x: Math.round(head.left - svg.left), y: Math.round(head.top - svg.top) };
+});
+
+test("머리 블록은 왼쪽 위에 고정 — 꾸러미가 열리면 오른쪽으로 비켰다가, 닫으면 다시 왼쪽으로", async ({ page }) => {
+  await page.goto("/demo/density");
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.waitForTimeout(300);
+  const flyoutRight = () => page.locator(".blocklyFlyout").first().evaluate((el) => el.getBoundingClientRect().right);
+  const svgLeft = () => page.locator('[aria-label*="블록 실험 설계"] svg.blocklySvg').evaluate((el) => el.getBoundingClientRect().left);
+  const opened = await headLeft(page);
+  expect(opened.x).toBeGreaterThan((await flyoutRight()) - (await svgLeft()));
+  const action = page.locator(".cat-action .blocklyToolboxCategory");
+  await action.click();
+  await page.waitForTimeout(300);
+  const wide = await headLeft(page);
+  expect(wide.x).toBeGreaterThan((await flyoutRight()) - (await svgLeft()));
+  expect(wide.y).toBe(opened.y);
+  await action.click(); // 같은 단추를 다시 누르면 꾸러미가 닫힌다
+  await page.waitForTimeout(300);
+  const closed = await headLeft(page);
+  expect(closed.x).toBeLessThan(opened.x);
+  expect(closed.y).toBe(opened.y);
+  // 머리 블록은 끌어도 움직이지 않는다
+  const box = (await page.locator(".blocklyBlockCanvas g.proc_start").first().boundingBox())!;
+  await page.mouse.move(box.x + 30, box.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 200, box.y + 200, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  expect(await headLeft(page)).toEqual(closed);
+});
+
+test("행동 블록에 준비물을 넣어도 작업판의 행동 블록 폭은 모두 같다", async ({ page }) => {
+  await page.goto("/demo/density");
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.evaluate(() => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
+    blocks: { languageVersion: 0, blocks: [{ type: "proc_start", x: 24, y: 24, deletable: false, next: { block: {
+      type: "act_density_a3", inputs: { S0: { block: { type: "item_density_cylinder" } } },
+      next: { block: { type: "act_density_a6", inputs: { S0: { block: { type: "item_density_beaker" } }, S1: { block: { type: "item_density_oil" } }, S2: { block: { type: "quant_mL", fields: { VALUE: 50 } } } },
+        next: { block: { type: "act_density_a5" } } } },
+    } } }] },
+  }));
+  await page.waitForTimeout(400);
+  const widths = await page.locator(".blocklyBlockCanvas g[class*='act_density_'] > path.blocklyPath").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+  expect(widths).toHaveLength(3);
+  expect(new Set(widths).size).toBe(1);
 });
