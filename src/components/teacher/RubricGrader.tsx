@@ -16,7 +16,7 @@ function Item({ id, value, onPick }: { id: (typeof RUBRIC)[number]["id"]; value:
   const item = RUBRIC.find((r) => r.id === id)!;
   return (
     <fieldset className="rounded border border-line p-2">
-      <legend className="px-1 font-semibold">{item.title}</legend>
+      <legend className="px-1 font-semibold">{item.title} <span className="text-xs font-normal text-muted">· {item.where}</span></legend>
       {LEVELS.map((l) => <label key={l} className="tap flex items-start gap-2 text-sm"><input type="radio" name={`rubric-${id}`} checked={value === l} onChange={() => onPick(l)} className="mt-1" /><span><strong>{LEVEL_LABEL[l]}</strong> — {item.levels[l]}</span></label>)}
     </fieldset>
   );
@@ -59,6 +59,7 @@ export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
       </div>
       {!canReturn ? <p className="text-sm text-muted">학생이 고치는 중이에요. 다시 제출하면 채점할 수 있어요.</p> : null}
       {!complete && canReturn ? <p className="text-sm text-muted">4항목을 모두 골라야 돌려줄 수 있어요.</p> : null}
+      <p className="text-xs text-muted">채점 기준 근거: NRC(2012) 과학 실천, 주장–증거–추론(McNeill et al., 2006), 과학 글쓰기 발견법(Keys et al., 1999), 실험 보고서 범용 루브릭(Timmerman et al., 2011)</p>
       <p aria-live="polite" className="text-sm text-ok">{done}</p>
       {act.error ? <p role="alert" className="text-sm text-err">{act.error}</p> : null}
       {detail.history.length ? <p className="text-xs text-muted">채점 기록: {detail.history.map((h) => `${REASON_LABEL[h.reason] ?? h.reason} ${new Date(h.at).toLocaleString("ko-KR")}`).join(" · ")}</p> : null}

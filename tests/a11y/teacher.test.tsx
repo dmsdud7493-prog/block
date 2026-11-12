@@ -62,11 +62,17 @@ describe("RubricGrader", () => {
     render(<RubricGrader detail={detail} />);
     const btn = screen.getByRole("button", { name: "확정하고 돌려주기" });
     expect((btn as HTMLButtonElement).disabled).toBe(true);
-    ["가설·변인 설계", "자료 정리", "해석·결론", "성찰"].forEach((t) => {
-      const group = screen.getByRole("group", { name: t });
+    ["탐구 설계", "자료 분석·해석", "증거 기반 결론", "성찰"].forEach((t) => {
+      const group = screen.getByRole("group", { name: new RegExp(`^${t}`) });
       fireEvent.click(group.querySelector("input")!);
     });
     expect((btn as HTMLButtonElement).disabled).toBe(false);
+  });
+  it("루브릭은 지금 보고서 양식 기준 — 변인·그래프 전용 문구가 없고, 항목마다 볼 곳을 알려 준다", () => {
+    render(<RubricGrader detail={detail} />);
+    expect(screen.queryByText(/조작·종속·통제/)).toBeNull();
+    expect(screen.getByRole("group", { name: /증거 기반 결론 · 정리 1·2/ })).toBeTruthy();
+    expect(screen.getByText(/주장–증거–추론/)).toBeTruthy();
   });
   it("코멘트 뱅크 문장을 넣을 수 있다", () => {
     render(<RubricGrader detail={detail} />);
