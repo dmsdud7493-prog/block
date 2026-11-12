@@ -95,7 +95,8 @@ test("밀도: 식용유가 든 비커에 물을 부으면 물방울이 식용유
   ]));
   const drops = page.locator(".monitor-screen .lab-sink-drop");
   await expect(drops.first()).toBeAttached({ timeout: 10_000 });
-  await expect(page.locator(".monitor-screen").getByText("⬇ 물이 아래로 가라앉아요")).toBeAttached();
+  await expect(page.locator(".monitor-screen").getByText("⬇ 물이")).toBeAttached();
+  await expect(page.locator(".monitor-screen").getByText("아래로 가라앉아요")).toBeAttached();
   // 층이 천천히 자리를 바꾼다(가라앉는 장면에서만 느린 전환)
   await expect(page.locator(".monitor-screen .lab-liquid.lab-sink")).toHaveCount(2);
   // 보통 단계(1.6초)보다 오래 머문다 — 2.4초 뒤에도 아직 그 장면
@@ -143,5 +144,6 @@ test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 �
   await page.getByRole("button", { name: "예상 저장하기" }).click();
   const scaleX = await page.locator(".monitor-screen .lab-move").first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
   expect(scaleX).toBeCloseTo(1.5, 1);
+  await expect(page.locator(".monitor-screen").getByText("바닥에 가라앉았어요").first()).toBeAttached({ timeout: 20_000 });
   await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
 });

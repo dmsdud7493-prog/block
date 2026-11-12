@@ -116,14 +116,25 @@ function SinkDrops({ liquid, from, to }: { liquid: string; from: number; to: num
   );
 }
 
-/** 가라앉는 중이라는 말풍선 */
-function SinkCaption({ liquid, w }: { liquid: string; w: number }) {
+/** 비커 왼쪽 옆 말풍선(두 줄) — 비커 속을 가리지 않게 비커 밖에 띄우고, 꼬리로 비커 안을 가리킨다 */
+function SideCaption({ lines, delay = 0 }: { lines: [string, string]; delay?: number }) {
+  const w = Math.max(...lines.map((t) => t.length)) * 8.4 + 12;
   return (
-    <g className="lab-appear" aria-hidden="true">
-      <rect x={w / 2 - 50} y={6} width="100" height="15" rx="7.5" fill="#ffffff" opacity="0.92" stroke="#2563eb" strokeWidth="0.8" />
-      <text x={w / 2} y={16.5} textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#1d4ed8">⬇ {liquid === "oil" ? "식용유가" : "물이"} 아래로 가라앉아요</text>
+    <g className="lab-appear" aria-hidden="true" style={{ animationDelay: `calc(${delay}s / var(--lab-speed, 1))` }}>
+      <rect x={-w - 8} y={-14} width={w} height="28" rx="7" fill="#ffffff" opacity="0.96" stroke="#2563eb" strokeWidth="0.9" />
+      <path d="M -8 4 L 10 14" stroke="#2563eb" strokeWidth="0.9" fill="none" />
+      {lines.map((t, i) => <text key={t} x={-w / 2 - 8} y={-3 + i * 11} textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#1d4ed8">{t}</text>)}
     </g>
   );
+}
+
+const SUBJ: Record<string, string> = { water: "물이", oil: "식용유가", iron_big: "큰 철조각이", iron_small: "작은 철조각이" };
+
+/** 이번 단계 말풍선 — 액체가 가라앉는 중이거나, 철조각을 비커에 넣었을 때 */
+function captionLines(ev: SimEvent | null, sink: string | null): [string, string] | null {
+  if (sink) return [`⬇ ${SUBJ[sink] ?? "액체가"}`, "아래로 가라앉아요"];
+  if (ev?.type === "dropSolid" && ev.container === "beaker") return [`⬇ ${SUBJ[String(ev.name)] ?? "철조각이"}`, "바닥에 가라앉았어요"];
+  return null;
 }
 
 /** 비커만 쓰는 실행(미션 ③ 네 물질을 한 비커에)은 비커를 가운데에 크게 */
@@ -138,11 +149,12 @@ function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   const y = focus ? BENCH_Y - BKR.h * FOCUS_K : onScale ? BENCH_Y - 34 - BKR.h + 1 : BENCH_Y - BKR.h;
   const pourLiquid = ev?.type === "pour" ? String(ev.liquid) : ev?.type === "transfer" ? String(ev.liquid) : null;
   const sink = typeof ev?.sink === "string" && pouringInto(ev, "beaker") ? ev.sink : null;
+  const caption = captionLines(ev, sink);
   return (
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)${focus ? ` scale(${FOCUS_K})` : ""}` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} ev={ev} />} />
-      {sink ? <SinkCaption key={`c-${ev?.note}`} liquid={sink} w={BKR.w} /> : null}
+      {caption ? <SideCaption key={`c-${ev?.note}`} lines={caption} delay={sink ? 0 : 1} /> : null}
       {pouringInto(ev, "beaker") ? <PourWithHand key={ev?.note} x={BKR.w / 2} y1={-22} y2={BKR.h - 6} color={pourLiquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={pourLiquid} /> : null}
       {ev?.type === "dropSolid" && ev.container === "beaker" ? <IronTweezers key={ev.note} x={BKR.w / 2 - 6} y={10} solid={String(ev.name)} /> : null}
     </g>
