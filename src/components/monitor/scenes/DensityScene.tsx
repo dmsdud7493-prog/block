@@ -126,15 +126,20 @@ function SinkCaption({ liquid, w }: { liquid: string; w: number }) {
   );
 }
 
+/** 비커만 쓰는 실행(미션 ③ 네 물질을 한 비커에)은 비커를 가운데에 크게 */
+const FOCUS_K = 1.5;
+const beakerOnly = (s: DensityState) => s.shown.bkr && !s.shown.cyl && !s.shown.scale;
+
 function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   if (!s.shown.bkr) return null;
   const onScale = s.scale.item === "beaker";
-  const x = onScale ? SPOT.scaleX + SPOT.bkrScale - BKR.w / 2 + 22 : SPOT.bkrFloor;
-  const y = onScale ? BENCH_Y - 34 - BKR.h + 1 : BENCH_Y - BKR.h;
+  const focus = beakerOnly(s);
+  const x = focus ? (VIEW_W - BKR.w * FOCUS_K) / 2 : onScale ? SPOT.scaleX + SPOT.bkrScale - BKR.w / 2 + 22 : SPOT.bkrFloor;
+  const y = focus ? BENCH_Y - BKR.h * FOCUS_K : onScale ? BENCH_Y - 34 - BKR.h + 1 : BENCH_Y - BKR.h;
   const pourLiquid = ev?.type === "pour" ? String(ev.liquid) : ev?.type === "transfer" ? String(ev.liquid) : null;
   const sink = typeof ev?.sink === "string" && pouringInto(ev, "beaker") ? ev.sink : null;
   return (
-    <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
+    <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)${focus ? ` scale(${FOCUS_K})` : ""}` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} ev={ev} />} />
       {sink ? <SinkCaption key={`c-${ev?.note}`} liquid={sink} w={BKR.w} /> : null}

@@ -42,7 +42,7 @@ describe("활동 나누기", () => {
     expect(data[0].columns).toContain("밀도(g/mL)");
     expect(data[0].note).toBe("물이 더 무겁다");
     expect(data[2].rows).toEqual([]);
-    expect(data[2].observations[0]).toMatch(/^비커 속에서 아래부터 .*물 → 식용유 순서로 자리 잡았어요\.$/);
+    expect(data[2].observations[0]).toBe("비커 속에서 큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유 순서로 자리 잡았어요.");
   });
   it("학생이 먼저 한 활동이 활동 1이 된다(금속부터 하면 금속이 1)", () => {
     const s = stateOf([...iron("iron_big"), ...liquid("water")]);

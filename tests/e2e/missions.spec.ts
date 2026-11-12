@@ -30,7 +30,7 @@ test("밀도: 미션 카드가 보이고, 넷을 한 비커에 넣으면 밀도 
   await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 무거운 게 가라앉으니까");
   await dialog.getByRole("button", { name: "예상 저장하기" }).click();
 
-  await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/아래부터 .*철조각 → 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
   await expect(card.getByText("0/3")).toBeVisible();
   await expect(page.getByText(/미션 ③까지 모두 성공/)).toHaveCount(0);
   // ①은 아직이므로 지금 할 미션은 여전히 ①

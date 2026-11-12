@@ -12,8 +12,19 @@ interface Props {
   locked: boolean;
 }
 
-function Check({ ok, label }: { ok: boolean; label: string }) {
-  return <li className={ok ? "text-ok" : "text-muted"}><span aria-hidden="true">{ok ? "✅" : "⬜"} </span><span className="sr-only">{ok ? "완료: " : "아직: "}</span>{label}</li>;
+/** 칸을 채우면 저절로 ✅가 된다. 아직이면 [쓰러 가기]로 그 칸으로 옮겨 간다 */
+function Check({ ok, label, target, locked }: { ok: boolean; label: string; target: string; locked: boolean }) {
+  const go = () => {
+    const el = document.getElementById(target);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus({ preventScroll: true });
+  };
+  return (
+    <li className={`flex flex-wrap items-center gap-x-2 ${ok ? "text-ok" : "text-muted"}`}>
+      <span><span aria-hidden="true">{ok ? "✅" : "⬜"} </span><span className="sr-only">{ok ? "완료: " : "아직: "}</span>{label}</span>
+      {ok || locked ? null : <button type="button" onClick={go} className="tap rounded border border-brand px-2 text-xs font-semibold text-brand">✏️ 쓰러 가기</button>}
+    </li>
+  );
 }
 
 function AiHelp({ aiAssisted, setAi, locked }: { aiAssisted: string[]; setAi: (v: string[]) => void; locked: boolean }) {
@@ -32,11 +43,12 @@ export default function SubmitGate({ content, aiAssisted, setAi, onSubmit, error
   return (
     <section aria-labelledby="submit-title" className="rounded-lg border-2 border-brand bg-panel p-3">
       <h2 id="submit-title" className="font-bold">📮 선생님께 제출하기</h2>
-      <ul className="mt-1 space-y-1 text-sm" aria-live="polite">{checks.map((c) => <Check key={c.id} ok={c.ok} label={c.label} />)}</ul>
+      {locked ? null : <p className="mt-1 text-xs text-muted">아래 항목은 직접 누르는 칸이 아니에요. 보고서의 그 칸을 채우면 저절로 ✅로 바뀌어요.</p>}
+      <ul className="mt-1 space-y-1 text-sm" aria-live="polite">{checks.map((c) => <Check key={c.id} ok={c.ok} label={c.label} target={c.target} locked={locked} />)}</ul>
       <AiHelp aiAssisted={aiAssisted} setAi={setAi} locked={locked} />
       {error ? <p role="alert" className="mt-2 text-sm text-err">{error}</p> : null}
       {mode === "demo" ? <p className="mt-2 text-sm text-muted">체험 모드에서는 제출되지 않아요. 인쇄해서 확인해 볼 수 있어요.</p> : null}
-      <button type="button" className="tap mt-2 w-full rounded-lg bg-brand font-bold text-white disabled:opacity-50" disabled={!ready || locked || mode === "demo"} onClick={onSubmit}>{ready ? "제출하기" : "체크리스트를 채우면 제출할 수 있어요"}</button>
+      <button type="button" className="tap mt-2 w-full rounded-lg bg-brand font-bold text-white disabled:opacity-50" disabled={!ready || locked || mode === "demo"} onClick={onSubmit}>{ready ? "제출하기" : "위 항목이 모두 ✅가 되면 제출할 수 있어요"}</button>
     </section>
   );
 }

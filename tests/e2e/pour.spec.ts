@@ -123,3 +123,25 @@ test("밀도 미션 ②: 철조각을 넣으면 핀셋에서 놓인 조각은 �
   await expect(page.getByRole("heading", { name: /한 비커에 담으면/ })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: /실행 기록/ })).toHaveCount(0);
 });
+
+test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 물질, 비커는 가운데 크게, 철조각은 함께 바닥", async ({ page }) => {
+  const D = "density";
+  await page.goto(`/demo/${D}`);
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), workspace(D, [
+    { action: "a6", inputs: [item(D, "beaker"), item(D, "oil"), qty("mL", 50)] },
+    { action: "a6", inputs: [item(D, "beaker"), item(D, "water"), qty("mL", 50)] },
+    { action: "a7", inputs: [item(D, "iron_big"), item(D, "beaker")] },
+    { action: "a7", inputs: [item(D, "iron_small"), item(D, "beaker")] },
+  ]));
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: /실험 실행하기/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("물, 식용유, 큰 철조각, 작은 철조각 네 가지를 한 비커에 모두 넣으면 어떻게 자리 잡을까요?")).toBeVisible();
+  await dialog.getByRole("radio", { name: /함께 바닥에/ }).check();
+  await page.getByLabel(/왜 그렇게/).fill("왜냐하면 철이 가장 무거우니까");
+  await page.getByRole("button", { name: "예상 저장하기" }).click();
+  const scaleX = await page.locator(".monitor-screen .lab-move").first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
+  expect(scaleX).toBeCloseTo(1.5, 1);
+  await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
+});

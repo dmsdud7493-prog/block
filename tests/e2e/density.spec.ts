@@ -119,14 +119,18 @@ test("밀도: 설계부터 보고서까지 — 미션 셋을 마치면 보고서
   await expect(page.locator("#r-var-i")).toHaveCount(0);
   await expect(page.locator("#r-evidence")).toHaveValue("");
   const gate = page.locator("section[aria-labelledby=submit-title]");
-  await expect(gate.getByText(/아직: 성찰 질문 3개에 모두/)).toBeVisible();
+  await expect(gate.getByText(/아직: 정리 3: 성찰 질문 3개에 질문마다 10자 이상/)).toBeVisible();
   await expect(gate.getByText(/가설을 지지/)).toHaveCount(0);
+  // 체크 항목은 누르는 칸이 아니라 저절로 바뀐다 — [쓰러 가기]로 그 칸에 옮겨 간다
+  await expect(gate.getByText(/직접 누르는 칸이 아니에요/)).toBeVisible();
+  await gate.getByRole("button", { name: /쓰러 가기/ }).first().click();
+  await expect(page.locator("#r-evidence")).toBeFocused();
   await page.getByLabel("⭕ 내 예상이 맞았어요").check();
   await page.locator("#r-evidence").fill("표의 밀도 7.9 g/mL 두 값");
   await page.locator("#r-error").fill("눈금을 읽을 때 오차");
   await page.locator("#r-improve").fill("여러 번 재서 평균");
   for (const id of ["hardest", "curious", "realLife"]) await page.locator(`#r-ref-${id}`).fill("예상과 결과를 비교하며 생각한 점");
-  await expect(gate.getByText(/완료: 성찰 질문 3개에 모두/)).toBeVisible();
+  await expect(gate.getByText(/완료: 정리 3: 성찰 질문 3개에 질문마다 10자 이상/)).toBeVisible();
   await expect(gate.getByRole("button", { name: "제출하기" })).toBeDisabled();
   await expect(gate.getByText(/체험 모드에서는 제출되지 않아요/)).toBeVisible();
 

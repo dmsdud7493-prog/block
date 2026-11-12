@@ -87,7 +87,17 @@ function withSettle(out: Out, cont: ContainerId): Out {
   const sinkNote = sink ? fixJosa(` ${L(sink.liquid)}이(가) ${L(sink.above)}을(를) 뚫고 아래로 가라앉았어요.`) : "";
   // 부은 액체가 먼저 있던 액체 아래로 가라앉는 장면은 화면에 조금 더 오래 보여 준다(hold)
   const extra = sink ? { sink: sink.liquid, hold: 2 } : {};
-  return { ...out, event: { ...out.event, ...extra, settled: layers, note: `${out.event.note}${sinkNote} 비커 속에서 아래부터 ${josaLayers(layers)} 순서로 자리 잡았어요.` } };
+  return { ...out, event: { ...out.event, ...extra, settled: layers, note: `${out.event.note}${sinkNote} ${settledText(out.state.bkr)}` } };
+}
+
+/** 자리 잡은 모습 — 철조각(고체)은 크기와 상관없이 함께 바닥에, 액체는 아래부터 순서대로 */
+function settledText(b: DensityState["bkr"]): string {
+  const liquids = b.layers.filter((k) => (b.liquids[k] ?? 0) > 0);
+  const solids = b.layers.filter((k) => !liquids.includes(k));
+  if (solids.length === 0) return `비커 속에서 아래부터 ${josaLayers(liquids)} 순서로 자리 잡았어요.`;
+  const bottom = solids.length > 1 ? fixJosa(`${solids.slice(0, -1).map(L).join(", ")}과(와) ${L(solids[solids.length - 1])}은(는) 함께`) : fixJosa(`${L(solids[0])}은(는)`);
+  if (liquids.length > 1) return `비커 속에서 ${bottom} 바닥에 가라앉고, 그 위로 아래부터 ${josaLayers(liquids)} 순서로 자리 잡았어요.`;
+  return `비커 속에서 ${bottom} ${liquids.length ? `${L(liquids[0])} 아래 ` : ""}바닥에 가라앉았어요.`;
 }
 
 /** 이번에 부은 액체가 이미 있던 액체 아래로 들어갔는가 — 그 위에 남은 액체(맨 위)와 함께 */
