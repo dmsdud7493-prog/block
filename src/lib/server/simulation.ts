@@ -3,18 +3,18 @@ import "server-only";
 import type { Program } from "@/lib/engine/types";
 import { getCatalog } from "@/lib/engine/experiments";
 import { getPhysics, paramsForSeed } from "@/lib/engine/experiments/physicsRegistry";
-import { physicsFromSeed, simulate } from "@/lib/engine/simulator/run";
+import { physicsFromSeed, simulate, type SimOptions } from "@/lib/engine/simulator/run";
 import { checkCalc, expectedValue, type CheckResult } from "@/lib/engine/grader/check";
 
 export function runSeed(seed: string, runNo: number): string {
   return `${seed}:run${runNo}`;
 }
 
-export function runProgram(slug: string, program: Program, seed: string, runNo: number) {
+export function runProgram(slug: string, program: Program, seed: string, runNo: number, opts: SimOptions = {}) {
   const catalog = getCatalog(slug);
   if (!catalog) throw new Error("unknown_experiment");
   const params = paramsForSeed(slug, seed);
-  return simulate({ ...program, experiment: slug }, catalog, physicsFromSeed(params, runSeed(seed, runNo)));
+  return simulate({ ...program, experiment: slug }, catalog, physicsFromSeed(params, runSeed(seed, runNo)), opts);
 }
 
 export interface CheckArgs {

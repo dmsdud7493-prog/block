@@ -11,6 +11,7 @@ import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import StepStepper from "@/components/inquiry/StepStepper";
 import CheckPanel from "@/components/inquiry/CheckPanel";
 import MissionBar from "@/components/inquiry/MissionBar";
+import { fixedAmountsText } from "@/lib/engine/rules/fixedAmounts";
 import { allMissionsDone, missionProgress, type MissionProgress } from "./missions";
 import LabMonitor from "@/components/monitor/LabMonitor";
 import PredictionGate from "@/components/data/PredictionGate";
@@ -90,13 +91,13 @@ function BlockHelp() {
   );
 }
 
-function DesignPane({ slug, examples, missions, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick, reset }: {
-  slug: string; examples: string[]; missions: MissionProgress; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null; reset: number;
+function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick, reset }: {
+  slug: string; examples: string[]; missions: MissionProgress; fixedText: string | null; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null; reset: number;
   onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-fit xl:overflow-visible xl:rounded-none xl:border-0 xl:border-r">
-      <MissionBar progress={missions} />
+      <MissionBar progress={missions} fixedText={fixedText} />
       {missions.missions.length > 0 && missions.done[0] ? null : <ExampleSteps steps={examples} />}
       <BlockHelp />
       {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}
@@ -143,7 +144,8 @@ export default function LabShell({ slug, backend, hydrate, initialBlockly, tutor
 
 function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, badge, settings = DEFAULT_SETTINGS }: Props) {
   const catalog = getCatalog(slug)!;
-  const ctl = useLabController(catalog, backend, hydrate);
+  const simOpts = useMemo(() => ({ fixedAmounts: Boolean(settings.fixedAmounts && catalog.fixedAmounts?.length) }), [settings.fixedAmounts, catalog]);
+  const ctl = useLabController(catalog, backend, hydrate, simOpts);
   const { state, dispatch } = ctl;
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [focusBlock, setFocusBlock] = useState<string | null>(null);
@@ -177,7 +179,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   };
 
   const stepper = <div className="min-w-0 flex-1"><StepStepper phase={state.phase} done={st.done} locked={st.locked} onSelect={(p) => dispatch({ type: "phase", phase: p })} /></div>;
-  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} reset={reset} />;
+  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} fixedText={simOpts.fixedAmounts ? fixedAmountsText(catalog) : null} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} reset={reset} />;
   const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} play={play} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
 
   if (state.phase === "report" && report) {

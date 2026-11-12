@@ -96,6 +96,8 @@ export interface ExperimentCatalog<S> {
   reference?: ReferenceTable[];
   /** 오늘의 미션(순서대로 열린다). 없으면 미션 카드를 보이지 않는다 */
   missions?: MissionDef[];
+  /** 교사가 '넣는 양 정해 주기'로 배정하면 이 양으로만 넣게 한다(반 결과를 비교하기 위해, ADR-P26). 없으면 언제나 자유 */
+  fixedAmounts?: FixedAmount[];
   /** '실험 계획 세우기'(변인 블록)를 쓸지 — 기본은 쓰지 않는다. 오늘의 미션이 실험 계획을 대신한다(ADR-P18·P21) */
   planBlocks?: boolean;
   /** 보고서 '과정'의 활동 나누기 — 활동마다 다루는 물질. 없으면 측정 대상(requiredSubjects)마다 활동 하나 */
@@ -116,3 +118,10 @@ export interface ExperimentCatalog<S> {
 /** 아무 상태 타입의 카탈로그를 담기 위한 형 */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 레지스트리는 실험별 상태 타입을 지운다
 export type AnyCatalog = ExperimentCatalog<any>;
+
+/** 정해 준 양 — 이 준비물을 넣는 블록의 양 빈칸은 이 값이어야 한다 */
+export interface FixedAmount {
+  item: string;
+  value: number;
+  unit: "g" | "mL";
+}

@@ -9,21 +9,21 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { CalcRequest, Program } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
-import { dryRun } from "@/lib/engine/simulator/run";
+import { dryRun, type SimOptions } from "@/lib/engine/simulator/run";
 import { changedVariables } from "@/lib/engine/rules/variables";
 import { graphTargets, runTarget } from "@/lib/engine/predictionScope";
 import type { LabBackend } from "./backend";
 import { initialLabState, labReducer, latestRun, missingPrediction } from "./state";
 import type { LabState, PredictionRecord, RunRecord } from "./types";
 
-export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydrate?: Partial<LabState>) {
+export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydrate?: Partial<LabState>, simOpts: SimOptions = {}) {
   const [state, dispatch] = useReducer(labReducer, initialLabState(catalog.slug, hydrate));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onProgram = useCallback((program: Program, blockly: object) => {
-    dispatch({ type: "program", program, blockly, diagnostics: dryRun(program, catalog) });
+    dispatch({ type: "program", program, blockly, diagnostics: dryRun(program, catalog, simOpts) });
     backend.logEvent("block_edit", { steps: program.steps.length, variables: program.variables.length });
-  }, [backend, catalog]);
+  }, [backend, catalog, simOpts]);
 
   // 블록·탐구 카드가 바뀌면 1.5초 뒤 자동저장 (첫 렌더는 건너뜀 — 불러온 상태를 다시 저장하지 않기 위해)
   const firstSave = useRef(true);

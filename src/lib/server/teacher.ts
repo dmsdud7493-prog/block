@@ -21,7 +21,7 @@ export async function classDetail(classId: string) {
     const [cls, enr, asg] = await Promise.all([
       db.from("classes").select("id, name, join_code, settings").eq("id", classId).single(),
       db.from("enrollments").select("student_no, profiles(id, consent_on_file, consent_date)").eq("class_id", classId).order("student_no"),
-      db.from("assignments").select("id, due_at, allow_late, experiments(slug, title)").eq("class_id", classId).order("created_at"),
+      db.from("assignments").select("id, due_at, allow_late, settings_override, experiments(slug, title)").eq("class_id", classId).order("created_at"),
     ]);
     if (!cls.data) return null;
     const students: StudentRow[] = (enr.data ?? []).map((e) => {
@@ -30,7 +30,7 @@ export async function classDetail(classId: string) {
     });
     const assignments: AssignmentRow[] = (asg.data ?? []).map((a) => {
       const x = a.experiments as unknown as { slug: string; title: string };
-      return { id: a.id, slug: x.slug, title: x.title, dueAt: a.due_at, allowLate: a.allow_late };
+      return { id: a.id, slug: x.slug, title: x.title, dueAt: a.due_at, allowLate: a.allow_late, fixedAmounts: (a.settings_override as Record<string, unknown> | null)?.fixed_amounts === true };
     });
     return { id: cls.data.id, name: cls.data.name, joinCode: cls.data.join_code, settings: cls.data.settings as Record<string, unknown>, students, assignments };
   } catch {

@@ -5,7 +5,7 @@
 import "server-only";
 import { rpc, rpcRow, normalizeError } from "./rpc";
 import { checkValue, runProgram } from "./simulation";
-import { latestRunProgram, runForUser, sessionForUser } from "./sessions";
+import { assignmentOptions, latestRunProgram, runForUser, sessionForUser } from "./sessions";
 import { getCatalog } from "@/lib/engine/experiments";
 import { changedVariables } from "@/lib/engine/rules/variables";
 import type { Program } from "@/lib/engine/types";
@@ -19,7 +19,8 @@ export async function runForStudent(userId: string, sessionId: string, program: 
     if (begin.max_runs && begin.next_run_no > begin.max_runs) throw new Error("forbidden");
     const catalog = getCatalog(begin.slug);
     if (!catalog) throw new Error("not_found");
-    const result = runProgram(begin.slug, program, begin.seed, begin.next_run_no);
+    // 교사가 넣는 양을 정해 준 배정이면 다른 양으로는 실행되지 않는다(학생 화면 점검과 같은 규칙, ADR-P26)
+    const result = runProgram(begin.slug, program, begin.seed, begin.next_run_no, await assignmentOptions(sessionId));
     const prev = (await latestRunProgram(sessionId)) as Program | null;
     const changed = changedVariables(prev, program, catalog.variableOptions, catalog.isTrialEnd);
     await rpc("app_record_run", {

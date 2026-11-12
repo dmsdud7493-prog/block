@@ -126,6 +126,8 @@ export const separation2Catalog: ExperimentCatalog<Separation2State> = {
   ],
 
   reference: [SOLUBILITY_REFERENCE],
+  // 교사가 '넣는 양 정해 주기'로 배정했을 때의 양 — 예시 순서·예측 질문(붕산 10 g, 황산 구리(II) 1 g)과 같은 값
+  fixedAmounts: [{ item: "hot_water", value: 100, unit: "g" }, { item: "boric_acid", value: 10, unit: "g" }, { item: "cuso4", value: 1, unit: "g" }],
   missions: [
     {
       id: "crystal", icon: "💎", title: "붕산과 황산 구리(II)의 혼합물을 뜨거운 물에 녹여 식힌 뒤 거르고, 걸러 낸 붕산 결정의 질량을 구해 봐",

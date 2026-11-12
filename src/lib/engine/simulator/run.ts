@@ -6,6 +6,10 @@ import type { CalcRequest, Diagnostic, Frame, Measurement, Program, Series, Simu
 import type { AnyCatalog, NoiseSpec, ReduceContext } from "../experiments/types";
 import { checkAllSlots } from "../rules/slots";
 import { checkVariables } from "../rules/variables";
+import { checkFixedAmounts } from "../rules/fixedAmounts";
+
+/** 배정 설정에 따른 추가 규칙 — fixedAmounts: 교사가 넣는 양을 정해 줌(ADR-P26) */
+export interface SimOptions { fixedAmounts?: boolean }
 import { createRng, jitter, type Rng } from "../rng";
 
 export interface PhysicsSource {
@@ -82,8 +86,8 @@ function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | nu
   }, init);
 }
 
-export function simulate(program: Program, catalog: AnyCatalog, src: PhysicsSource | null): SimulationResult {
-  const slotDiags = checkAllSlots(catalog.actions, program.steps);
+export function simulate(program: Program, catalog: AnyCatalog, src: PhysicsSource | null, opts: SimOptions = {}): SimulationResult {
+  const slotDiags = [...checkAllSlots(catalog.actions, program.steps), ...(opts.fixedAmounts ? checkFixedAmounts(catalog, program.steps) : [])];
   const varDiags = checkVariables(program, catalog.variableOptions, catalog.isTrialEnd);
   if (slotDiags.length > 0) {
     return { ok: false, frames: [], diagnostics: [...slotDiags, ...varDiags], measurements: [], calcRequests: [], series: [], stoppedAt: null };
@@ -102,8 +106,8 @@ export function simulate(program: Program, catalog: AnyCatalog, src: PhysicsSour
 }
 
 /** 편집 중 점검 — 물성 없이 규칙만 (클라이언트에서 실행 가능) */
-export function dryRun(program: Program, catalog: AnyCatalog): Diagnostic[] {
-  return simulate(program, catalog, null).diagnostics;
+export function dryRun(program: Program, catalog: AnyCatalog, opts: SimOptions = {}): Diagnostic[] {
+  return simulate(program, catalog, null, opts).diagnostics;
 }
 
 export function physicsFromSeed(params: Record<string, number>, seed: string, noisy = true): PhysicsSource {

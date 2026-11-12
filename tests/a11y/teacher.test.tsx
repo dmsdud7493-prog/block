@@ -10,6 +10,7 @@ import LiveBoard from "@/components/teacher/LiveBoard";
 import FourCards from "@/components/teacher/FourCards";
 import RubricGrader from "@/components/teacher/RubricGrader";
 import ReportReadOnly from "@/components/teacher/ReportReadOnly";
+import AssignForm from "@/components/teacher/AssignForm";
 import { DEFAULT_FOLD, foldClass, type SessionInfo } from "@/lib/events/fold";
 import { fourCards } from "@/lib/events/cards";
 import type { ClassBoard, SubmissionDetail } from "@/lib/teacherTypes";
@@ -88,5 +89,17 @@ describe("RubricGrader", () => {
     render(<RubricGrader detail={detail} />);
     fireEvent.click(screen.getByRole("button", { name: /단위를 꼭 붙여/ }));
     expect((screen.getByLabelText(/학생에게 남길 말/) as HTMLTextAreaElement).value).toContain("단위");
+  });
+});
+
+describe("AssignForm 넣는 양 (ADR-P26)", () => {
+  it("혼합물 분리 실험을 고르면 '학생이 정하기/정해 주기'를 고를 수 있고, 다른 실험에서는 보이지 않는다", async () => {
+    const { container } = render(<AssignForm classId="c1" assignments={[]} />);
+    expect(screen.queryByRole("group", { name: "넣는 양" })).toBeNull();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "separation2" } });
+    const group = screen.getByRole("group", { name: "넣는 양" });
+    expect(group.textContent).toContain("붕산 10 g");
+    expect((screen.getByRole("radio", { name: /학생이 정하기/ }) as HTMLInputElement).checked).toBe(true);
+    expect((await axe(container)).violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });
 });

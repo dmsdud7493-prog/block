@@ -38,3 +38,15 @@ export async function latestRunProgram(sessionId: string): Promise<unknown | nul
     return null;
   }
 }
+
+/** 배정 설정(교사가 실험을 배정할 때 고른 것) — fixedAmounts: 넣는 양 정해 주기(ADR-P26). 읽지 못하면 기본(자유) */
+export async function assignmentOptions(sessionId: string): Promise<{ fixedAmounts: boolean }> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from("sessions").select("assignments(settings_override)").eq("id", sessionId).single();
+    const raw = (data?.assignments as unknown as { settings_override?: Record<string, unknown> } | null)?.settings_override ?? {};
+    return { fixedAmounts: raw.fixed_amounts === true };
+  } catch {
+    return { fixedAmounts: false };
+  }
+}

@@ -5,7 +5,7 @@ import type { CalcRequest, Diagnostic, Measurement, Program, Series } from "@/li
 
 export interface ClassSummary { id: string; name: string; joinCode: string; studentCount: number; settings: Record<string, unknown> }
 export interface StudentRow { id: string; studentNo: string; consentOnFile: boolean; consentDate: string | null }
-export interface AssignmentRow { id: string; slug: string; title: string; dueAt: string | null; allowLate: boolean }
+export interface AssignmentRow { id: string; slug: string; title: string; dueAt: string | null; allowLate: boolean; /** 넣는 양 정해 주기(ADR-P26) */ fixedAmounts?: boolean }
 
 export interface ClassBoard {
   classId: string;

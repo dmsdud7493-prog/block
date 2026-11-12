@@ -153,6 +153,8 @@ export const separation1Catalog: ExperimentCatalog<Separation1State> = {
     "가지 달린 삼각플라스크에 끓임쪽을 3개 넣는다",
   ],
   predictionTargets,
+  // 교사가 '넣는 양 정해 주기'로 배정했을 때의 양 — 예시 순서와 같은 값(물 20 mL + 에탄올 20 mL)
+  fixedAmounts: [{ item: "water", value: 20, unit: "mL" }, { item: "ethanol", value: 20, unit: "mL" }],
   missions: [
     {
       id: "distill", icon: "🔥", title: "물과 에탄올의 혼합물을 가열해서, 시험관에 처음 모인 액체가 끓어 나온 온도를 구해 봐",

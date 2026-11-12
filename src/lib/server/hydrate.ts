@@ -34,7 +34,7 @@ export async function loadSessionView(sessionId: string): Promise<SessionView | 
 
 async function loadSessionViewInner(sessionId: string): Promise<SessionView | null> {
   const db = await createClient();
-  const { data: s } = await db.from("sessions").select("id, seed, status, inquiry, current_step, classes(settings), experiments(slug)").eq("id", sessionId).single();
+  const { data: s } = await db.from("sessions").select("id, seed, status, inquiry, current_step, classes(settings), assignments(settings_override), experiments(slug)").eq("id", sessionId).single();
   if (!s) return null;
   const slug = (s.experiments as unknown as { slug: string }).slug;
   const [prog, runs, preds, meas, report, sub, chat] = await Promise.all([
@@ -55,7 +55,8 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
     sessionId,
     slug,
     status: s.status,
-    classSettings: (s.classes as unknown as { settings: Record<string, unknown> }).settings ?? {},
+    // 반 설정 위에 이 배정의 설정(예: fixed_amounts 넣는 양 정해 주기)을 덮어쓴다
+    classSettings: { ...((s.classes as unknown as { settings: Record<string, unknown> }).settings ?? {}), ...((s.assignments as unknown as { settings_override?: Record<string, unknown> } | null)?.settings_override ?? {}) },
     blockly: (latest?.blockly as object) ?? null,
     report: report.data ? { content: report.data.content as Record<string, unknown>, aiAssisted: report.data.ai_assisted_sections, version: report.data.version } : null,
     submission: sub.data ?? null,
