@@ -98,6 +98,7 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
   predictionTargets: [
     {
       id: "more_at_room",
+      subjects: ["kno3", "cuso4"],
       question: "실온(20 °C)의 물 10 g에 질산 칼륨과 황산 구리(II) 중 어느 쪽이 더 많이 녹을까요?",
       choices: [
         { id: "kno3", label: "질산 칼륨이 더 많이 녹는다" },
@@ -112,32 +113,42 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
     },
 
     {
-      id: "kno3_hot_ice",
-      question: "물 10 g에 질산 칼륨 6 g을 넣었더니 일부가 바닥에 남았어요. 이 시험관을 뜨거운 물에 넣은 뒤, 다시 얼음물에 넣으면 어떻게 될까요?",
+      id: "kno3_temp",
+      question: "질산 칼륨을 얼음물(약 0 °C), 실온(20 °C), 뜨거운 물(약 60 °C) 속 시험관의 물 10 g에 각각 더 녹지 않을 때까지 녹이면, 녹는 양은 어떻게 다를까요?",
+      subjects: ["kno3", "ice_water", "hot_water"],
       choices: [
-        { id: "dissolve_then_crystal", label: "뜨거운 물에서 모두 녹고, 얼음물에서 다시 고체가 생긴다" },
-        { id: "more_solid_then_dissolve", label: "뜨거운 물에서 고체가 더 많아지고, 얼음물에서 모두 녹는다" },
-        { id: "no_change", label: "두 경우 모두 변화가 없다" },
+        { id: "hot_most", label: "뜨거운 물에서 가장 많이, 얼음물에서 가장 적게 녹는다" },
+        { id: "ice_most", label: "얼음물에서 가장 많이, 뜨거운 물에서 가장 적게 녹는다" },
+        { id: "same", label: "온도와 상관없이 녹는 양이 같다" },
       ],
       hints: [
         "따뜻한 코코아와 차가운 우유 중 어디에 가루가 더 잘 녹았나요?",
-        "온도가 바뀌면 같은 물 10 g이 녹일 수 있는 양도 바뀔까요?",
-        "녹일 수 있는 양이 지금 녹아 있는 양보다 작아지면, 넘치는 만큼은 어디로 갈까요?",
+        "온도가 바뀌어도 같은 물 10 g이 녹일 수 있는 양은 그대로일까요?",
+        "미션 ①에서 구한 실온의 값을 기준으로, 더 차갑거나 더 뜨거우면 어느 쪽으로 바뀔지 생각해 봐요.",
       ],
     },
   ],
 
-  /** 실험2(온도 변화)는 확장 과제라 완료 조건에 넣지 않는다 */
+  /**
+   * 미션 ①② 실온에서 두 물질 비교(종류), 미션 ③ 온도에 따라 녹는 양이 크게 바뀌는 질산 칼륨으로 온도 비교.
+   * "kno3@60"은 60 °C(뜨거운 물 비커에 담근 시험관)에서 맞힌 '물 100 g에 녹는 양' 계산값 (사용자 요청 2026-11-13)
+   */
   missions: [
     {
-      id: "kno3", icon: "🧂", title: "질산 칼륨은 물 100 g에 얼마나 녹을까? 녹는 양을 구해 봐",
+      id: "kno3", icon: "🧂", title: "질산 칼륨은 실온의 물 100 g에 얼마나 녹을까? 녹는 양을 구해 봐",
       cheer: "🎉 미션 ① 성공! 질산 칼륨이 녹는 양을 구했네. 다른 물질도 똑같이 녹을까? 이제 미션 ② 황산 구리(II) 차례야 💪",
-      done: { solved: ["kno3"] },
+      done: { solved: ["kno3@20"] },
     },
     {
       id: "cuso4", icon: "💎", title: "황산 구리(II)도 같은 방법으로! 두 물질이 녹는 양을 비교해 봐",
-      cheer: "🏆 미션 ② 성공! 두 물질이 녹는 양은 같았어? 다르다면 왜일까? 보고서에서 정리해 보자 ✨",
-      done: { solved: ["cuso4"] },
+      cheer: "🎉 미션 ② 성공! 두 물질이 녹는 양은 같았어? 이번엔 온도를 바꿔 볼 차례야. 미션 ③으로 가 보자 🌡️",
+      done: { solved: ["cuso4@20"] },
+    },
+    {
+      id: "kno3_temp", icon: "🌡️", title: "질산 칼륨을 얼음물·실온·뜨거운 물에서! 온도에 따라 녹는 양을 비교해 봐",
+      cheer: "🏆 미션 ③ 성공! 온도가 바뀌니 녹는 양도 달라졌어? 세 온도의 값을 보고서에서 비교해 보자 ✨",
+      done: { solved: ["kno3@0", "kno3@20", "kno3@60"] },
+      report: "온도에 따른 질산 칼륨의 용해도 비교하기",
     },
   ],
   requiredSubjects: ["kno3", "cuso4"],

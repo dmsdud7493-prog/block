@@ -12,10 +12,23 @@ export interface MissionProgress {
   current: number;
 }
 
-/** 계산값을 맞힌 대상(subject) — 계산 요청 key로 실행 기록에서 대상을 찾는다 */
+/** 계산 요청 하나의 이름표 — 대상, 그리고 같은 회차에 온도를 쟀으면 "대상@온도"(예: kno3@60) */
+function tagsOf(r: RunRecord, c: RunRecord["calcRequests"][number]): string[] {
+  const t = r.measurements.find((m) => m.key === `temp.${c.subject}.t${c.trial}`);
+  return t ? [c.subject, `${c.subject}@${t.value}`] : [c.subject];
+}
+
+/** 이 실행에서 맞힌 계산값의 이름표들 */
+function solvedTagsIn(s: LabState, r: RunRecord): string[] {
+  return r.calcRequests.filter((c) => s.calc[c.key]?.correct && s.calc[c.key]?.runNo === r.runNo).flatMap((c) => tagsOf(r, c));
+}
+
+/** 계산값을 맞힌 대상(subject)과 "대상@온도" — 계산 요청 key로 실행 기록에서 대상을 찾는다 */
 function solvedSubjects(s: LabState): Set<string> {
-  const subjectOf = new Map(s.runs.flatMap((r) => r.calcRequests.map((c) => [c.key, c.subject] as const)));
-  return new Set(Object.values(s.calc).filter((e) => e.correct).map((e) => subjectOf.get(e.key)).filter((x): x is string => Boolean(x)));
+  const loose = new Map(s.runs.flatMap((r) => r.calcRequests.map((c) => [c.key, c.subject] as const)));
+  const tagged = s.runs.flatMap((r) => solvedTagsIn(s, r));
+  const plain = Object.values(s.calc).filter((e) => e.correct).map((e) => loose.get(e.key)).filter((x): x is string => Boolean(x));
+  return new Set([...plain, ...tagged]);
 }
 
 /** 이 실행에 미션이 바라는 장면(이벤트)이 나왔는가 */
@@ -60,7 +73,12 @@ export function missionRuns(catalog: AnyCatalog, s: LabState): RunRecord[] | nul
 function runFor(m: MissionDef, s: LabState): RunRecord | null {
   const want = m.done.solved ?? [];
   if (want.length === 0) return m.done.event ? [...s.runs].reverse().find((r) => r.ok && runShowsEvent(r, m.done.event!)) ?? null : null;
-  const solvedIn = (r: RunRecord) => r.calcRequests.filter((c) => want.includes(c.subject) && s.calc[c.key]?.correct && s.calc[c.key]?.runNo === r.runNo).length;
-  const best = s.runs.reduce<RunRecord | null>((b, r) => (solvedIn(r) > 0 && (!b || solvedIn(r) >= solvedIn(b)) ? r : b), null);
-  return best;
+  // 바라는 것을 가장 많이 맞힌 실행 — 같으면 다른 미션 것이 덜 섞인 실행, 그래도 같으면 나중 것
+  const score = (r: RunRecord) => {
+    const tags = solvedTagsIn(s, r);
+    const hit = want.filter((w) => tags.includes(w)).length;
+    const extra = new Set(tags.filter((t) => t.includes("@") && !want.includes(t))).size;
+    return hit === 0 ? -1 : hit - extra * 0.1;
+  };
+  return s.runs.reduce<RunRecord | null>((b, r) => (score(r) >= 0 && (!b || score(r) >= score(b)) ? r : b), null);
 }

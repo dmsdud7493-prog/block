@@ -69,6 +69,7 @@ export interface PredictionTarget {
 /**
  * 오늘의 미션 — 무엇을 알아낼지만 알려 주고, 순서는 학생이 블록으로 짠다(규칙 6: 설계를 대신 만들지 않음).
  * 완료 조건은 선언형: solved = 계산값을 맞힌 대상(subject) 모두, event = 실행 기록에 이 종류의 이벤트가 있고 그 settled에 items가 모두 있음.
+ * solved 항목에 "@온도"를 붙이면(예: "kno3@60") 그 온도(같은 회차의 temp 측정값)에서 맞힌 계산값이어야 한다.
  */
 export interface MissionDef {
   id: string;
@@ -77,6 +78,8 @@ export interface MissionDef {
   /** 미션을 마쳤을 때 튜터가 건네는 한마디(정답 수치는 넣지 않는다) */
   cheer: string;
   done: { solved?: string[]; event?: { type?: string; settled?: string[] } };
+  /** 보고서 과정에서 이 미션 활동의 제목(없으면 같은 물질을 다루는 기본 활동 제목, 그것도 없으면 미션 문장) */
+  report?: string;
 }
 
 export interface ExperimentCatalog<S> {

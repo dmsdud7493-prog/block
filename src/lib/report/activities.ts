@@ -94,12 +94,13 @@ const lastOkRun = (s: LabState): RunRecord | null => [...s.runs].reverse().find(
 
 const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
-/** 미션마다 활동 하나 — 제목은 같은 물질을 다루는 기본 활동 제목, 없으면 미션 문장 */
+/** 미션마다 활동 하나 — 제목은 미션이 정한 보고서 제목, 없으면 같은 물질을 다루는 기본 활동 제목, 그것도 없으면 미션 문장 */
 export function missionDefs(c: AnyCatalog): ActivityDef[] {
   const defs = activityDefs(c);
   return (c.missions ?? []).map((m) => {
-    const subjects = m.done.solved?.length ? m.done.solved : m.done.event?.settled ?? [];
-    return { title: defs.find((d) => sameSet(d.subjects, subjects))?.title ?? m.title, subjects };
+    const raw = m.done.solved?.length ? m.done.solved : m.done.event?.settled ?? [];
+    const subjects = [...new Set(raw.map((x) => x.split("@")[0]))]; // "kno3@60" → kno3
+    return { title: m.report ?? defs.find((d) => sameSet(d.subjects, subjects))?.title ?? m.title, subjects };
   });
 }
 
