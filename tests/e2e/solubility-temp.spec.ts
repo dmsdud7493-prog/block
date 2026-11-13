@@ -33,3 +33,28 @@ test("용해도 미션 ③: 오늘의 미션에 온도 비교가 있고, 얼음�
   await expect(log.getByText(/시험관 C을\(를\)|시험관 C를 뜨거운 물/).first()).toBeVisible({ timeout: 60_000 });
   await expect(log.getByText(/넣은 질산 칼륨의 총량을 표에 기록했어요/)).toHaveCount(3, { timeout: 60_000 });
 });
+
+test("용해도 미션 ①만 마치면 그래프 대신 '미션 2 하러 가기' — 그래프는 미션 ③까지 마친 뒤", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto(`/demo/${D}`);
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.evaluate((s) => (window as unknown as { __labLoad: (x: object) => void }).__labLoad(s), workspace(D, tube("tube_a", null, 1, 0.5, true)));
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: /실험 실행하기/ }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("radio").first().check();
+  await page.getByLabel(/왜 그렇게/).fill("알갱이가 더 고와 보여서");
+  await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
+  const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
+  await expect(table).toBeVisible({ timeout: 40_000 });
+  await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+  await expect(page.getByText("🎯 오늘의 미션을 마치면 다음 단계가 열려요.")).toBeVisible();
+  const text = await table.innerText();
+  const water = Number(/물의 질량 ([\d.]+)/.exec(text)![1]);
+  const dissolved = Number(/녹은 양 ([\d.]+)/.exec(text)![1]);
+  await table.getByLabel("물 100 g에 녹는 양 값").fill(((dissolved / water) * 100).toFixed(1));
+  await table.getByLabel("물 100 g에 녹는 양 단위").selectOption("g/물 100 g");
+  await table.getByRole("button", { name: "확인" }).click();
+  await expect(page.getByRole("button", { name: "🎯 미션 2 하러 가기" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+});

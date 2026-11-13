@@ -135,6 +135,9 @@ export const boilingCatalog: ExperimentCatalog<BoilingState> = {
     "온도계를 스탠드에 고정한다",
   ],
   predictionTargets: PREDICTIONS,
+
+  // 녹는점·끓는점은 시간–온도 그래프의 평탄 구간에서 읽으므로 미션마다 그래프를 연다
+  graphForMissions: true,
   missions: [
     {
       id: "water", icon: "💧", title: "물은 몇 ℃에서 끓을까? 물의 끓는점을 구해 봐",

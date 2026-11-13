@@ -31,7 +31,7 @@ test("density screens", async ({ page }) => {
 test("S8 scenes", async ({ page }) => {
   const fs = await import("node:fs");
   const path = await import("node:path");
-  for (const slug of ["melting", "boiling", "solubility", "separation1", "separation2"]) {
+  for (const slug of ["melting", "boiling", "separation1"]) { // 미션 중에 그래프를 여는 실험만(용해도·재결정은 미션을 다 마친 뒤)
     const sc = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../fixtures/prototypes", `${slug}.json`), "utf8")).scenarios.find((s: { expect: { ok: boolean } }) => s.expect.ok);
     const tok = (t: string) => { const [k, a, b] = t.split(":"); return k === "E" ? item(slug, a) : k === "Q" ? qty(b, Number(a)) : { block: { type: `pos_${slug}_${a}` } }; };
     await page.goto(`/demo/${slug}`);

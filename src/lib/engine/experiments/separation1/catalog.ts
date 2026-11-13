@@ -155,6 +155,9 @@ export const separation1Catalog: ExperimentCatalog<Separation1State> = {
   predictionTargets,
   // 교사가 '넣는 양 정해 주기'로 배정했을 때의 양 — 예시 순서와 같은 값(물 20 mL + 에탄올 20 mL)
   fixedAmounts: [{ item: "water", value: 20, unit: "mL" }, { item: "ethanol", value: 20, unit: "mL" }],
+
+  // 증류 온도는 시간–온도 그래프의 평탄 구간에서 읽으므로 미션마다 그래프를 연다
+  graphForMissions: true,
   missions: [
     {
       id: "distill", icon: "🔥", title: "물과 에탄올의 혼합물을 가열해서, 시험관에 처음 모인 액체가 끓어 나온 온도를 구해 봐",

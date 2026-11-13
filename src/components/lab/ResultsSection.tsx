@@ -64,10 +64,17 @@ function LayersView({ catalog, ctl, liquids, onNext }: { catalog: AnyCatalog; ct
   );
 }
 
-/** 그래프형: 예측 확인 후 그래프 → 예상과 비교 → 보고서로 */
+/**
+ * 그래프형: 예측 확인 후 그래프 → 예상과 비교 → 보고서로.
+ * 미션이 남아 있으면 그래프는 아직 — 다음 미션 버튼만 보이고, 마지막 미션까지 마치면 그래프가 열린다
+ * (사용자 요청 2026-11-13: "미션 3을 해야 그래프 그리기가 나오도록, 미션 1이 끝나면 미션 2 하기 버튼").
+ * 녹는점·끓는점·증류(graphForMissions)는 그래프에서 값을 읽어야 미션을 마치므로 미션마다 그래프를 연다.
+ */
 function GraphView({ catalog, ctl, onNext }: { catalog: AnyCatalog; ctl: LabController; onNext: () => void }) {
   const { state } = ctl;
   const okRun = [...state.runs].reverse().find((r) => r.ok);
+  const p = missionProgress(catalog, state);
+  if (p.missions.length > 0 && !allMissionsDone(p) && !catalog.graphForMissions) return okRun ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null;
   return (
     <>
       {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}

@@ -51,8 +51,10 @@ async function answerGates(page: Page) {
   }
 }
 
+const GRAPH_FOR_MISSIONS = ["melting", "boiling", "separation1"];
+
 for (const slug of ["melting", "boiling", "solubility", "separation1", "separation2"]) {
-  test(`${slug}: 설계 → 예측 → 실행 → 표 → 그래프 → 보고서 잠김(미션 전)`, async ({ page }) => {
+  test(`${slug}: 설계 → 예측 → 실행 → 표 → (그래프) → 보고서 잠김(미션 전)`, async ({ page }) => {
     const { ws, name } = scenario(slug);
     test.info().annotations.push({ type: "scenario", description: name });
     await page.goto(`/demo/${slug}`);
@@ -68,6 +70,13 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
     const text = await table.innerText();
     for (const m of body.data.measurements) expect(text).toContain(fmtNum(m.value));
 
+    // 그래프는 녹는점·끓는점·증류처럼 그래프에서 값을 읽는 실험만 미션 중에 열린다 — 용해도·재결정은 미션을 다 마친 뒤
+    if (!GRAPH_FOR_MISSIONS.includes(slug)) {
+      await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+      await expect(page.getByText("🎯 오늘의 미션을 마치면 다음 단계가 열려요.")).toBeVisible();
+      await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
+      return;
+    }
     await page.getByRole("button", { name: "📈 그래프 그리기" }).click();
     await answerGates(page);
     await expect(page.getByRole("figure", { name: /결과 그래프/ })).toBeVisible();

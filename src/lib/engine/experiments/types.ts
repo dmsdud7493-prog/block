@@ -99,6 +99,11 @@ export interface ExperimentCatalog<S> {
   reference?: ReferenceTable[];
   /** 오늘의 미션(순서대로 열린다). 없으면 미션 카드를 보이지 않는다 */
   missions?: MissionDef[];
+  /**
+   * 미션 계산값을 그래프에서 읽어야 하는 실험(녹는점·끓는점·증류의 평탄 구간)만 true — 미션마다 그래프를 연다.
+   * 아니면(용해도·재결정) 그래프는 마지막 미션까지 마친 뒤에 열린다(사용자 요청 2026-11-13).
+   */
+  graphForMissions?: boolean;
   /** 교사가 '넣는 양 정해 주기'로 배정하면 이 양으로만 넣게 한다(반 결과를 비교하기 위해, ADR-P26). 없으면 언제나 자유 */
   fixedAmounts?: FixedAmount[];
   /** '실험 계획 세우기'(변인 블록)를 쓸지 — 기본은 쓰지 않는다. 오늘의 미션이 실험 계획을 대신한다(ADR-P18·P21) */

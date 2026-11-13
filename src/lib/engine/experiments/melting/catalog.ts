@@ -124,6 +124,9 @@ export const meltingCatalog: ExperimentCatalog<MeltingState> = {
     "비커를 핫플레이트 위에 올린다",
   ],
   predictionTargets: PREDICTIONS,
+
+  // 녹는점·끓는점은 시간–온도 그래프의 평탄 구간에서 읽으므로 미션마다 그래프를 연다
+  graphForMissions: true,
   missions: [
     {
       id: "lauric", icon: "🧊", title: "로르산은 몇 ℃에서 녹을까? 로르산의 녹는점을 구해 봐",
