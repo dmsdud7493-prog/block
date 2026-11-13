@@ -1,9 +1,11 @@
 "use client";
-/** 결과 영역 — 데이터 표 → (예측 확인 후) 그래프 → 예상과 비교 → 보고서로. 밀도처럼 resultView가 "layers"면 그래프·비교 대신 한 비커 그림 */
+/**
+ * 결과 영역 — 데이터 표 → (예측 확인 후) 그래프 → 다음 미션 / 보고서로. 밀도처럼 resultView가 "layers"면 그래프 대신 한 비커 그림.
+ * 예상과 결과 비교는 실험실에서 따로 묻지 않고 보고서의 '탐구 결과 해석'에서 쓴다(사용자 요청 2026-11-13).
+ */
 import dynamic from "next/dynamic";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import DataTable from "@/components/data/DataTable";
-import AfterExplain from "@/components/data/AfterExplain";
 import LayerResult from "@/components/data/LayerResult";
 import ReferencePanel from "@/components/data/ReferencePanel";
 import type { LabController } from "./useLabController";
@@ -47,7 +49,7 @@ function ToReport({ ctl, catalog, onNextMission }: { ctl: LabController; catalog
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap rounded-full bg-ok px-5 py-2 font-bold text-white shadow-[0_3px_0_#05613f] disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
-      {!ready ? <span className="text-sm text-muted">{catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인하면 열려요." : "예상과 결과를 비교해 적으면 열려요."}</span> : null}
+      {!ready ? <span className="text-sm text-muted">{catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인하면 열려요." : "그래프를 그리면 열려요."}</span> : null}
     </div>
   );
 }
@@ -65,7 +67,7 @@ function LayersView({ catalog, ctl, liquids, onNext }: { catalog: AnyCatalog; ct
 }
 
 /**
- * 그래프형: 예측 확인 후 그래프 → 예상과 비교 → 보고서로.
+ * 그래프형: 예측 확인 후 그래프 → 다음 미션(남았으면) / 보고서로.
  * 미션이 남아 있으면 그래프는 아직 — 다음 미션 버튼만 보이고, 마지막 미션까지 마치면 그래프가 열린다
  * (사용자 요청 2026-11-13: "미션 3을 해야 그래프 그리기가 나오도록, 미션 1이 끝나면 미션 2 하기 버튼").
  * 녹는점·끓는점·증류(graphForMissions)는 그래프에서 값을 읽어야 미션을 마치므로 미션마다 그래프를 연다.
@@ -79,7 +81,6 @@ function GraphView({ catalog, ctl, onNext }: { catalog: AnyCatalog; ctl: LabCont
     <>
       {okRun && !state.graphOpened ? <GraphGate ctl={ctl} catalog={catalog} /> : null}
       {state.graphOpened ? <ResultChart catalog={catalog} runs={state.runs} predictions={state.predictions} /> : null}
-      {state.graphOpened ? <AfterExplain targets={catalog.predictionTargets} predictions={state.predictions} onSave={ctl.explainAfter} /> : null}
       {state.graphOpened ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
     </>
   );

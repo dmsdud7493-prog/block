@@ -93,12 +93,16 @@ export default function BoilingScene({ state, event }: { state: BoilingState | n
   if (!state) return null;
   const temp = state.thermo.where ? state.temp : null;
   const armY = (state.tube.fixed ? TUBE_Y.fixed : TUBE_Y.held) + 12;
+  // 물을 비커에서 바로 끓일 때(시험관 없음)는 스탠드 집게가 비커 속 온도계를 잡는다 — 예전엔 시험관 자리를 잡아 온도계와 떨어져 보였다
+  const thermoInBeaker = !state.tube.liquid && state.thermo.where === "bkr";
+  const beakerTop = (state.bkr.onHot || state.shown.hot ? PLATE.top : BENCH_Y) - BKR.h;
+  const arm = thermoInBeaker ? { x: BKR.x + BKR.w * 0.7, y: beakerTop - 44 } : { x: TUBE.x + TUBE.w / 2, y: armY };
   return (
     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="h-full w-full" role="img" aria-label={event?.note ?? "끓는점 실험 장치"}>
       <LabDefs />
       <LiquidDefs keys={["water", "hot_water", "ethanol", "ice_water"]} />
       <Bench />
-      {state.shown.stand ? <Stand x={30} top={10} armX={TUBE.x + TUBE.w / 2} armY={armY} /> : null}
+      {state.shown.stand ? <Stand x={30} top={10} armX={arm.x} armY={arm.y} /> : null}
       {state.shown.hot ? <HotPlate x={PLATE.x} y={PLATE.top} w={PLATE.w} on={state.heating} /> : null}
       <BeakerView s={state} ev={event} />
       <SideTube s={state} ev={event} />

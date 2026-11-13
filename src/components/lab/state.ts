@@ -93,16 +93,19 @@ export function missingPrediction(s: LabState, targets: string[]): string | null
 
 /** 결과 확인을 마쳤는가 — 그래프형: 예상과 결과 비교(지침 3.3) / 층 그림형(밀도): 마지막 성공 실행의 계산값을 모두 맞힘 */
 export function resultsDone(s: LabState, catalog: AnyCatalog): boolean {
-  if (catalog.resultView?.kind !== "layers") return afterExplained(s);
+  if (catalog.resultView?.kind !== "layers") return s.graphOpened;
   const ok = [...s.runs].reverse().find((r) => r.ok);
   return Boolean(ok && ok.calcRequests.length > 0 && ok.calcRequests.every((c) => s.calc[c.key]?.correct));
 }
 
-/** 보고서를 열 수 있는가 — 미션이 있는 실험은 미션을 모두 마쳐야 한다(보고서는 미션을 모아 한 장으로). 그래프형은 예상과 비교까지 */
+/**
+ * 보고서를 열 수 있는가 — 미션이 있는 실험은 미션을 모두 마쳐야 한다(보고서는 미션을 모아 한 장으로). 그래프형은 그래프까지 본 뒤.
+ * 예상과 결과 비교는 보고서의 '탐구 결과 해석'에서 쓴다(2026-11-13, 실험실의 비교 칸은 뺌)
+ */
 export function reportReady(s: LabState, catalog: AnyCatalog): boolean {
   const p = missionProgress(catalog, s);
   if (p.missions.length === 0) return resultsDone(s, catalog);
-  return allMissionsDone(p) && (catalog.resultView?.kind === "layers" || afterExplained(s));
+  return allMissionsDone(p) && (catalog.resultView?.kind === "layers" || s.graphOpened);
 }
 
 /** 지침 3.3: 결과를 본 뒤 차이 설명을 모두 했는가 */
