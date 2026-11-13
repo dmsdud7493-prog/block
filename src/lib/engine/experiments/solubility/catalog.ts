@@ -135,7 +135,7 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
    */
   missions: [
     {
-      id: "kno3", icon: "🧂", title: "질산 칼륨은 실온의 물 100 g에 얼마나 녹을까? 녹는 양을 구해 봐",
+      id: "kno3", icon: "🧂", title: "질산 칼륨은 실온의 물 10 g에 얼마나 녹을까? 녹인 양으로 물 100 g에 녹는 양을 구해 봐",
       cheer: "🎉 미션 ① 성공! 질산 칼륨이 녹는 양을 구했네. 다른 물질도 똑같이 녹을까? 이제 미션 ② 황산 구리(II) 차례야 💪",
       done: { solved: ["kno3@20"] },
     },
