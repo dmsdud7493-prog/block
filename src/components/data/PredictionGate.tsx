@@ -2,7 +2,7 @@
 /**
  * 예측 게이트 (지침 3.1, 4.2) — 실행·그래프 공개 전에 결과와 이유를 먼저 적는다.
  * 어려우면 힌트 P1→P3를 하나씩(정답은 주지 않음). 예측은 형성평가: 맞고 틀림을 매기지 않는다.
- * 겉모양은 '카드 고르기'(사용자 선택 시안 3-A, 2026-11-13): 보기마다 색 카드 한 장, 고른 카드는 살짝 들리고 노란 테두리.
+ * 겉모양은 '카드 고르기'(사용자 확정 시안 3-A, 2026-11-13 · 뒤 배경은 푸른색 계열): 보기마다 색 카드 한 장, 고른 카드는 살짝 들리고 노란 테두리.
  * 카드는 라디오 단추를 감싼 label이라 키보드(화살표·Space)와 화면 읽기 프로그램으로도 똑같이 고른다.
  */
 import { useState } from "react";
@@ -10,7 +10,7 @@ import Modal from "@/components/ui/Modal";
 import type { PredictionTarget } from "@/lib/engine/experiments/types";
 import type { PredictionRecord } from "@/components/lab/types";
 import SketchPad, { type Sketch } from "./SketchPad";
-import ChoicePicture from "./ChoicePicture";
+import ChoicePicture, { hasPicture } from "./ChoicePicture";
 
 interface Props {
   target: PredictionTarget;
@@ -36,7 +36,7 @@ const COLS: Record<number, string> = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3" 
 function Card({ name, id, label, index, checked, targetId, onPick }: { name: string; id: string; label: string; index: number; checked: boolean; targetId: string; onPick: (id: string) => void }) {
   const lift = checked ? "-translate-y-2 -rotate-1 outline outline-4 outline-yellow-300 shadow-[0_14px_24px_rgba(0,0,0,0.3)]" : "shadow-[0_5px_0_rgba(0,0,0,0.15)]";
   return (
-    <label className={`relative flex min-h-[150px] cursor-pointer flex-col rounded-2xl border-[3px] border-white/40 bg-gradient-to-b p-2.5 text-white transition-transform motion-reduce:transition-none focus-within:ring-4 focus-within:ring-sky-300 ${CARD[index % CARD.length]} ${lift}`}>
+    <label className={`relative flex ${hasPicture(targetId) ? "min-h-[150px]" : "min-h-[104px]"} cursor-pointer flex-col rounded-2xl border-[3px] border-white/40 bg-gradient-to-b p-2.5 text-white transition-transform motion-reduce:transition-none focus-within:ring-4 focus-within:ring-sky-300 ${CARD[index % CARD.length]} ${lift}`}>
       <input type="radio" name={name} value={id} checked={checked} onChange={() => onPick(id)} className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" />
       {checked ? <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-md bg-yellow-300 px-2 text-xs font-black text-slate-900">✔ 내 선택</span> : null}
       <span className="text-xl font-black" aria-hidden="true">{LETTERS[index] ?? index + 1}</span>
@@ -97,7 +97,7 @@ export default function PredictionGate({ target, record, onHint, onSubmit, onCan
     if (ready) onSubmit(choice, why.trim(), sketch.some((v) => v !== null) ? sketch : undefined);
   };
   return (
-    <Modal labelledBy="gate-title" onClose={onCancel} backdrop="bg-gradient-to-br from-violet-950/85 via-pink-900/80 to-amber-700/75" panel="max-w-3xl rounded-[26px] bg-white p-5 shadow-2xl sm:p-6">
+    <Modal labelledBy="gate-title" onClose={onCancel} backdrop="bg-gradient-to-br from-slate-950/85 via-blue-900/80 to-cyan-700/75" panel="max-w-3xl rounded-[26px] bg-white p-5 shadow-2xl sm:p-6">
       <form onSubmit={submit}>
         <Head purpose={purpose} />
         <ChoiceSet target={target} choice={choice} onPick={setChoice} />
