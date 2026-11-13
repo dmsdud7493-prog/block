@@ -200,7 +200,7 @@ test("머리 블록은 왼쪽 위에 고정 — 꾸러미가 열리면 오른쪽
   expect(await headLeft(page)).toEqual(closed);
 });
 
-test("행동 블록에 준비물을 넣어도 작업판의 행동 블록 폭은 모두 같다", async ({ page }) => {
+test("준비물을 넣은 행동 블록도 두 줄까지만 꺾이고, 블록마다 원래 길이를 지킨다", async ({ page }) => {
   await page.goto("/demo/density");
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
   await page.evaluate(() => (window as unknown as { __labLoad: (x: object) => void }).__labLoad({
@@ -213,5 +213,9 @@ test("행동 블록에 준비물을 넣어도 작업판의 행동 블록 폭은 
   await page.waitForTimeout(400);
   const widths = await page.locator(".blocklyBlockCanvas g[class*='act_density_'] > path.blocklyPath").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
   expect(widths).toHaveLength(3);
-  expect(new Set(widths).size).toBe(1);
+  expect(new Set(widths).size).toBeGreaterThan(1);
+  type WS = { getAllBlocks: (o: boolean) => { type: string; inputList: { name: string; isVisible: () => boolean }[] }[] };
+  const lines = await page.evaluate(() => (window as unknown as { __labWs: WS }).__labWs.getAllBlocks(false)
+    .filter((b) => b.type.startsWith("act_")).map((b) => 1 + b.inputList.filter((i) => i.name.startsWith("BR") && i.isVisible()).length));
+  expect(Math.max(...lines)).toBeLessThanOrEqual(2);
 });

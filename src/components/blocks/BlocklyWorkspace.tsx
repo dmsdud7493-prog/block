@@ -17,7 +17,6 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
-import { LAB_RENDERER, equalizeActionWidths, registerLabRenderer } from "./labRenderer";
 import { lockHeads, pinHeadSoon } from "./pinHead";
 
 const defined = new Set<string>();
@@ -27,7 +26,6 @@ function ensureBlocks(slug: string) {
   // 끼우기 쉽게: 블록을 빈칸 근처(기본 28 → 56)에만 놓아도 쏙 들어가게
   Blockly.config.snapRadius = 56;
   Blockly.config.connectingSnapRadius = 72;
-  registerLabRenderer();
   if (!catalog || defined.has(slug)) return;
   registerAutoWrap();
   Blockly.common.defineBlocksWithJsonArray(allBlockJson(catalog));
@@ -128,14 +126,8 @@ function keepHeadOnZoom(ws: Blockly.WorkspaceSvg) {
   ws.getParentSvg().querySelector(".blocklyZoomReset")?.addEventListener("pointerup", () => setTimeout(() => pinHeadSoon(ws), 0));
 }
 
-/** 행동 블록 줄바꿈을 다시 정하고, 다 그린 뒤 행동 블록 폭을 가장 넓은 것에 맞춘다 */
-function relayout(ws: Blockly.WorkspaceSvg) {
-  relayoutWorkspace(ws);
-  void Blockly.renderManagement.finishQueuedRenders().then(() => {
-    // 그 사이 작업판이 닫혔으면(페이지 이동) 할 일이 없다
-    if (ws.getParentSvg()?.isConnected) equalizeActionWidths(ws);
-  });
-}
+/** 행동 블록 줄바꿈을 실제 폭으로 다시 정한다 */
+const relayout = (ws: Blockly.WorkspaceSvg) => relayoutWorkspace(ws);
 
 /** 빈칸 속 값 블록이면 그것을 품은 행동(문장) 블록 id를 찾는다 */
 function stepOf(ws: Blockly.WorkspaceSvg, id: string): string {
@@ -172,7 +164,7 @@ function injectOptions(catalog: NonNullable<ReturnType<typeof getCatalog>>, read
   return {
     toolbox: readOnly ? undefined : toolbox(catalog),
     readOnly,
-    renderer: LAB_RENDERER,
+    renderer: "zelos",
     theme: labTheme,
     trashcan: !readOnly,
     zoom: { controls: true, wheel: false, startScale: 0.8, maxScale: 1.6, minScale: 0.5 },

@@ -39,4 +39,9 @@ describe("자동 줄바꿈", () => {
     expect(s.inputList.some((i) => i.name.startsWith("BR") && i.isVisible())).toBe(false);
     expect(MAX_ROW).toBeGreaterThan(200);
   });
+  it.each(all.map(({ slug, a }) => [`${slug}/${a.id}`, slug, a] as const))("%s: 길어도 두 줄까지(꺾는 자리는 한 곳)", (_n, slug, a) => {
+    const b = ws.newBlock(T.action(slug, a.id));
+    layoutAction(b);
+    expect(b.inputList.filter((i) => i.name.startsWith("BR") && i.isVisible()).length).toBeLessThanOrEqual(1);
+  });
 });

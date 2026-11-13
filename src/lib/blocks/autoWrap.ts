@@ -1,12 +1,16 @@
 /**
- * 행동 블록 자동 줄바꿈 — 빈칸에 블록을 끼우면 블록 폭을 재서, 한 줄이 MAX_ROW를 넘지 않도록
- * 숨은 줄바꿈 입력(BRn)을 켜고 끈다. 그래서 조립한 블록들의 폭이 서로 비슷하게 유지된다.
- * (사용자 요청 2026-10-29: "조립이 되면 다른 블록이랑 어울리게 길이가 자동 수정")
+ * 행동 블록 자동 줄바꿈 — 빈칸에 블록을 끼우면 블록 폭을 재서 숨은 줄바꿈 입력(BRn)을 켜고 끈다.
+ * 짧으면 한 줄, 한 줄(MAX_ROW)을 넘으면 두 줄로 — 두 줄의 길이가 가장 비슷해지는 자리에서 한 번만 꺾는다.
+ * 그래도 한 줄이 MAX_LINE(화면 폭)을 넘을 만큼 긴 블록만 세 줄 이상이 된다.
+ * 블록마다 원래 길이는 살려 서로 구분되게 한다(폭을 억지로 같게 맞추지 않음).
+ * (사용자 요청 2026-10-29 "다른 블록이랑 어울리게 길이 자동 수정", 2026-11-13 "세 줄은 되지 않게 두 줄 정도")
  */
 import * as Blockly from "blockly/core";
 
-/** 한 줄 최대 폭(작업판 단위 px) */
+/** 이 폭까지는 한 줄(작업판 단위 px) */
 export const MAX_ROW = 300;
+/** 두 줄로 꺾었을 때 한 줄이 넘지 않을 폭 — 꾸러미를 연 조립판 화면 안에 들어오는 폭 */
+export const MAX_LINE = 400;
 const EMPTY_SLOT = 44;
 const CHAR = 11;
 
@@ -42,21 +46,46 @@ function segments(block: Blockly.Block, measure: boolean): { breaks: Blockly.Inp
   }, { breaks: [], widths: [0] });
 }
 
+const sum = (xs: number[]) => xs.reduce((n, x) => n + x, 0);
+
+/** 앞에서부터 채우다 limit를 넘으면 꺾는 방식 — 줄바꿈 입력마다 켤지(true) 끌지 */
+function greedy(widths: number[], limit: number): boolean[] {
+  let line = widths[0];
+  return widths.slice(1).map((next) => {
+    const wrap = line + next > limit;
+    line = wrap ? next : line + next;
+    return wrap;
+  });
+}
+
+/** 한 번만 꺾어 두 줄 중 긴 줄이 가장 짧아지는 줄바꿈 자리(없으면 -1) */
+function bestSplit(widths: number[]): { at: number; longest: number } {
+  const total = sum(widths);
+  return widths.slice(1).reduce((best, _, k) => {
+    const first = sum(widths.slice(0, k + 1));
+    const longest = Math.max(first, total - first);
+    return longest < best.longest ? { at: k, longest } : best;
+  }, { at: -1, longest: Number.POSITIVE_INFINITY });
+}
+
+/** 줄바꿈 입력마다 켤지 정한다: 한 줄 → 고른 두 줄 → (아주 길 때만) 여러 줄 */
+function plan(widths: number[]): boolean[] {
+  const none = widths.slice(1).map(() => false);
+  if (sum(widths) <= MAX_ROW) return none;
+  const split = bestSplit(widths);
+  if (split.at >= 0 && split.longest <= MAX_LINE) return none.map((_, k) => k === split.at);
+  return greedy(widths, MAX_LINE);
+}
+
 /** 줄바꿈을 정하고, 바뀐 것이 있으면 true */
 export function layoutAction(block: Blockly.Block, measure = false): boolean {
   const { breaks, widths } = segments(block, measure);
-  let line = widths[0];
-  let changed = false;
-  breaks.forEach((br, k) => {
-    const next = widths[k + 1];
-    const wrap = line + next > MAX_ROW;
-    line = wrap ? next : line + next;
-    if (br.isVisible() !== wrap) {
-      br.setVisible(wrap);
-      changed = true;
-    }
-  });
-  return changed;
+  const wraps = plan(widths);
+  return breaks.reduce((changed, br, k) => {
+    if (br.isVisible() === wraps[k]) return changed;
+    br.setVisible(wraps[k]);
+    return true;
+  }, false);
 }
 
 /** 준비물·수치·위치 블록 옆의 ⊗ 단추 (원래 프로토타입) — 회색 동그라미에 흰 ✕ */
