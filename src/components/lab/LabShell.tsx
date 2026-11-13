@@ -91,8 +91,8 @@ function BlockHelp() {
   );
 }
 
-function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick, reset }: {
-  slug: string; examples: string[]; missions: MissionProgress; fixedText: string | null; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null; reset: number;
+function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics, activeBlock, errorBlock, focusBlock, onProgram, onBlockClick }: {
+  slug: string; examples: string[]; missions: MissionProgress; fixedText: string | null; initial: object | null; diagnostics: Diagnostic[]; activeBlock: string | null; errorBlock: string | null; focusBlock: string | null;
   onProgram: LabController["onProgram"]; onBlockClick: (id: string, stepId: string) => void;
 }) {
   return (
@@ -102,7 +102,7 @@ function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics,
       <BlockHelp />
       {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}
       <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-[480px]">
-        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} resetSignal={reset} />
+        <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
       </div>
     </section>
   );
@@ -159,9 +159,8 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const runError: Diagnostic | null = run && !run.ok ? run.diagnostics.find((d) => d.severity === "error") ?? null : null;
   const gate = catalog.predictionTargets.find((t) => t.id === state.gateTarget);
   const st = stepperState(state, catalog);
-  // 다음 미션: 조립판을 비워 새로 짠다(지난 미션 기록은 실행 기록에 남아 보고서에 쓰인다)
-  const [reset, setReset] = useState(0);
-  const nextMission = useCallback(() => setReset((n) => n + 1), []);
+  // 다음 미션: 조립판은 그대로 둔다 — 물질만 바꿔 다시 쓰는 경우가 많다. 비우려면 블록 위 🧹 모두 지우기(사용자 요청 2026-11-13)
+  const nextMission = useCallback(() => undefined, []);
   const runCtl = useRun(ctl, settings);
   const missions = useMemo(() => missionProgress(catalog, state), [catalog, state]);
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);
@@ -179,7 +178,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   };
 
   const stepper = <div className="min-w-0 flex-1"><StepStepper phase={state.phase} done={st.done} locked={st.locked} onSelect={(p) => dispatch({ type: "phase", phase: p })} /></div>;
-  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} fixedText={simOpts.fixedAmounts ? fixedAmountsText(catalog) : null} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} reset={reset} />;
+  const design = <DesignPane slug={slug} examples={catalog.exampleSteps} missions={missions} fixedText={simOpts.fixedAmounts ? fixedAmountsText(catalog) : null} initial={initial} diagnostics={runCtl.shown} activeBlock={activeBlock} errorBlock={runError?.blockId ?? null} focusBlock={focusBlock} onProgram={ctl.onProgram} onBlockClick={onBlockClick} />;
   const monitor = <MonitorPane slug={slug} ctl={ctl} settings={settings} shown={runCtl.shown} runError={runError} play={play} onFocus={setFocusBlock} onActive={onActive} onFinish={onFinish} />;
 
   if (state.phase === "report" && report) {

@@ -65,4 +65,7 @@ test("용해도 미션 ①만 마치면 그래프 대신 '미션 2 하러 가기
   await table.getByRole("button", { name: "확인" }).last().click();
   await expect(page.getByRole("button", { name: "🎯 미션 2 하러 가기" })).toBeVisible();
   await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
+  // 미션 2는 물질만 바꾸면 된다 — 버튼을 눌러도 미션 1 블록이 그대로 남는다
+  await page.getByRole("button", { name: "🎯 미션 2 하러 가기" }).click();
+  await expect(page.locator(".blocklyBlockCanvas g.act_solubility_a6")).toHaveCount(1);
 });

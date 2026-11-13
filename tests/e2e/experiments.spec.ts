@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { item, qty, workspace, type ActionSpec, type VarSpec } from "./workspace";
-import { fmtNum } from "../../src/lib/engine/format";
+import { fmtMeasure } from "../../src/lib/engine/format";
 
 interface Scenario { name: string; steps: string[][]; variables?: [string, string | null][]; expect: { ok: boolean } }
 
@@ -62,13 +62,13 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
     const runResponse = page.waitForResponse((r) => r.url().includes("/api/demo/run") && r.status() === 200);
     await page.getByRole("button", { name: /실험 실행하기/ }).click();
     await answerGates(page);
-    const body = (await (await runResponse).json()) as { data: { ok: boolean; measurements: { value: number }[] } };
+    const body = (await (await runResponse).json()) as { data: { ok: boolean; measurements: { value: number; digits?: number }[] } };
     expect(body.data.ok).toBe(true);
 
     const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
     await expect(table).toBeVisible({ timeout: 30_000 });
     const text = await table.innerText();
-    for (const m of body.data.measurements) expect(text).toContain(fmtNum(m.value));
+    for (const m of body.data.measurements) expect(text).toContain(fmtMeasure(m));
 
     // 그래프는 녹는점·끓는점·증류처럼 그래프에서 값을 읽는 실험만 미션 중에 열린다 — 용해도·재결정은 미션을 다 마친 뒤
     if (!GRAPH_FOR_MISSIONS.includes(slug)) {

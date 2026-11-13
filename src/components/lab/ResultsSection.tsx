@@ -33,7 +33,7 @@ function NextMission({ n, numbered, onStart }: { n: number; numbered: boolean; o
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap btn-sun px-5 py-2" onClick={go}>🎯 미션{numbered ? ` ${n}` : ""} 하러 가기</button>
-      <span className="text-sm text-muted">누르면 조립판이 비워져요. 새로 블록을 짜서 다음 미션을 실행해 봐요. 지난 미션 기록은 보고서에 그대로 남아요.</span>
+      <span className="text-sm text-muted">지금 블록은 그대로 남아 있어요. 물질이나 순서를 바꿔 다음 미션을 실행해 봐요. 새로 짜고 싶으면 블록 위 🧹 모두 지우기를 눌러요. 지난 미션 기록은 보고서에 그대로 남아요.</span>
     </div>
   );
 }
