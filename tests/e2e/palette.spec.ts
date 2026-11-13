@@ -234,3 +234,23 @@ test("휠로 굴려도 '실험 과정' 머리 블록은 맨 위에서 내려가�
   await page.waitForTimeout(300);
   expect(await headLeft(page)).toEqual(top);
 });
+
+test("🧹 모두 지우기 — 한 번 더 확인한 뒤 머리 블록만 남기고 지우며, Ctrl+Z로 되살린다", async ({ page }) => {
+  await loadDensity(page, { type: "act_density_a1", next: { block: { type: "act_density_a5" } } });
+  const acts = page.locator(".blocklyBlockCanvas g.act_density_a1, .blocklyBlockCanvas g.act_density_a5");
+  await expect(acts).toHaveCount(2);
+  await page.getByRole("button", { name: "조립판의 블록 모두 지우기" }).click();
+  const ask = page.getByRole("group", { name: "모두 지우기 확인" });
+  await expect(ask).toContainText("모두 지울까요");
+  await ask.getByRole("button", { name: "취소" }).click();
+  await expect(acts).toHaveCount(2);
+  await page.getByRole("button", { name: "조립판의 블록 모두 지우기" }).click();
+  await page.getByRole("group", { name: "모두 지우기 확인" }).getByRole("button", { name: "지우기" }).click();
+  await expect(acts).toHaveCount(0);
+  await expect(page.locator(".blocklyBlockCanvas g.proc_start")).toHaveCount(1);
+  await expect(page.getByRole("toolbar", { name: "블록 편집" })).toContainText("Ctrl+Z");
+  await page.locator(".blocklyBlockCanvas g.proc_start").first().click();
+  await page.keyboard.press("Control+z");
+  await expect(acts).toHaveCount(2);
+  await expect(page.locator(".blocklyZoomReset")).toBeHidden();
+});

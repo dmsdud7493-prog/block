@@ -202,3 +202,6 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 @keyframes lab-tip-release { 0%, 34% { opacity: 1; } 38%, 100% { opacity: 0; } }
 .lab-drop-in { animation: lab-drop-in calc(.45s / var(--lab-speed, 1)) cubic-bezier(.5, 0, 1, 1) calc(.55s / var(--lab-speed, 1)) both; }
 @keyframes lab-drop-in { from { opacity: 0; transform: translateY(-46px); } 12% { opacity: 1; } to { opacity: 1; transform: none; } }
+
+/* 조립판 ⌖(가운데로) 단추 숨김 — 머리 블록이 늘 왼쪽 위에 고정돼 있어 쓸 일이 없다(사용자 요청 2026-11-13). ＋/− 확대·축소와 휴지통은 그대로 */
+.blocklyZoomReset { display: none; }

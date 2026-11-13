@@ -93,7 +93,8 @@ function withSettle(out: Out, cont: ContainerId): Out {
 /** 자리 잡은 모습 — 철조각(고체)은 크기와 상관없이 함께 바닥에, 액체는 아래부터 순서대로 */
 function settledText(b: DensityState["bkr"]): string {
   const liquids = b.layers.filter((k) => (b.liquids[k] ?? 0) > 0);
-  const solids = b.layers.filter((k) => !liquids.includes(k));
+  // 함께 가라앉은 고체는 쌓인 순서(측정 오차로 바뀜)와 상관없이 늘 같은 순서로 부른다(큰 → 작은)
+  const solids = b.layers.filter((k) => !liquids.includes(k)).sort();
   if (solids.length === 0) return `비커 속에서 아래부터 ${josaLayers(liquids)} 순서로 자리 잡았어요.`;
   const bottom = solids.length > 1 ? fixJosa(`${solids.slice(0, -1).map(L).join(", ")}과(와) ${L(solids[solids.length - 1])}은(는) 함께`) : fixJosa(`${L(solids[0])}은(는)`);
   if (liquids.length > 1) return `비커 속에서 ${bottom} 바닥에 가라앉고, 그 위로 아래부터 ${josaLayers(liquids)} 순서로 자리 잡았어요.`;

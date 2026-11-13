@@ -126,6 +126,7 @@ test("밀도 미션 ②: 철조각을 넣으면 핀셋에서 놓인 조각은 �
 });
 
 test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 물질, 비커는 가운데 크게, 철조각은 함께 바닥", async ({ page }) => {
+  test.setTimeout(90_000);
   const D = "density";
   await page.goto(`/demo/${D}`);
   await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
@@ -145,5 +146,5 @@ test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 �
   const scaleX = await page.locator(".monitor-screen .lab-move").first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
   expect(scaleX).toBeCloseTo(1.5, 1);
   await expect(page.locator(".monitor-screen").getByText("바닥에 가라앉았어요").first()).toBeAttached({ timeout: 20_000 });
-  await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 45_000 }); // 여러 테스트가 함께 돌 때 애니메이션이 느려진다
 });

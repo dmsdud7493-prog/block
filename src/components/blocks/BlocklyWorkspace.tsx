@@ -116,14 +116,13 @@ function setupPalette(ws: Blockly.WorkspaceSvg) {
   });
 }
 
-/** 확대·축소하거나 ⌖(가운데로) 단추를 눌러도 머리 블록은 왼쪽 위 자리로 돌아온다 */
+/** 확대·축소해도 머리 블록은 왼쪽 위 자리로 돌아온다(⌖ 가운데로 단추는 CSS로 숨김) */
 function keepHeadOnZoom(ws: Blockly.WorkspaceSvg) {
   ws.addChangeListener((e: Blockly.Events.Abstract) => {
     if (e.type !== Blockly.Events.VIEWPORT_CHANGE) return;
     const v = e as Blockly.Events.ViewportChange;
     if (v.oldScale !== undefined && v.scale !== v.oldScale) pinHeadSoon(ws);
   });
-  ws.getParentSvg().querySelector(".blocklyZoomReset")?.addEventListener("pointerup", () => setTimeout(() => pinHeadSoon(ws), 0));
 }
 
 /** 행동 블록 줄바꿈을 실제 폭으로 다시 정한다 */
