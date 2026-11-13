@@ -219,3 +219,18 @@ test("준비물을 넣은 행동 블록도 두 줄까지만 꺾이고, 블록마
     .filter((b) => b.type.startsWith("act_")).map((b) => 1 + b.inputList.filter((i) => i.name.startsWith("BR") && i.isVisible()).length));
   expect(Math.max(...lines)).toBeLessThanOrEqual(2);
 });
+
+test("휠로 굴려도 '실험 과정' 머리 블록은 맨 위에서 내려가지 않는다", async ({ page }) => {
+  await page.goto("/demo/density");
+  await page.waitForFunction(() => typeof (window as unknown as { __labLoad?: unknown }).__labLoad === "function");
+  await page.waitForTimeout(300);
+  const top = await headLeft(page);
+  const svg = (await page.locator('[role=application][aria-label*="블록 실험 설계"] svg.blocklySvg').boundingBox())!;
+  await page.mouse.move(svg.x + svg.width * 0.7, svg.y + svg.height * 0.5);
+  await page.mouse.wheel(0, -400); // 위로 굴리기 — 예전에는 머리 블록이 아래로 내려갔다
+  await page.waitForTimeout(300);
+  expect(await headLeft(page)).toEqual(top);
+  await page.mouse.wheel(0, 400); // 짧은 순서는 아래로 굴릴 것도 없다
+  await page.waitForTimeout(300);
+  expect(await headLeft(page)).toEqual(top);
+});

@@ -17,7 +17,7 @@ import { workspaceToProgram } from "@/lib/blocks/program";
 import { labTheme } from "./theme";
 import { registerAutoWrap, relayoutWorkspace } from "@/lib/blocks/autoWrap";
 import BlockToolbar, { selectedIn } from "./BlockToolbar";
-import { lockHeads, pinHeadSoon } from "./pinHead";
+import { keepHeadOnTop, lockHeads, pinHeadSoon } from "./pinHead";
 
 const defined = new Set<string>();
 
@@ -232,6 +232,7 @@ export default function BlocklyWorkspace(props: BlocklyWorkspaceProps) {
       setupPalette(ws);
       lockHeads(ws);
       keepHeadOnZoom(ws);
+      keepHeadOnTop(ws);
     }
     pinHeadSoon(ws);
     exposeForE2E(ws);

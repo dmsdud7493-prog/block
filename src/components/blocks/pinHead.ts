@@ -53,3 +53,39 @@ export function pinHead(ws: Blockly.WorkspaceSvg) {
 
 /** 다음 그리기 뒤에 맞춘다(꾸러미가 열리고 닫힌 뒤 크기가 정해진 다음) */
 export const pinHeadSoon = (ws: Blockly.WorkspaceSvg) => requestAnimationFrame(() => requestAnimationFrame(() => pinHead(ws)));
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/**
+ * 화면을 굴릴 수 있는 범위(스크롤 값, px). 머리 블록이 원점에 있으므로 위·왼쪽(양수)으로는 못 가고,
+ * 블록이 화면보다 길거나 넓을 때만 그만큼 아래·오른쪽(음수)으로 내려가 끝까지 볼 수 있다.
+ */
+function scrollRange(ws: Blockly.WorkspaceSvg): { minX: number; minY: number } {
+  const box = ws.getBlocksBoundingBox();
+  const view = ws.getMetricsManager().getViewMetrics();
+  const k = ws.scale;
+  return {
+    minX: Math.min(0, view.width - box.right * k - MARGIN),
+    minY: Math.min(0, view.height - box.bottom * k - MARGIN),
+  };
+}
+
+/**
+ * 휠·스크롤 막대로 화면을 굴려도 '실험 과정' 머리 블록이 아래로 내려가지 않게 한다
+ * (사용자 요청 2026-11-13: "시작 블럭은 항상 제일 위에, 안 내려가게"). 순서가 길어 화면 아래로 넘칠 때만
+ * 그 끝까지 내려 볼 수 있다. 휠은 ws.scroll을 거치므로 거기서 바로 막고, 스크롤 막대는 화면이 바뀐 뒤 되돌린다.
+ */
+export function keepHeadOnTop(ws: Blockly.WorkspaceSvg) {
+  const raw = ws.scroll.bind(ws);
+  ws.scroll = (x: number, y: number, hide?: boolean) => {
+    const r = scrollRange(ws);
+    raw(clamp(x, r.minX, 0), clamp(y, r.minY, 0), hide);
+  };
+  ws.addChangeListener((e: Blockly.Events.Abstract) => {
+    if (e.type !== Blockly.Events.VIEWPORT_CHANGE || Blockly.Gesture.inProgress()) return;
+    const r = scrollRange(ws);
+    const x = clamp(ws.scrollX, r.minX, 0);
+    const y = clamp(ws.scrollY, r.minY, 0);
+    if (Math.abs(x - ws.scrollX) > 0.5 || Math.abs(y - ws.scrollY) > 0.5) ws.scroll(x, y);
+  });
+}
