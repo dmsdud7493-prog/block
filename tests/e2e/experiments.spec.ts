@@ -46,7 +46,7 @@ async function answerGates(page: Page) {
     }
     await dialog.getByRole("radio").first().check();
     await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 배운 내용을 떠올려 보면");
-    await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+    await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
     await page.waitForTimeout(300);
   }
 }

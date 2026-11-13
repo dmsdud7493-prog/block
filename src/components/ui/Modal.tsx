@@ -20,7 +20,11 @@ function trap(e: KeyboardEvent, box: HTMLElement | null) {
   }
 }
 
-export default function Modal({ labelledBy, onClose, children }: { labelledBy: string; onClose: () => void; children: React.ReactNode }) {
+const BACKDROP = "bg-slate-900/50";
+const PANEL = "max-w-lg rounded-xl bg-panel p-4 shadow-xl";
+
+/** backdrop·panel을 주면 기본 겉모양 대신 그것을 쓴다(예측 카드 창) */
+export default function Modal({ labelledBy, onClose, children, backdrop = BACKDROP, panel = PANEL }: { labelledBy: string; onClose: () => void; children: React.ReactNode; backdrop?: string; panel?: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -38,8 +42,8 @@ export default function Modal({ labelledBy, onClose, children }: { labelledBy: s
   }, [onClose]);
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby={labelledBy} className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4">
-      <div ref={ref} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-panel p-4 shadow-xl">{children}</div>
+    <div role="dialog" aria-modal="true" aria-labelledby={labelledBy} className={`fixed inset-0 z-[100] flex items-center justify-center p-4 ${backdrop}`}>
+      <div ref={ref} className={`max-h-[90vh] w-full overflow-y-auto ${panel}`}>{children}</div>
     </div>
   );
 }

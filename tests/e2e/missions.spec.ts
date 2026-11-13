@@ -28,7 +28,7 @@ test("밀도: 미션 카드가 보이고, 넷을 한 비커에 넣으면 밀도 
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("radio").first().check();
   await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 무거운 게 가라앉으니까");
-  await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+  await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
 
   await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 20_000 });
   await expect(card.getByText("0/3")).toBeVisible();
@@ -75,7 +75,7 @@ test("밀도: 물·식용유 밀도를 맞게 계산하면 그래프 대신 한 
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("식용유가 위로 간다").check();
   await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("국 위에 기름이 뜨니까");
-  await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+  await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
 
   const table = page.getByRole("table").filter({ hasText: "실험 1회차 결과" });
   await expect(table).toBeVisible({ timeout: 20_000 });

@@ -23,7 +23,7 @@ test("density screens", async ({ page }) => {
   await page.screenshot({ path: "/tmp/claude-0/shots/gate.png" });
   await page.getByLabel("두 철조각의 밀도는 같다").check();
   await page.getByLabel(/왜 그렇게/).fill("같은 철이니까 같을 것 같다");
-  await page.getByRole("button", { name: "예상 저장하기" }).click();
+  await page.getByRole("button", { name: /이 카드로 결정/ }).click();
   await page.waitForTimeout(2500);
   await page.screenshot({ path: "/tmp/claude-0/shots/run.png", fullPage: true });
 });
@@ -47,7 +47,7 @@ test("S8 scenes", async ({ page }) => {
     }
     await page.getByRole("dialog").getByRole("radio").first().check();
     await page.getByLabel(/왜 그렇게/).fill("왜냐하면 그럴 것 같아서");
-    await page.getByRole("button", { name: "예상 저장하기" }).click();
+    await page.getByRole("button", { name: /이 카드로 결정/ }).click();
     await page.waitForTimeout(1800);
     await page.locator("section[aria-labelledby=monitor-title]").screenshot({ path: `/tmp/claude-0/shots/${slug}-monitor.png` });
     await page.waitForTimeout(6000);
@@ -55,7 +55,7 @@ test("S8 scenes", async ({ page }) => {
     for (let i = 0; i < 3 && await page.getByRole("dialog").isVisible().catch(() => false); i += 1) {
       await page.getByRole("dialog").getByRole("radio").first().check();
       await page.getByLabel(/왜 그렇게/).fill("왜냐하면 그럴 것 같아서");
-      await page.getByRole("button", { name: "예상 저장하기" }).click();
+      await page.getByRole("button", { name: /이 카드로 결정/ }).click();
       await page.waitForTimeout(300);
     }
     const fig = page.getByRole("figure", { name: /결과 그래프/ });

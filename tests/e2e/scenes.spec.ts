@@ -22,7 +22,7 @@ async function runAndCapture(page: Page, slug: string, frames: number) {
   if (await dialog.isVisible().catch(() => false)) {
     await dialog.getByRole("radio").first().check();
     await page.getByLabel(/왜 그렇게/).fill("왜냐하면 그럴 것 같아서");
-    await page.getByRole("button", { name: "예상 저장하기" }).click();
+    await page.getByRole("button", { name: /이 카드로 결정/ }).click();
   }
   const mon = page.locator("section[aria-labelledby=monitor-title] .monitor-screen");
   await mon.waitFor();

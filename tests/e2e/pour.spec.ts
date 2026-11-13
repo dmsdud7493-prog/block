@@ -12,7 +12,7 @@ async function loadAndRun(page: Page, slug: string, state: object) {
   if (await dialog.isVisible().catch(() => false)) {
     await dialog.getByRole("radio").first().check();
     await page.getByLabel(/왜 그렇게/).fill("왜냐하면 그럴 것 같아서");
-    await page.getByRole("button", { name: "예상 저장하기" }).click();
+    await page.getByRole("button", { name: /이 카드로 결정/ }).click();
   }
 }
 
@@ -141,7 +141,7 @@ test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 �
   await expect(dialog.getByText("물, 식용유, 큰 철조각, 작은 철조각 네 가지를 한 비커에 모두 넣으면 어떻게 자리 잡을까요?")).toBeVisible();
   await dialog.getByRole("radio", { name: /함께 바닥에/ }).check();
   await page.getByLabel(/왜 그렇게/).fill("왜냐하면 철이 가장 무거우니까");
-  await page.getByRole("button", { name: "예상 저장하기" }).click();
+  await page.getByRole("button", { name: /이 카드로 결정/ }).click();
   const scaleX = await page.locator(".monitor-screen .lab-move").first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
   expect(scaleX).toBeCloseTo(1.5, 1);
   await expect(page.locator(".monitor-screen").getByText("바닥에 가라앉았어요").first()).toBeAttached({ timeout: 20_000 });

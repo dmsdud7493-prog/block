@@ -33,7 +33,7 @@ async function predict(page: Page, choiceText: string) {
   await expect(dialog.getByText(/힌트 1:/)).toBeVisible();
   await dialog.getByLabel(choiceText).check();
   await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 같은 물질이니까");
-  await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+  await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
 }
 
 const liquidSteps = (liq: string) => [
@@ -55,7 +55,7 @@ async function answerAll(page: Page) {
   for (let i = 0; i < 4 && (await dialog.isVisible().catch(() => false)); i += 1) {
     await dialog.getByRole("radio").first().check();
     await dialog.getByLabel(/왜 그렇게 생각했나요/).fill("왜냐하면 무거운 게 가라앉으니까");
-    await dialog.getByRole("button", { name: "예상 저장하기" }).click();
+    await dialog.getByRole("button", { name: /이 카드로 결정/ }).click();
     await page.waitForTimeout(300);
   }
 }
