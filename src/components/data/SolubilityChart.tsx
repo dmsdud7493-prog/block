@@ -10,8 +10,23 @@ import type { RunRecord } from "@/components/lab/types";
 const COLORS = ["#1d4ed8", "#0e7490", "#b45309"];
 const labelOf = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
 
+export interface DissolvedRecord { subject: string; trial: number; value: number }
+
+/**
+ * 회차마다 녹은 양 — 지금은 '넣은 총량 − 녹지 않고 남은 양'으로 구한다(표에는 녹은 양을 보여 주지 않고 학생이 뺀다).
+ * 예전 기록(녹은 양을 그대로 측정값으로 남김)도 읽는다. 그래프는 미션을 모두 마친 뒤에 열린다.
+ */
+export function dissolvedRecords(run: RunRecord): DissolvedRecord[] {
+  const old = run.measurements.filter((m) => /^dissolved\.[^.]+\.t\d+$/.test(m.key)).map((m) => ({ subject: m.subject, trial: m.trial, value: m.value }));
+  const now = run.measurements.filter((m) => /^residue\.[^.]+\.t\d+$/.test(m.key)).flatMap((r) => {
+    const added = run.measurements.find((m) => m.key === `added.${r.subject}.t${r.trial}`);
+    return added ? [{ subject: r.subject, trial: r.trial, value: Math.round((added.value - r.value) * 100) / 100 }] : [];
+  });
+  return [...old, ...now];
+}
+
 export function solubilityPoints(run: RunRecord): { subject: string; points: { x: number; y: number }[] }[] {
-  const dissolved = run.measurements.filter((m) => m.key.startsWith("dissolved."));
+  const dissolved = dissolvedRecords(run);
   const subjects = [...new Set(dissolved.map((d) => d.subject))];
   return subjects.map((subject) => ({
     subject,

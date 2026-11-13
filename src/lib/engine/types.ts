@@ -91,6 +91,8 @@ export interface Measurement {
   value: number;
   unit: Unit | "g/mL" | "g/물 100 g";
   subject: string;
+  /** 표에 보일 소수 자릿수(없으면 1) — 학생이 이 값으로 직접 빼고 나누는 칸은 0.01 g까지 보여 준다 */
+  digits?: number;
 }
 
 /** 학생이 계산해서 입력해야 하는 칸 */

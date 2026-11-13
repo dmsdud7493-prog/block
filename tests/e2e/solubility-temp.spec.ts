@@ -31,7 +31,7 @@ test("용해도 미션 ③: 오늘의 미션에 온도 비교가 있고, 얼음�
   await page.getByRole("button", { name: "2×" }).click().catch(() => undefined);
   const log = page.getByRole("list", { name: "실험 기록" });
   await expect(log.getByText(/시험관 C을\(를\)|시험관 C를 뜨거운 물/).first()).toBeVisible({ timeout: 60_000 });
-  await expect(log.getByText(/넣은 질산 칼륨의 총량을 표에 기록했어요/)).toHaveCount(3, { timeout: 60_000 });
+  await expect(log.getByText(/넣은 질산 칼륨의 총량과 녹지 않고 남은 양을 표에 기록했어요/)).toHaveCount(3, { timeout: 60_000 });
 });
 
 test("용해도 미션 ①만 마치면 그래프 대신 '미션 2 하러 가기' — 그래프는 미션 ③까지 마친 뒤", async ({ page }) => {
@@ -50,11 +50,19 @@ test("용해도 미션 ①만 마치면 그래프 대신 '미션 2 하러 가기
   await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
   await expect(page.getByText("🎯 오늘의 미션을 마치면 다음 단계가 열려요.")).toBeVisible();
   const text = await table.innerText();
+  // 표에는 녹은 양이 없다 — 넣은 총량에서 녹지 않고 남은 양을 빼서 구한다
+  expect(text).not.toMatch(/녹은 양 [\d.]+ g/);
   const water = Number(/물의 질량 ([\d.]+)/.exec(text)![1]);
-  const dissolved = Number(/녹은 양 ([\d.]+)/.exec(text)![1]);
+  const added = Number(/넣은 총량 ([\d.]+)/.exec(text)![1]);
+  const residue = Number(/녹지 않고 남은 양 ([\d.]+)/.exec(text)![1]);
+  const dissolved = added - residue;
+  await table.getByLabel("녹은 양 값").fill(dissolved.toFixed(2));
+  await table.getByLabel("녹은 양 단위").selectOption("g");
+  await table.getByRole("button", { name: "확인" }).first().click();
+  await expect(page.getByRole("button", { name: /미션 2 하러 가기/ })).toHaveCount(0); // 물 100 g 환산까지 맞혀야 미션 완료
   await table.getByLabel("물 100 g에 녹는 양 값").fill(((dissolved / water) * 100).toFixed(1));
   await table.getByLabel("물 100 g에 녹는 양 단위").selectOption("g/물 100 g");
-  await table.getByRole("button", { name: "확인" }).click();
+  await table.getByRole("button", { name: "확인" }).last().click();
   await expect(page.getByRole("button", { name: "🎯 미션 2 하러 가기" })).toBeVisible();
   await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
 });

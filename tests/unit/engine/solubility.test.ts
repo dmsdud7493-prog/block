@@ -34,17 +34,23 @@ describe("golden: solubility", () => {
     });
   }
 
-  it("물 10 g·20 °C에서 녹는 양이 프로토타입 용해도(31.6, 20.7 g/물 100 g)의 1/10", () => {
+  it("물 10 g·20 °C에서 녹는 양(넣은 총량 − 남은 양)이 프로토타입 용해도(31.6, 20.7 g/물 100 g)의 1/10", () => {
     const sc = scenarios.find((s) => s.name.includes("실험1 전체"))!;
     const ms = simulate(sc.program, solubilityCatalog, src).measurements;
-    expect(ms.find((m) => m.key === "dissolved.kno3.t1")?.value).toBeCloseTo(3.16, 2);
-    expect(ms.find((m) => m.key === "dissolved.cuso4.t2")?.value).toBeCloseTo(2.07, 2);
+    const v = (k: string) => ms.find((m) => m.key === k)!.value;
+    expect(v("added.kno3.t1") - v("residue.kno3.t1")).toBeCloseTo(3.16, 2);
+    expect(v("added.cuso4.t2") - v("residue.cuso4.t2")).toBeCloseTo(2.07, 2);
   });
 
-  it("계산 요청은 녹은 양·물의 질량을 입력으로 쓴다", () => {
+  it("표에는 녹은 양 대신 넣은 총량·녹지 않고 남은 양(0.01 g)을 보여 주고, 학생이 녹은 양 → 물 100 g에 녹는 양 순서로 계산한다", () => {
     const sc = scenarios[0];
-    const req = simulate(sc.program, solubilityCatalog, src).calcRequests[0];
-    expect(req).toMatchObject({ label: "물 100 g에 녹는 양", unit: "g/물 100 g", inputs: ["dissolved.kno3.t1", "water.kno3.t1"] });
+    const r = simulate(sc.program, solubilityCatalog, src);
+    expect(r.measurements.map((m) => m.label)).toEqual(["물의 질량", "온도", "넣은 총량", "녹지 않고 남은 양"]);
+    expect(r.measurements.filter((m) => m.digits === 2).map((m) => m.label)).toEqual(["넣은 총량", "녹지 않고 남은 양"]);
+    expect(r.calcRequests).toMatchObject([
+      { key: "diss.kno3.t1", label: "녹은 양", unit: "g", inputs: ["added.kno3.t1", "residue.kno3.t1"] },
+      { key: "sol.kno3.t1", label: "물 100 g에 녹는 양", unit: "g/물 100 g", inputs: ["added.kno3.t1", "residue.kno3.t1", "water.kno3.t1"] },
+    ]);
   });
 
   it("실험2: 얼음물에서 결정이 생긴다", () => {
@@ -78,7 +84,7 @@ describe("seed 결정성: solubility", () => {
     const b = run("student-B:sol").measurements;
     expect(a.map((m) => m.value)).not.toEqual(b.map((m) => m.value));
     for (const ms of [a, b]) {
-      const kno3 = ms.find((m) => m.key === "dissolved.kno3.t1")!.value;
+      const kno3 = ms.find((m) => m.key === "added.kno3.t1")!.value - ms.find((m) => m.key === "residue.kno3.t1")!.value;
       expect(Math.abs(kno3 * 10 - 31.6) / 31.6).toBeLessThan(0.03);
     }
   });
@@ -96,4 +102,21 @@ describe("계산값 채점 — 용해도 (per100, FORMATIVE)", () => {
   it("solvent_basis: 물 10 g 기준 값을 그대로 입력", () => expect(check(3.16).errorType).toBe("solvent_basis"));
   it("decimal: 10배", () => expect(check(316).errorType).toBe("decimal"));
   it("unit: 값은 맞고 단위가 g", () => expect(check(31.6, "g").errorType).toBe("unit"));
+});
+
+describe("계산값 채점 — 넣은 총량·남은 양에서 (difference → per100)", () => {
+  const ms: Measurement[] = [
+    { key: "added.kno3.t1", trial: 1, label: "넣은 총량", value: 4, unit: "g", subject: "kno3", digits: 2 },
+    { key: "residue.kno3.t1", trial: 1, label: "녹지 않고 남은 양", value: 0.84, unit: "g", subject: "kno3", digits: 2 },
+    { key: "water.kno3.t1", trial: 1, label: "물의 질량", value: 10, unit: "g", subject: "kno3" },
+  ];
+  const diss: CalcRequest = { key: "diss.kno3.t1", trial: 1, label: "녹은 양", unit: "g", subject: "kno3", inputs: ["added.kno3.t1", "residue.kno3.t1"] };
+  const sol: CalcRequest = { key: "sol.kno3.t1", trial: 1, label: "물 100 g에 녹는 양", unit: "g/물 100 g", subject: "kno3", inputs: ["added.kno3.t1", "residue.kno3.t1", "water.kno3.t1"] };
+  const check = (request: CalcRequest, value: number, unit?: string) =>
+    checkCalc({ request, measurements: ms, value, unit, params: solubilityPhysics.sessionParams(null, { textbookMode: true }), rules: solubilityPhysics.answers });
+  it("녹은 양 = 4.00 − 0.84 = 3.16 g", () => expect(check(diss, 3.16, "g")).toMatchObject({ correct: true }));
+  it("남은 양을 빼지 않고 넣은 총량을 적으면 residue 안내", () => expect(check(diss, 4, "g").errorType).toBe("residue"));
+  it("물 100 g에 녹는 양 = 3.16 ÷ 10 × 100 = 31.6", () => expect(check(sol, 31.6, "g/물 100 g")).toMatchObject({ correct: true }));
+  it("넣은 총량으로 환산하면(40) residue 안내", () => expect(check(sol, 40, "g/물 100 g").errorType).toBe("residue"));
+  it("물 10 g 기준 그대로(3.16)면 solvent_basis", () => expect(check(sol, 3.16, "g/물 100 g").errorType).toBe("solvent_basis"));
 });

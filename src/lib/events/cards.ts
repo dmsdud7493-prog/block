@@ -31,6 +31,7 @@ export const ERROR_TYPE_LABEL: Record<string, string> = {
   decimal: "소수점 자리 오류",
   rounding: "반올림·계산 실수",
   solvent_basis: "물 100 g 기준 환산 누락",
+  residue: "남은 양을 빼지 않음",
   plateau: "그래프의 평평한 구간을 못 찾음",
   table_read: "용해도 표 읽기 오류",
   not_number: "숫자가 아닌 입력",

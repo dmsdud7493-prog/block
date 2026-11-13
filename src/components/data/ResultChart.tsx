@@ -8,7 +8,7 @@ import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { PredictionRecord, RunRecord } from "@/components/lab/types";
 import { fmtNum } from "@/lib/engine/format";
 import TimeTempChart, { type SketchLine } from "./TimeTempChart";
-import SolubilityChart from "./SolubilityChart";
+import SolubilityChart, { dissolvedRecords } from "./SolubilityChart";
 import { sketchTimes } from "./SketchPad";
 
 const COLORS = ["#1d4ed8", "#b45309", "#047857", "#7c3aed", "#be123c", "#0e7490"];
@@ -54,7 +54,8 @@ function SeriesRows({ title, points }: { title: string; points: { t: number; tem
 }
 
 function AmountBars({ catalog, run }: { catalog: AnyCatalog; run: RunRecord }) {
-  const data = run.measurements.filter((m) => m.key.startsWith("dissolved.") || m.key.startsWith("crystal_mass")).map((m) => ({ name: `${labelOf(catalog, m.subject)} ${m.trial}회`, value: m.value }));
+  const crystals = run.measurements.filter((m) => m.key.startsWith("crystal_mass"));
+  const data = [...dissolvedRecords(run), ...crystals].map((m) => ({ name: `${labelOf(catalog, m.subject)} ${m.trial}회`, value: m.value }));
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 10, right: 20, bottom: 30, left: 10 }}>

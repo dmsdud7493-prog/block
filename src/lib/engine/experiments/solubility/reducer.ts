@@ -14,8 +14,8 @@ import {
 export type { SolubilityState } from "./model";
 export { initialSolubilityState } from "./model";
 
-const mk = (key: string, label: string, value: number, unit: Measurement["unit"], subject: string, trial: number): Measurement =>
-  ({ key, trial, label, value, unit, subject });
+const mk = (key: string, label: string, value: number, unit: Measurement["unit"], subject: string, trial: number, digits?: number): Measurement =>
+  ({ key, trial, label, value, unit, subject, ...(digits ? { digits } : {}) });
 
 function pourWater(s: SolubilityState, step: Step, ctx: ReduceContext): Out {
   const tube = eq(step, 0);
@@ -135,25 +135,29 @@ function recordTotal(s: SolubilityState, step: Step, ctx: ReduceContext): Out {
   }
   const tr = ctx.trial;
   const k = (name: string) => `${name}.${sub}.t${tr}`;
+  // 녹은 양은 보여 주지 않는다 — 넣은 총량과 녹지 않고 남은 양(0.01 g 저울)으로 학생이 빼서 구하고, 물 100 g으로 환산한다
   const measurements = [
     mk(k("water"), "물의 질량", t.water, "g", sub, tr),
     mk(k("temp"), "온도", t.temp, "°C", sub, tr),
-    mk(k("added"), "넣은 총량", t.added, "g", sub, tr),
-    mk(k("dissolved"), "녹은 양", info.dissolved, "g", sub, tr),
+    mk(k("added"), "넣은 총량", t.added, "g", sub, tr, 2),
+    mk(k("residue"), "녹지 않고 남은 양", info.solid, "g", sub, tr, 2),
   ];
-  const request: CalcRequest = { key: `sol.${sub}.t${tr}`, trial: tr, label: "물 100 g에 녹는 양", unit: "g/물 100 g", subject: sub, inputs: [k("dissolved"), k("water")] };
-  const note = `${L(tube)}: 물 ${fmtNum(t.water)} g에 넣은 ${L(sub)}의 총량을 표에 기록했어요. 물 100 g에 녹는 양은 직접 계산해 볼까요?`;
+  const requests: CalcRequest[] = [
+    { key: `diss.${sub}.t${tr}`, trial: tr, label: "녹은 양", unit: "g", subject: sub, inputs: [k("added"), k("residue")] },
+    { key: `sol.${sub}.t${tr}`, trial: tr, label: "물 100 g에 녹는 양", unit: "g/물 100 g", subject: sub, inputs: [k("added"), k("residue"), k("water")] },
+  ];
+  const note = `${L(tube)}: 물 ${fmtNum(t.water)} g에 넣은 ${L(sub)}의 총량과 녹지 않고 남은 양을 표에 기록했어요. 녹은 양과 물 100 g에 녹는 양은 직접 계산해 볼까요?`;
   const event = ev("record", note, s, ctx, { sub, tube, water: t.water, temp: t.temp, total: t.added, dissolved: info.dissolved, solid: info.solid });
-  return { state: s, measurements, calcRequests: [request], endTrial: true, event };
+  return { state: s, measurements, calcRequests: requests, endTrial: true, event };
 }
 
-/** 온도별 관찰값: 녹은 양·바닥에 남은 양 (시험관·온도마다) */
-function observeMeasurements(tube: TubeId, t: Tube, temp: number, d: number, solid: number, trial: number): Measurement[] {
+/** 온도별 관찰값: 넣은 총량·바닥에 남은 양 (시험관·온도마다) — 녹은 양은 학생이 뺀다 */
+function observeMeasurements(tube: TubeId, t: Tube, temp: number, _d: number, solid: number, trial: number): Measurement[] {
   const sub = t.solute ?? "none";
   const k = (name: string) => `${name}.${sub}.${tube}.${temp}c.t${trial}`;
   return [
-    mk(k("dissolved"), `녹은 양 (${temp} °C)`, d, "g", sub, trial),
-    mk(k("solid"), `녹지 않고 남은 양 (${temp} °C)`, solid, "g", sub, trial),
+    mk(k("added"), `넣은 총량 (${temp} °C)`, t.added, "g", sub, trial, 2),
+    mk(k("solid"), `녹지 않고 남은 양 (${temp} °C)`, solid, "g", sub, trial, 2),
   ];
 }
 

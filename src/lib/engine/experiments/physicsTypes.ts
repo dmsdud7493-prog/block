@@ -1,7 +1,7 @@
 /** 서버 전용 물성·정답 규칙 계약 (ADR-P04) */
 import type { Rng } from "../rng";
 
-export type AnswerFamily = "ratio" | "per100" | "plateau" | "precipitate";
+export type AnswerFamily = "ratio" | "per100" | "difference" | "plateau" | "precipitate";
 
 export interface AnswerRule {
   /** CalcRequest.key 접두어 — 예: "density." */

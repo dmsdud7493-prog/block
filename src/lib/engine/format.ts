@@ -2,6 +2,11 @@
 export const round1 = (v: number): number => Math.round(v * 10) / 10;
 export const round2 = (v: number): number => Math.round(v * 100) / 100;
 
+/** 측정값 표시 — 정해진 자릿수가 있으면 그만큼(전자저울 0.01 g), 없으면 소수 첫째 자리 */
+export function fmtMeasure(m: { value: number; digits?: number }): string {
+  return m.digits ? m.value.toFixed(m.digits) : fmtNum(m.value);
+}
+
 export function fmtNum(v: number): string {
   const r = round1(v);
   return Number.isInteger(r) ? String(r) : r.toFixed(1);

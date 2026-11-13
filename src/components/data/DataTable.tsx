@@ -6,7 +6,7 @@ import type { CalcRequest, Measurement } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { CalcEntry, RunRecord } from "@/components/lab/types";
 import CalcCell from "./CalcCell";
-import { fmtNum } from "@/lib/engine/format";
+import { fmtMeasure } from "@/lib/engine/format";
 
 interface Props {
   catalog: AnyCatalog;
@@ -40,7 +40,7 @@ function groupRows(run: RunRecord): Group[] {
 const labelOf = (catalog: AnyCatalog, id: string) => catalog.items.find((i) => i.id === id)?.label ?? id;
 
 function Row({ g, catalog, calc, onCheck }: { g: Group; catalog: AnyCatalog; calc: Record<string, CalcEntry>; onCheck: Props["onCheck"] }) {
-  const measured = g.measurements.map((m) => `${m.label} ${fmtNum(m.value)} ${m.unit}`).join(" · ");
+  const measured = g.measurements.map((m) => `${m.label} ${fmtMeasure(m)} ${m.unit}`).join(" · ");
   return (
     <tr className="border-t border-line align-top">
       <td className="p-2 text-center">{g.trial}</td>

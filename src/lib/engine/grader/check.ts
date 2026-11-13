@@ -34,10 +34,15 @@ function inputsOf(req: CalcRequest, ms: Measurement[]): number[] {
   return req.inputs.map((k) => ms.find((m) => m.key === k)?.value ?? Number.NaN);
 }
 
+/** per100 입력: [녹은 양, 물] 또는 [넣은 총량, 남은 양, 물](녹은 양 = 넣은 총량 − 남은 양) */
+const dissolvedOf = (inputs: number[]) => (inputs.length >= 3 ? inputs[0] - inputs[1] : inputs[0]);
+const waterOf = (inputs: number[]) => inputs[inputs.length - 1];
+
 function expectedFor(rule: AnswerRule, req: CalcRequest, inputs: number[], params: Record<string, number>): number {
   if (rule.fromParams) return rule.fromParams(req.subject, params, inputs);
   if (rule.family === "ratio") return inputs[0] / inputs[1];
-  if (rule.family === "per100") return (inputs[0] / inputs[1]) * 100;
+  if (rule.family === "per100") return (dissolvedOf(inputs) / waterOf(inputs)) * 100;
+  if (rule.family === "difference") return inputs[0] - inputs[1];
   return Number.NaN;
 }
 
@@ -49,7 +54,9 @@ function alternatives(rule: AnswerRule, inputs: number[], expected: number): [Er
     const men: [ErrorType, number][] = [-1, -0.5, 0.5, 1].map((d) => ["meniscus", a / (b + d)]);
     return [["swapped", b / a], ...decimals, ...men];
   }
-  if (rule.family === "per100") return [["solvent_basis", inputs[0]], ...decimals];
+  // 넣은 총량을 녹은 양으로 착각한 경우(남은 양을 빼지 않음)는 residue
+  if (rule.family === "per100") return [["solvent_basis", dissolvedOf(inputs)], ...(inputs.length >= 3 ? [["residue", (inputs[0] / waterOf(inputs)) * 100] as [ErrorType, number]] : []), ...decimals];
+  if (rule.family === "difference") return [["residue", inputs[1] - inputs[0]], ["residue", inputs[0]], ["residue", inputs[1]], ...decimals];
   if (rule.family === "plateau") return [["unit", expected + 273.15], ["unit", expected + 273], ["unit", (expected * 9) / 5 + 32]];
   return decimals;
 }

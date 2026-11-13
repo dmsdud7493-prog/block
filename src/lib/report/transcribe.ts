@@ -5,7 +5,7 @@
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { LabState } from "@/components/lab/types";
 import { renderProgram } from "@/lib/engine/dsl/render";
-import { fmtNum } from "@/lib/engine/format";
+import { fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { latestRun } from "@/components/lab/state";
 import { emptyReport, type ReportContent } from "./template";
 import { activitiesOf, dataOf } from "./activities";
@@ -28,7 +28,7 @@ function materialsOf(c: AnyCatalog, s: LabState): string {
 function resultsOf(c: AnyCatalog, s: LabState): string {
   const run = latestRun(s);
   if (!run) return "";
-  const lines = run.measurements.map((m) => `${m.trial}회 ${itemLabel(c, m.subject)} ${m.label}: ${fmtNum(m.value)} ${m.unit}`);
+  const lines = run.measurements.map((m) => `${m.trial}회 ${itemLabel(c, m.subject)} ${m.label}: ${fmtMeasure(m)} ${m.unit}`);
   const calc = Object.values(s.calc).filter((e) => e.correct).map((e) => `${run.calcRequests.find((r) => r.key === e.key)?.label ?? e.key}(${itemLabel(c, run.calcRequests.find((r) => r.key === e.key)?.subject ?? "")}): ${e.value} ${e.unit}`);
   return [...lines, ...calc].join("\n");
 }
@@ -39,7 +39,7 @@ export function resultsTableOf(c: AnyCatalog, s: LabState): ReportContent["resul
   if (!run) return { columns: [], rows: [] };
   const solved = run.calcRequests.filter((r) => s.calc[r.key]?.correct);
   const cells = [
-    ...run.measurements.map((m) => ({ trial: m.trial, subject: m.subject, col: `${m.label}(${m.unit})`, value: fmtNum(m.value) })),
+    ...run.measurements.map((m) => ({ trial: m.trial, subject: m.subject, col: `${m.label}(${m.unit})`, value: fmtMeasure(m) })),
     ...solved.map((r) => ({ trial: r.trial, subject: r.subject, col: `${r.label}(${s.calc[r.key].unit})`, value: s.calc[r.key].value })),
   ];
   const cols = [...new Set(cells.map((x) => x.col))].slice(0, 10);

@@ -6,6 +6,7 @@ export type ErrorType =
   | "decimal"
   | "rounding"
   | "solvent_basis"
+  | "residue"
   | "plateau"
   | "table_read"
   | "not_number"
@@ -19,6 +20,7 @@ export const ERROR_HINTS: Record<ErrorType, string> = {
   decimal: "소수점 위치를 확인해 볼까요? 대략 어느 정도 크기의 값이 나와야 할지 어림해 보세요.",
   rounding: "거의 다 왔어요. 계산을 한 번 더 하고 소수 둘째 자리까지 적어 볼까요?",
   solvent_basis: "용해도는 물 100 g 기준이에요. 실험에 쓴 물의 양으로 환산했는지 확인해 볼까요?",
+  residue: "녹은 양은 넣은 총량에서 녹지 않고 남은 양을 뺀 값이에요. 표의 두 값을 다시 확인해 볼까요?",
   plateau: "그래프에서 온도가 한동안 변하지 않는 평평한 구간을 찾아 그 온도를 읽어 볼까요?",
   table_read: "용해도 표에서 식힌 온도의 값을 읽었는지 확인해 볼까요?",
   not_number: "숫자로 입력해 주세요.",

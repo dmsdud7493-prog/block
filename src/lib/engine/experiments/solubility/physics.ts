@@ -36,6 +36,14 @@ function sessionParams(rng: Rng | null, ...rest: [PhysicsOptions?]): Record<stri
 
 const answers: AnswerRule[] = [
   {
+    prefix: "diss.",
+    family: "difference",
+    label: "녹은 양",
+    unit: "g",
+    tolerance: { abs: 0.02 },
+    unitChoices: ["g", "g/물 100 g"],
+  },
+  {
     prefix: "sol.",
     family: "per100",
     label: "물 100 g에 녹는 양",

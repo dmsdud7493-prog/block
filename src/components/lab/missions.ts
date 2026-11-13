@@ -18,9 +18,11 @@ function tagsOf(r: RunRecord, c: RunRecord["calcRequests"][number]): string[] {
   return t ? [c.subject, `${c.subject}@${t.value}`] : [c.subject];
 }
 
-/** 이 실행에서 맞힌 계산값의 이름표들 */
+/** 이 실행에서 맞힌 계산값의 이름표들 — 한 회차·한 대상의 계산 칸(예: 녹은 양 → 물 100 g에 녹는 양)을 모두 맞혀야 센다 */
 function solvedTagsIn(s: LabState, r: RunRecord): string[] {
-  return r.calcRequests.filter((c) => s.calc[c.key]?.correct && s.calc[c.key]?.runNo === r.runNo).flatMap((c) => tagsOf(r, c));
+  const ok = (c: RunRecord["calcRequests"][number]) => Boolean(s.calc[c.key]?.correct && s.calc[c.key]?.runNo === r.runNo);
+  const allOk = (c: RunRecord["calcRequests"][number]) => r.calcRequests.filter((x) => x.trial === c.trial && x.subject === c.subject).every(ok);
+  return r.calcRequests.filter((c) => ok(c) && allOk(c)).flatMap((c) => tagsOf(r, c));
 }
 
 /** 계산값을 맞힌 대상(subject)과 "대상@온도" — 계산 요청 key로 실행 기록에서 대상을 찾는다 */

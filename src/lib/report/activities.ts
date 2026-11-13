@@ -8,7 +8,7 @@ import type { RunRecord, LabState } from "@/components/lab/types";
 import type { Step } from "@/lib/engine/types";
 import { renderProgram } from "@/lib/engine/dsl/render";
 import { splitTrials } from "@/lib/engine/rules/variables";
-import { fixJosa, fmtNum } from "@/lib/engine/format";
+import { fixJosa, fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { missionRuns } from "@/components/lab/missions";
 import type { ReportContent } from "./template";
 
@@ -57,7 +57,7 @@ function groupTrials(c: AnyCatalog, steps: Step[], run: RunRecord | null, defs: 
 function tableOf(c: AnyCatalog, s: LabState, run: RunRecord, trials: number[]): Pick<DataItem, "columns" | "rows"> {
   const inT = (n: number) => trials.includes(n);
   const cells = [
-    ...run.measurements.filter((m) => inT(m.trial)).map((m) => ({ trial: m.trial, subject: m.subject, col: `${m.label}(${m.unit})`, value: fmtNum(m.value) })),
+    ...run.measurements.filter((m) => inT(m.trial)).map((m) => ({ trial: m.trial, subject: m.subject, col: `${m.label}(${m.unit})`, value: fmtMeasure(m) })),
     ...run.calcRequests.filter((r) => inT(r.trial) && s.calc[r.key]?.correct).map((r) => ({ trial: r.trial, subject: r.subject, col: `${r.label}(${s.calc[r.key].unit})`, value: s.calc[r.key].value })),
   ];
   if (cells.length === 0) return { columns: [], rows: [] };

@@ -51,12 +51,13 @@ const state = (runs: RunRecord[], calc: LabState["calc"]): LabState => ({ ...ini
 describe("용해도 미션 ③ — 온도에 따른 질산 칼륨의 녹는 양", () => {
   const r3 = record(mission3, 3);
   const temps = r3.measurements.filter((m) => m.key.startsWith("temp.kno3")).map((m) => m.value);
-  const dissolved = r3.measurements.filter((m) => m.key.startsWith("dissolved.kno3")).map((m) => m.value);
+  const v = (k: string) => r3.measurements.find((m) => m.key === k)!.value;
+  const dissolved = [2, 3, 5].map((t) => v(`added.kno3.t${t}`) - v(`residue.kno3.t${t}`));
 
   it("세 시험관을 0 °C·20 °C·60 °C에서 포화시켜 기록한다(실행 오류 없음)", () => {
     expect(r3.ok).toBe(true);
     expect(temps).toEqual([0, 20, 60]);
-    expect(r3.calcRequests.map((c) => c.subject)).toEqual(["kno3", "kno3", "kno3"]);
+    expect(r3.calcRequests.map((c) => c.key)).toEqual(["diss.kno3.t2", "sol.kno3.t2", "diss.kno3.t3", "sol.kno3.t3", "diss.kno3.t5", "sol.kno3.t5"]);
   });
 
   it("온도가 높을수록 물 10 g에 녹는 양이 크게 늘어난다(교과서 13.3 → 31.6 → 109 g/물 100 g)", () => {
