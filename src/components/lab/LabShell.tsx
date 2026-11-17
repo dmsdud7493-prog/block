@@ -167,10 +167,10 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   const onFinish = useCallback(() => backend.logEvent("playback_done", {}), [backend]);
   /** 실행 버튼에서 열린 예측 게이트는 저장 뒤 바로 실행, 그래프에서 열린 게이트는 바로 그래프를 연다 */
   const submitGate = async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
-    const before = state.runs.length;
+    const forRun = state.gateFor !== "graph";
     try {
       const rec = await ctl.predict(target, choice, rationale, sketch);
-      if (before === 0) await ctl.run(rec);
+      if (forRun) await ctl.run(rec);
       else ctl.openGraph(rec);
     } catch {
       // 저장 실패 시 게이트가 닫히지 않으므로 학생이 다시 시도할 수 있다
@@ -196,13 +196,13 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
         {stepper}
         <RunButton running={state.running} onRun={runCtl.onRun} errors={runCtl.errors} />
       </LabHeader>
-      {/* 넓은 화면: 조립 칸을 넉넉히(680px 이상) 두고, 화면이 좁으면 아래 가로 막대로 오른쪽 모니터까지 옮겨 본다 */}
-      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
+      {/* 넓은 화면(1536px~): 300·680+·460+. 학교 노트북(1280~1535px)에서도 세 칸이 한 화면에 다 들어오게 랩메이트 칸을 줄이고 조립·모니터 칸 최소 폭을 낮춘다(2026-11-17 점검: 1366에서 모니터가 잘림) */}
+      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[240px_minmax(560px,1.3fr)_minmax(400px,1fr)] 2xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
         <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto">{design}</div>
         <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} onNextMission={nextMission} /></div>
         <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
       </main>
-      {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.runs.length ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
+      {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.gateFor === "graph" ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
     </div>
   );
 }

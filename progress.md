@@ -1,7 +1,7 @@
 # progress.md — 물질의 특성 가상실험실
 
 > AI 에이전트는 작업 시작 전 이 파일을 읽고, 작업 완료 후 반드시 업데이트합니다.
-> 마지막 업데이트: 2026-11-02
+> 마지막 업데이트: 2026-11-17
 
 ---
 
@@ -13,7 +13,8 @@
 | changes_made | S0~S9 전부 구현 (각 스프린트 요약: `_workspace/S1~S9/summary.md`). 배포 후 개선: 학생 화면 재디자인, 변인 블록 3종 정리, 블록 툴바(복사·붙여넣기·준비물 ⊗ 삭제·자동 줄바꿈), 모니터 장치 SVG 재작성, 6개 실험 모두 흰 라텍스 장갑 손동작(kit/hand.tsx), 밀도 오늘의 미션·한 비커 결과, 보고서 8항목·결과 표·쉬운 해석 |
 | decisions_taken | ADR-P01~P19 (docs/decision-log.md). DB 변경은 Claude가 Supabase SQL Editor에 붙여 넣고 교사 확인 후 실행(DEPLOY.md 표에 기록), GitHub 자동 적용은 키 없이 건너뜀 |
 | next_steps | 사용자 계정으로 DEPLOY.md 실행(GitHub·Supabase·Vercel·Claude 키) → 스테이징 점검(교사 E2E·Realtime 10초·부하 30명) → 파일럿(docs/pilot-checklist.md) |
-| test_status | unit 583 passed(실 API 회귀 25 skipped), E2E 40 passed(+장면 캡처 6, SHOTS=1), verify SCORE=100 APPROVED |
+| test_status | unit 686 passed(실 API 회귀 25 skipped), E2E 49 passed, verify SCORE=100 APPROVED (2026-11-17) |
+| 2026-11-17 점검 | 실사이트·6개 실험 보고서 제출 조건까지 진행 점검 → 1280~1535px 세 칸 맞춤, 대상 이름 우리말(subjectLabel), 증류 '먼저 모이는 액체' 예측은 실행 전(beforeRun), 두 번째 실행부터 예측 창 저장 뒤 바로 실행(gateFor), 가설 '왜냐하면' 중복·보고서 '번호'·칸 순서·끝자리 0 보존, 결론 제출 조건(클라이언트만 — 서버 app_submit_report는 다음 DB 반영 때), 체험 도우미 칩 답, 장면 수정(밀도 배치·수면 상승·이름표, 용해도 남은 고체·용액 색, 끓는점 온도계 위치·작은 비커, 시도 끝 장치 유지, 증류 플라스크 수면, 재결정 파란 용액) |
 
 ---
 

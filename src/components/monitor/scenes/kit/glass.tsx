@@ -111,7 +111,8 @@ export function TestTube({ x, y, w, h, level, liquid, label, inside }: VesselPro
 }
 
 /** 눈금실린더 — 육각 받침, 0~max 눈금 */
-export function Cylinder({ x, y, w, h, level, liquid, label, inside, max = 100 }: VesselProps & { max?: number }) {
+export function Cylinder({ x, y, w, h, level, liquid, label, inside, max = 100, labelLeft }: VesselProps & { max?: number }) {
+  const lp = labelPos(w, h, labelLeft, 22);
   const id = useId();
   const ticks = Array.from({ length: 11 }, (_, i) => i);
   const yOf = (i: number) => h - 2 - ((h - 12) * i) / 10;
@@ -129,7 +130,7 @@ export function Cylinder({ x, y, w, h, level, liquid, label, inside, max = 100 }
       <path d={`M-3 -2 L${w + 5} -4`} stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
       <path d={`M-14 ${h} L${w + 14} ${h} L${w + 8} ${h + 7} L-8 ${h + 7} Z`} fill="url(#lab-glass)" stroke="#64748b" strokeWidth="1.5" />
       <Shine x1={4} h={h} />
-      <Label x={w / 2} y={h + 22} text={label} />
+      <Label x={lp.x} y={lp.y} text={label} />
     </g>
   );
 }

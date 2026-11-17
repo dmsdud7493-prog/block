@@ -68,7 +68,8 @@ describe("golden: boiling", () => {
   it("그래프 블록이 끓는점 계산 칸을 만든다 (입력은 시간–온도 series)", () => {
     const r = simulate(byName("물 10 mL 직접").program, boilingCatalog, goldenSrc());
     expect(r.calcRequests[0]).toMatchObject({ key: "bp.water.t1", label: "끓는점", unit: "°C", subject: "water", inputs: ["temp.water.t1"] });
-    expect(r.frames.at(-1)?.state).toEqual(boilingCatalog.initialState());
+    // 장치 정리 단계 화면은 장치를 그대로 두고 가열만 끈 모습(2026-11-17 점검) — 계산은 처음 상태에서 다음 시도로 이어진다
+    expect(r.frames.at(-1)?.state).toMatchObject({ heating: false, bubbles: 0, bkr: { liquid: "water", volume: 10 } });
   });
 
   it("textbookMode 전환: 에탄올 78 ↔ 78.4 ℃", () => {

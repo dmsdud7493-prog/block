@@ -9,7 +9,7 @@ export const SOL_TABLE: Record<Solute, number[]> = {
 
 export const SOLUBILITY_REFERENCE: ReferenceTable = {
   title: "온도에 따른 용해도 (물 100 g에 녹는 최대 질량, g)",
-  caption: "석출량 = 넣은 양 − (식힌 온도의 용해도 × 물의 양 ÷ 100)",
+  caption: "석출량 = 넣은 양 − (식힌 온도의 용해도 × 물의 양 ÷ 100) · 식힌 온도가 표에 없으면(예: 10.4 °C) 가장 가까운 온도(10 °C)의 용해도를 써요.",
   columns: ["온도(°C)", ...SOL_GRID.map(String)],
   rows: [["붕산", ...SOL_TABLE.boric_acid], ["황산 구리(II)", ...SOL_TABLE.cuso4]],
 };

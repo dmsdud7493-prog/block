@@ -122,6 +122,7 @@ const predictionTargets: PredictionTarget[] = [
 
   {
     id: "first_collected",
+    beforeRun: true,
     question: "얼음물 속 시험관에 먼저 모이는 액체는 무엇일까요?",
     choices: [
       { id: "ethanol", label: "주로 에탄올이 모인다" },

@@ -68,7 +68,12 @@ export function Crystals({ x, y, w, amount, color = "#ffffff" }: { x: number; y:
 /** 바닥에 쌓인 가루(녹지 않은 고체) — 높이 h */
 export function Powder({ x, y, w, h, color = "#e5e7eb" }: { x: number; y: number; w: number; h: number; color?: string }) {
   if (h <= 0.2) return null;
-  return <path data-part="녹지 않은 고체" d={`M${x} ${y} Q${x + w * 0.25} ${y - h * 1.2} ${x + w / 2} ${y - h} Q${x + w * 0.75} ${y - h * 1.3} ${x + w} ${y} Z`} fill={color} stroke="#cbd5e1" strokeWidth="0.6" />;
+  return (
+    <g data-part="녹지 않은 고체">
+      <path d={`M${x} ${y} Q${x + w * 0.25} ${y - h * 1.2} ${x + w / 2} ${y - h} Q${x + w * 0.75} ${y - h * 1.3} ${x + w} ${y} Z`} fill={color} stroke="#94a3b8" strokeWidth="0.8" />
+      {[0.2, 0.45, 0.7].map((f) => <circle key={f} cx={x + w * f} cy={y - h * 0.35} r="0.9" fill="#94a3b8" opacity="0.7" />)}
+    </g>
+  );
 }
 
 /** 철조각 — 입체감 있는 금속 덩어리 */

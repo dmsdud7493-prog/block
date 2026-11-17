@@ -11,11 +11,12 @@ import { splitTrials } from "@/lib/engine/rules/variables";
 import { fixJosa, fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { missionRuns } from "@/components/lab/missions";
 import type { ReportContent } from "./template";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 export interface ActivityDef { title: string; subjects: string[] }
 type DataItem = ReportContent["data"][number];
 
-const itemLabel = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const itemLabel = subjectLabel;
 const MARKS = ["➊", "➋", "➌", "➍", "➎", "➏", "➐", "➑", "➒", "➓"];
 export const stepMark = (i: number) => MARKS[i] ?? `${i + 1}.`;
 
@@ -61,15 +62,18 @@ function tableOf(c: AnyCatalog, s: LabState, run: RunRecord, trials: number[]): 
     ...run.calcRequests.filter((r) => inT(r.trial) && s.calc[r.key]?.correct).map((r) => ({ trial: r.trial, subject: r.subject, col: `${r.label}(${s.calc[r.key].unit})`, value: s.calc[r.key].value })),
   ];
   if (cells.length === 0) return { columns: [], rows: [] };
-  const cols = [...new Set(cells.map((x) => x.col))].slice(0, 10);
+  // 칸 순서는 모든 실행에서 처음 나온 순서로 통일 — 표마다 질량·부피 순서가 뒤바뀌지 않게
+  const order = [...new Set(s.runs.flatMap((r) => r.measurements.map((m) => `${m.label}(${m.unit})`)))];
+  const rank = (col: string) => (order.indexOf(col) < 0 ? order.length : order.indexOf(col));
+  const cols = [...new Set(cells.map((x) => x.col))].sort((a, b) => rank(a) - rank(b)).slice(0, 10);
   const keys = [...new Set(cells.map((x) => `${x.trial}|${x.subject}`))].slice(0, 60);
   const multi = new Set(cells.map((x) => x.trial)).size > 1;
   const rows = keys.map((k) => {
     const [trial, subject] = k.split("|");
     const here = cells.filter((x) => `${x.trial}|${x.subject}` === k);
-    return [...(multi ? [`${trial}회`] : []), itemLabel(c, subject), ...cols.map((col) => here.filter((x) => x.col === col).map((x) => x.value).join(", ") || "—")];
+    return [...(multi ? [trial] : []), itemLabel(c, subject), ...cols.map((col) => here.filter((x) => x.col === col).map((x) => x.value).join(", ") || "—")];
   });
-  return { columns: [...(multi ? ["회차"] : []), "물질", ...cols], rows };
+  return { columns: [...(multi ? ["번호"] : []), "물질", ...cols], rows };
 }
 
 /** 관찰 — 비커 속에서 자리 잡은 순서처럼 표로 나타내기 어려운 결과 */
@@ -86,7 +90,7 @@ function seriesOf(c: AnyCatalog, run: RunRecord, trials: number[]): DataItem["se
   return run.series.filter((x) => trials.includes(x.trial)).slice(0, 6).map((x) => {
     const step = Math.max(1, Math.ceil(x.points.length / 40));
     const pts = x.points.filter((_, i) => i % step === 0 || i === x.points.length - 1).map((p): [number, number] => [p.t, p.temp]);
-    return { label: `${itemLabel(c, x.subject)}${trials.length > 1 ? ` (${x.trial}회)` : ""}`, points: pts };
+    return { label: `${itemLabel(c, x.subject)}${trials.length > 1 ? ` (${x.trial}번)` : ""}`, points: pts };
   });
 }
 

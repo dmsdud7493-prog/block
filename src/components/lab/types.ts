@@ -58,6 +58,8 @@ export interface LabState {
   diagnostics: Diagnostic[];
   predictions: PredictionRecord[];
   gateTarget: string | null;
+  /** 예측 창을 연 곳 — 실행 전(run)이면 저장 뒤 실행하고, 그래프 전(graph)이면 그래프를 연다 */
+  gateFor?: "run" | "graph";
   runs: RunRecord[];
   running: boolean;
   runError: string | null;

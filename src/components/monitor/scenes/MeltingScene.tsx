@@ -44,7 +44,8 @@ function TubeAssembly({ s, ev }: { s: MeltingState; ev: SimEvent | null }) {
       {s.thermo.in ? <Thermometer x={TUBE.w / 2} top={-46} len={TUBE.h + 40} temp={s.temp} min={0} max={100} /> : null}
       <Label x={TUBE.w / 2 - 46} y={TUBE.h - 30} text={SUB_LABEL[s.tube.sub] ?? s.tube.sub} />
       {melting ? <Label x={TUBE.w / 2 + 52} y={TUBE.h - 30} text="녹는 중…" /> : null}
-      {ev?.type === "fixTube" ? <GripHand key={ev.note} x={TUBE.w} y={34} /> : null}
+      {/* 스탠드에 고정하기 전에는 손이 시험관을 들고 있다(공중에 떠 보이지 않게, 2026-11-17 점검) */}
+      {ev?.type === "fixTube" || !s.tube.fixed ? <GripHand key={ev?.type === "fixTube" ? ev.note : "hold"} x={TUBE.w} y={34} /> : null}
       {ev?.type === "insertThermo" ? <PinchHand key={ev.note} x={TUBE.w / 2} y={-24} /> : null}
     </g>
   );

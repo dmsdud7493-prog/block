@@ -110,13 +110,15 @@ export const LIQ: Record<string, { top: string; bottom: string; opacity: number 
   water: { top: "#bfe3ff", bottom: "#5aaef0", opacity: 0.75 },
   hot_water: { top: "#cfe9ff", bottom: "#6bb8f2", opacity: 0.75 },
   ice_water: { top: "#e6f6ff", bottom: "#9fd4f7", opacity: 0.8 },
-  ethanol: { top: "#f3efff", bottom: "#c9bdf5", opacity: 0.7 },
-  mixture: { top: "#e3e6ff", bottom: "#a6b2f2", opacity: 0.72 },
+  ethanol: { top: "#e9e2ff", bottom: "#ad9cf0", opacity: 0.78 },
+  mixture: { top: "#d6dbff", bottom: "#8795ee", opacity: 0.8 },
   oil: { top: "#fff3b0", bottom: "#e8b923", opacity: 0.85 },
-  cuso4: { top: "#9fd3ff", bottom: "#1d74d6", opacity: 0.82 },
-  cuso4_light: { top: "#d6ecff", bottom: "#6fb2ee", opacity: 0.75 },
-  kno3: { top: "#eef7ff", bottom: "#b8daf5", opacity: 0.75 },
-  nacl: { top: "#eef7ff", bottom: "#b8daf5", opacity: 0.75 },
+  // 황산 구리(II) 용액은 물과 한눈에 구별되게 더 진한 파랑(2026-11-17 점검: 녹여도 물 색과 같아 보였음)
+  cuso4: { top: "#6fb6ff", bottom: "#0b55c4", opacity: 0.86 },
+  cuso4_light: { top: "#8cc8ff", bottom: "#1f6fd8", opacity: 0.82 },
+  // 무색 용액도 물처럼 보이게(2026-11-17 점검: 녹이면 시험관이 빈 것처럼 보였음)
+  kno3: { top: "#c8e7ff", bottom: "#6cb6ee", opacity: 0.72 },
+  nacl: { top: "#c8e7ff", bottom: "#6cb6ee", opacity: 0.72 },
   melt: { top: "#fff8d6", bottom: "#f2d873", opacity: 0.85 },
 };
 

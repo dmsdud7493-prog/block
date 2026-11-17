@@ -9,10 +9,11 @@ import { useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { RunRecord } from "@/components/lab/types";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 const COLORS = ["#1d4ed8", "#b45309", "#047857", "#be123c", "#0e7490", "#4d7c0f"];
 const SKETCH_COLOR = "#7c3aed";
-const labelOf = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const labelOf = subjectLabel;
 
 export interface SketchLine { name: string; points: { t: number; temp: number }[] }
 interface Plateau { key: string; x1: number; x2: number }

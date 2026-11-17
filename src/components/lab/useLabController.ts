@@ -46,7 +46,13 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
     // 방금 예측을 저장했다면 그대로 실행한다(그 사이 블록이 바뀌어 다른 예측이 맞아져도 같은 창을 다시 띄우지 않음)
     if (!justSaved && first && missingPrediction({ ...state, predictions }, [first])) {
-      dispatch({ type: "openGate", target: first });
+      dispatch({ type: "openGate", target: first, for: "run" });
+      return;
+    }
+    // 결과표가 답을 드러내는 예측(beforeRun)은 실행 전에 함께 묻는다
+    const early = missingPrediction({ ...state, predictions }, catalog.predictionTargets.filter((t) => t.beforeRun && t.id !== first).map((t) => t.id));
+    if (early) {
+      dispatch({ type: "openGate", target: early, for: "run" });
       return;
     }
     dispatch({ type: "runStart" });
@@ -59,7 +65,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
       return;
     }
     if (res.error || !res.data) {
-      if (res.error?.code === "prediction_required" && first) dispatch({ type: "openGate", target: first });
+      if (res.error?.code === "prediction_required" && first) dispatch({ type: "openGate", target: first, for: "run" });
       dispatch({ type: "runFail", message: res.error?.message ?? "실행하지 못했어요." });
       return;
     }
@@ -77,12 +83,12 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     return record;
   }, [backend, state]);
 
-  const check = useCallback(async (req: CalcRequest, runNo: number, value: number, unit: string) => {
+  const check = useCallback(async (req: CalcRequest, runNo: number, value: number, unit: string, raw?: string) => {
     const prev = state.calc[req.key];
     const res = await backend.check(latestRun(state)?.program ?? state.program, runNo, req.key, value, unit);
     const attempts = (prev?.attempts ?? 0) + 1;
     const data = res.data;
-    const entry = { key: req.key, runNo, value: String(value), unit, attempts, correct: data?.correct ?? false, errorType: data?.errorType ?? null, hint: data?.hint ?? res.error?.message ?? null };
+    const entry = { key: req.key, runNo, value: raw && Number(raw) === value ? raw : String(value), unit, attempts, correct: data?.correct ?? false, errorType: data?.errorType ?? null, hint: data?.hint ?? res.error?.message ?? null };
     dispatch({ type: "calc", entry });
   }, [backend, state]);
 
@@ -90,7 +96,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
     const missing = missingPrediction({ ...state, predictions }, graphTargets(catalog, latestRun(state)?.program ?? state.program));
     if (missing) {
-      dispatch({ type: "openGate", target: missing });
+      dispatch({ type: "openGate", target: missing, for: "graph" });
       return;
     }
     dispatch({ type: "graph" });

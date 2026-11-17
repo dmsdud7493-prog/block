@@ -144,7 +144,7 @@ test("밀도 미션 ③: 네 가지를 한 비커에 — 예상 질문은 네 �
   await page.getByLabel(/왜 그렇게/).fill("왜냐하면 철이 가장 무거우니까");
   await page.getByRole("button", { name: /이 카드로 결정/ }).click();
   const scaleX = await page.locator(".monitor-screen .lab-move").first().evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a);
-  expect(scaleX).toBeCloseTo(1.5, 1);
+  expect(scaleX).toBeCloseTo(1.3, 1); // 손·핀셋이 화면 위로 잘리지 않게 1.5 → 1.3 (2026-11-17 점검)
   await expect(page.locator(".monitor-screen").getByText("바닥에 가라앉았어요").first()).toBeAttached({ timeout: 20_000 });
   await expect(page.getByRole("list", { name: "실험 기록" }).getByText(/큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유/)).toBeVisible({ timeout: 45_000 }); // 여러 테스트가 함께 돌 때 애니메이션이 느려진다
 });

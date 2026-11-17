@@ -35,3 +35,20 @@ describe("localTutor 개념 질문", () => {
     expect(r.reply).toContain("나눈");
   });
 });
+
+describe("제안 칩 질문 (2026-11-17 점검)", () => {
+  it("블록에 고칠 곳이 있어도 '고체의 부피는 어떻게 재요?'에는 그 질문에 답한다", () => {
+    const r = localTutor(state({ diagnostics: [{ code: "empty_slot", severity: "error", message: "2번째 빈 칸에 블록을 끼워 주세요.", blockId: "b1" }] } as never), "고체의 부피는 어떻게 재요?", null);
+    expect(r.reply).toContain("눈금실린더에 넣으면");
+    expect(r.reply).not.toContain("점검 패널");
+  });
+  it("결과와 이어지는 칩은 예상 전이면 예상부터 권한다", () => {
+    const r = localTutor(state(), "온도가 왜 한동안 일정해요?", null);
+    expect(r.next_action).toBe("predict");
+  });
+  it("칩 답에 실험 결론을 담지 않는다", async () => {
+    const { CHIP_REPLIES } = await import("@/lib/tutor/chips");
+    const all = Object.values(CHIP_REPLIES).map((c) => c.text).join(" ");
+    expect(all).not.toMatch(/크기와 (관계|상관)없이|에탄올이 먼저|물이 먼저|흰색 결정|파란색 결정/);
+  });
+});

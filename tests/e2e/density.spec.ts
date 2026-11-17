@@ -127,6 +127,7 @@ test("밀도: 설계부터 보고서까지 — 미션 셋을 마치면 보고서
   await expect(page.locator("#r-evidence")).toBeFocused();
   await page.getByLabel("⭕ 내 예상이 맞았어요").check();
   await page.locator("#r-evidence").fill("표의 밀도 7.9 g/mL 두 값");
+  await page.locator("#r-trend").fill("크기가 달라도 같은 물질이면 밀도가 같다");
   await page.locator("#r-error").fill("눈금을 읽을 때 오차");
   await page.locator("#r-improve").fill("여러 번 재서 평균");
   for (const id of ["hardest", "curious", "realLife"]) await page.locator(`#r-ref-${id}`).fill("예상과 결과를 비교하며 생각한 점");

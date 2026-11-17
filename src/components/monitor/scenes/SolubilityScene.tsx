@@ -50,10 +50,11 @@ function BathAround({ bath, x }: { bath: string; x: number }) {
   const w = 54;
   const h = 70;
   const bx = x + TUBE.w / 2 - w / 2;
-  if (bath === "ice_water") return <IceBath x={bx} y={BENCH_Y - h} w={w} h={h} label="얼음물" />;
+  // 중탕 이름표는 빼고 시험관 이름표(예: "A · 0℃")에 온도를 함께 보인다 — 두 이름표가 겹쳐 보였음(2026-11-17 점검)
+  if (bath === "ice_water") return <IceBath x={bx} y={BENCH_Y - h} w={w} h={h} label="" />;
   return (
     <g>
-      <Beaker x={bx} y={BENCH_Y - h} w={w} h={h} level={0.75} liquid="hot_water" label="뜨거운 물" />
+      <Beaker x={bx} y={BENCH_Y - h} w={w} h={h} level={0.75} liquid="hot_water" label="" />
       <Steam cx={bx + w / 2} y={BENCH_Y - h - 6} w={w} strength={0.6} />
     </g>
   );
@@ -87,7 +88,9 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
   const x = tubeX(i);
   const y = t.bath ? BENCH_Y - 70 - TUBE.h + 52 : RACK.top - TUBE.h + 50;
   const level = Math.min(0.62, t.water / 32);
-  const solidH = Math.min(14, (info?.solid ?? 0) * 3);
+  // 녹지 않고 남은 고체 — 0.1 g 남짓이어도 눈에 띄게(2026-11-17 점검: 포화돼도 바닥이 비어 보였음)
+  const left = info?.solid ?? 0;
+  const solidH = left > 0.02 ? Math.min(16, 4 + left * 3) : 0;
   return (
     <g>
       {t.bath ? <BathAround bath={t.bath} x={x} /> : null}
@@ -95,7 +98,7 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
         <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={level} liquid={liquidOf(t.solute, t.water, info)} label="" inside={<TubeInside solute={t.solute} crystal={t.crystal} solidH={solidH} />} />
         <TubeHands id={id} ev={event} solute={t.solute} />
       </g>
-      <Label x={x + TUBE.w / 2} y={BENCH_Y + 16} text={`${name.slice(-1)} · ${t.temp}℃`} />
+      <Label x={x + TUBE.w / 2} y={BENCH_Y + 16} text={`${name.slice(-1)} · ${t.bath === "ice_water" ? "얼음물 " : t.bath ? "뜨거운 물 " : ""}${t.temp}℃`} />
       <title>{name}</title>
     </g>
   );

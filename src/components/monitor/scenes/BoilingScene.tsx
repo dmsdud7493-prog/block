@@ -16,7 +16,7 @@ import { GripHand, PinchHand, PourWithHand, PressHand } from "./kit/hand";
 const PLATE = { x: 60, w: 150, top: BENCH_Y - 30 };
 const BKR = { w: 118, h: 100, x: PLATE.x + 16 };
 const TUBE = { w: 24, h: 124, x: PLATE.x + 64 };
-const TUBE_Y = { fixed: PLATE.top - 14 - 124, held: 14 };
+const TUBE_Y = { fixed: PLATE.top - 14 - 124, held: 30 };
 const COLD = { x: 300, w: 104, h: 84 };
 const ETUBE = { x: COLD.x + 42, w: 20, h: 92 };
 
@@ -24,16 +24,32 @@ const LABEL: Record<string, string> = { water: "물", ethanol: "에탄올" };
 
 const isThermo = (ev: SimEvent | null) => ev?.type === "fixThermo" || ev?.type === "adjust";
 
+/**
+ * 비커 크기 — 적은 양은 작은 비커 눈금으로 보여 줘야 수면이 보인다(10 mL는 50 mL 눈금).
+ * 2026-11-17 점검: 10 mL가 바닥에 얇게 깔려 온도계 끝이 물 밖에 있는 것처럼 보였음
+ */
+function beakerScale(bk: BoilingState["bkr"]): { level: number; marks: string[] } {
+  const cap = bk.volume > 0 && bk.volume <= 20 ? 50 : bk.volume > 0 && bk.volume <= 50 ? 100 : 250;
+  const marks = cap === 50 ? ["10", "20", "30", "40", ""] : cap === 100 ? ["20", "40", "60", "80", ""] : ["50", "100", "150", "200", ""];
+  return { level: bk.liquid ? Math.min(1, bk.volume / cap) : 0, marks };
+}
+
+const THERMO_LEN = BKR.h + 56;
+
+/** 온도계 윗끝(비커 좌표) — 높이를 맞춘 뒤에는 온도계 끝(구)이 액체 한가운데, 맞추기 전에는 수면 위에 떠 있다 */
+function thermoTop(s: BoilingState): number {
+  const { level } = beakerScale(s.bkr);
+  const surface = 6 + (BKR.h - 6) * (1 - level);
+  const bulb = s.thermo.adjusted ? (surface + BKR.h - 4) / 2 : Math.min(surface - 16, BKR.h - 40);
+  return bulb - THERMO_LEN + 2;
+}
+
 function BeakerView({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
   if (!s.shown.bkr) return null;
   const bk = s.bkr;
   const direct = !s.tube.liquid;
   const y = (bk.onHot || s.shown.hot ? PLATE.top : BENCH_Y) - BKR.h;
-  // 적은 양(50 mL 이하)은 작은 비커(100 mL 눈금)로 보여 줘야 수면이 보인다
-  const small = bk.volume > 0 && bk.volume <= 50;
-  const cap = small ? 100 : 250;
-  const level = bk.liquid ? Math.min(1, bk.volume / cap) : 0;
-  const marks = small ? ["20", "40", "60", "80", ""] : ["50", "100", "150", "200", ""];
+  const { level, marks } = beakerScale(bk);
   const strength = s.heating ? (direct ? s.bubbles : Math.min(0.3, s.bubbles * 0.4 + 0.08)) : 0;
   return (
     <g className="lab-move" style={{ transform: `translate(${BKR.x}px, ${y}px)` }}>
@@ -41,10 +57,10 @@ function BeakerView({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
       <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={level} liquid={bk.liquid === "water" ? "hot_water" : bk.liquid} label={direct ? "비커" : "물중탕 비커"} labelLeft={bk.onHot || s.shown.hot} marks={marks}
         inside={<Bubbles x={6} y={BKR.h - 6} w={BKR.w - 12} rise={BKR.h * level * 0.85} strength={strength} />} />
       {direct && s.heating ? <Steam cx={BKR.w / 2} y={-8} w={BKR.w} strength={s.bubbles} /> : null}
-      {direct && s.thermo.where === "bkr" ? <Thermometer x={BKR.w * 0.7} top={-70} len={BKR.h + 56} temp={s.temp} min={0} max={110} /> : null}
+      {direct && s.thermo.where === "bkr" ? <Thermometer x={BKR.w * 0.7} top={thermoTop(s)} len={THERMO_LEN} temp={s.temp} min={0} max={110} /> : null}
       {ev?.type === "pour" && ev.container === "beaker" ? <PourWithHand key={ev.note} x={BKR.w / 2} y1={-22} y2={BKR.h - 6} /> : null}
       {ev?.type === "placeHot" ? <GripHand key={ev.note} x={BKR.w - 2} y={BKR.h * 0.45} /> : null}
-      {direct && isThermo(ev) ? <PinchHand key={ev?.note} x={BKR.w * 0.7} y={-58} /> : null}
+      {direct && isThermo(ev) ? <PinchHand key={ev?.note} x={BKR.w * 0.7} y={thermoTop(s) + 12} /> : null}
     </g>
   );
 }
@@ -63,7 +79,7 @@ function SideTube({ s, ev }: { s: BoilingState; ev: SimEvent | null }) {
       {s.thermo.where === "tube" ? <Thermometer x={TUBE.w / 2} top={-54} len={TUBE.h + 40} temp={s.temp} min={0} max={110} /> : null}
       <Label x={-28} y={TUBE.h - 16} text={LABEL[s.tube.liquid] ?? s.tube.liquid} />
       {ev?.type === "pour" && ev.container !== "beaker" ? <PourWithHand key={ev.note} x={TUBE.w / 2} y1={-22} y2={TUBE.h - 8} color="#c9bdf5" liquid={s.tube.liquid} /> : null}
-      {ev?.type === "fixTube" ? <GripHand key={ev.note} x={TUBE.w} y={48} /> : null}
+      {ev?.type === "fixTube" || !s.tube.fixed ? <GripHand key={ev?.type === "fixTube" ? ev.note : "hold"} x={TUBE.w} y={48} /> : null}
       {ev?.type === "stopper" ? <PinchHand key={ev.note} x={TUBE.w / 2} y={-4} /> : null}
       {isThermo(ev) ? <PinchHand key={ev?.note} x={TUBE.w / 2} y={-42} /> : null}
     </g>
@@ -96,7 +112,7 @@ export default function BoilingScene({ state, event }: { state: BoilingState | n
   // 물을 비커에서 바로 끓일 때(시험관 없음)는 스탠드 집게가 비커 속 온도계를 잡는다 — 예전엔 시험관 자리를 잡아 온도계와 떨어져 보였다
   const thermoInBeaker = !state.tube.liquid && state.thermo.where === "bkr";
   const beakerTop = (state.bkr.onHot || state.shown.hot ? PLATE.top : BENCH_Y) - BKR.h;
-  const arm = thermoInBeaker ? { x: BKR.x + BKR.w * 0.7, y: beakerTop - 44 } : { x: TUBE.x + TUBE.w / 2, y: armY };
+  const arm = thermoInBeaker ? { x: BKR.x + BKR.w * 0.7, y: beakerTop + thermoTop(state) + 22 } : { x: TUBE.x + TUBE.w / 2, y: armY };
   return (
     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="h-full w-full" role="img" aria-label={event?.note ?? "끓는점 실험 장치"}>
       <LabDefs />

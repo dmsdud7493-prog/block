@@ -64,6 +64,8 @@ export interface PredictionTarget {
   sketch?: SketchSpec;
   /** 이 예측이 다루는 물질(준비물 id). 있으면 학생 블록에 쓰인 물질에 맞는 예측을 묻는다 */
   subjects?: string[];
+  /** 결과표가 이 예측의 답을 드러내면 true — 그래프 전이 아니라 실행 전에 묻는다 */
+  beforeRun?: boolean;
 }
 
 /**

@@ -9,9 +9,10 @@ import { fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { latestRun } from "@/components/lab/state";
 import { emptyReport, type ReportContent } from "./template";
 import { activitiesOf, dataOf } from "./activities";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 const opt = (c: AnyCatalog, id: string | null) => c.variableOptions.find((o) => o.id === id)?.label ?? "";
-const itemLabel = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const itemLabel = subjectLabel;
 
 function variablesOf(c: AnyCatalog, s: LabState): ReportContent["variables"] {
   const pick = (role: string) => s.program.variables.filter((v) => v.role === role).map((v) => opt(c, v.optionId)).filter(Boolean).join(", ");
@@ -28,7 +29,7 @@ function materialsOf(c: AnyCatalog, s: LabState): string {
 function resultsOf(c: AnyCatalog, s: LabState): string {
   const run = latestRun(s);
   if (!run) return "";
-  const lines = run.measurements.map((m) => `${m.trial}회 ${itemLabel(c, m.subject)} ${m.label}: ${fmtMeasure(m)} ${m.unit}`);
+  const lines = run.measurements.map((m) => `${m.trial}번 ${itemLabel(c, m.subject)} ${m.label}: ${fmtMeasure(m)} ${m.unit}`);
   const calc = Object.values(s.calc).filter((e) => e.correct).map((e) => `${run.calcRequests.find((r) => r.key === e.key)?.label ?? e.key}(${itemLabel(c, run.calcRequests.find((r) => r.key === e.key)?.subject ?? "")}): ${e.value} ${e.unit}`);
   return [...lines, ...calc].join("\n");
 }
@@ -49,9 +50,9 @@ export function resultsTableOf(c: AnyCatalog, s: LabState): ReportContent["resul
     const [trial, subject] = k.split("|");
     const here = cells.filter((x) => `${x.trial}|${x.subject}` === k);
     const vals = cols.map((col) => here.filter((x) => x.col === col).map((x) => x.value).join(", ") || "—");
-    return [...(multiTrial ? [`${trial}회`] : []), itemLabel(c, subject), ...vals];
+    return [...(multiTrial ? [trial] : []), itemLabel(c, subject), ...vals];
   });
-  return { columns: [...(multiTrial ? ["회차"] : []), "물질", ...cols], rows };
+  return { columns: [...(multiTrial ? ["번호"] : []), "물질", ...cols], rows };
 }
 
 function hypothesisOf(c: AnyCatalog, s: LabState): string {
@@ -59,7 +60,7 @@ function hypothesisOf(c: AnyCatalog, s: LabState): string {
   return s.predictions.filter((p) => p.choice).map((p) => {
     const target = c.predictionTargets.find((x) => x.id === p.target);
     const choice = target?.choices.find((x) => x.id === p.choice)?.label ?? p.choice;
-    return `${choice}. 왜냐하면 ${p.rationale}`;
+    return `${choice}. 왜냐하면 ${p.rationale.trim().replace(/^왜냐하면[\s,]*/, "")}`;
   }).join("\n");
 }
 

@@ -7,6 +7,7 @@ import type { TutorState } from "./stateInjection";
 import { ERROR_HINTS, type ErrorType } from "@/lib/engine/grader/errorTypes";
 import { SAFETY_REPLY } from "./safety";
 import { conceptOf } from "./glossary";
+import { CHIP_REPLIES } from "./chips";
 
 const ASKS_RESULT = /(결과|그래프|정답|답|몇|얼마|뜨|가라앉|녹는점|끓는점|밀도는)/;
 
@@ -26,6 +27,10 @@ export function localTutor(state: TutorState, lastUser: string, risk: string | n
   // "밀도가 뭐야?" 같은 개념 질문 — 낱말 뜻은 탐구 답이 아니므로 바로 알려 주고, 되묻기로 학생에게 돌려준다(결과·결론은 말하지 않음, 지침 5.4)
   const concept = conceptOf(lastUser);
   if (concept) return reply(`${concept.meaning} ${concept.ask}`, Math.min(1, state.hint_level_max) as 0 | 1, "ask_rationale");
+  // 제안 칩 질문 — 블록에 고칠 곳이 있어도 물은 것에 먼저 답한다
+  const chip = CHIP_REPLIES[lastUser.trim()];
+  if (chip?.afterPrediction && !state.prediction_submitted) return reply("좋은 질문이에요! 그건 결과와 이어지는 질문이라, 먼저 결과를 예상해 본 뒤에 같이 알아봐요. 실행 버튼을 누르면 예상을 적는 칸이 나와요.", 0, "predict");
+  if (chip) return reply(chip.text, Math.min(1, state.hint_level_max) as 0 | 1, "ask_rationale");
   if (!state.prediction_submitted && ASKS_RESULT.test(lastUser)) {
     return reply("결과를 보기 전에 먼저 예상해 보는 게 중요해요. 실행 버튼을 누르면 예상을 적는 칸이 나와요. 어떻게 될 것 같아요?", 0, "predict");
   }

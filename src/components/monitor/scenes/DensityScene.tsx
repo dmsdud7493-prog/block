@@ -17,7 +17,8 @@ const SOLID_LABEL: Record<string, string> = { iron_big: "큰 철조각", iron_sm
 const CYL = { w: 52, h: 150 };
 const BKR = { w: 88, h: 100 };
 /** 그릇 자리: 바닥 / 저울 접시 위 */
-const SPOT = { cylFloor: 222, cylScale: 80, bkrFloor: 322, bkrScale: 58, scaleX: 14 };
+// 장치를 화면 가운데 쪽으로(2026-11-17 점검: 왼쪽에 몰려 오른쪽이 비어 보임)
+const SPOT = { cylFloor: 282, cylScale: 80, bkrFloor: 345, bkrScale: 58, scaleX: 78 };
 
 /** 저울 표시 — 이번 단계 측정값, 아니면 저울 위 물체를 마지막으로 잰 값(측정 기록에 있는 값만) */
 function scaleText(s: DensityState, ev: SimEvent | null): string {
@@ -54,16 +55,18 @@ function CylinderView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   const onScale = s.scale.item === "cylinder";
   const x = onScale ? SPOT.scaleX + SPOT.cylScale - CYL.w / 2 + 2 : SPOT.cylFloor;
   const y = onScale ? BENCH_Y - 34 - CYL.h - 7 + 1 : BENCH_Y - CYL.h - 7;
-  const level = Math.min(1, s.cyl.volume / CYL_MAX);
+  // 철조각을 넣으면 그만큼 수면이 올라간다(넣은 단계의 눈금 after) — 2026-11-17 점검: 넣어도 수면이 그대로였음
+  const ins = s.lastInsert && s.cyl.solids.includes(s.lastInsert.name) ? s.lastInsert.after : null;
+  const level = Math.min(1, (ins ?? s.cyl.volume) / CYL_MAX);
   const reading = ev?.type === "measureVol" || ev?.type === "measureChange";
   const surface = CYL.h - 2 - (CYL.h - 12) * level;
   return (
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
       {onScale ? null : <FloorShadow cx={CYL.w / 2} w={CYL.w + 26} y={CYL.h + 7} />}
-      <Cylinder x={0} y={0} w={CYL.w} h={CYL.h} level={level} liquid={s.cyl.liquid} label="눈금실린더" max={CYL_MAX}
+      <Cylinder x={0} y={0} w={CYL.w} h={CYL.h} level={level} liquid={s.cyl.liquid} label="눈금실린더" max={CYL_MAX} labelLeft={onScale}
         inside={<SolidsInCylinder solids={s.cyl.solids} ev={ev} />} />
       {reading && level > 0 ? <EyeLine y={surface} /> : null}
-      {pouringInto(ev, "cylinder") ? <PourWithHand key={ev?.note} x={CYL.w / 2} y1={-24} y2={CYL.h - 4} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={s.cyl.liquid} /> : null}
+      {pouringInto(ev, "cylinder") ? <PourWithHand key={ev?.note} x={CYL.w / 2} y1={onScale ? -8 : -24} y2={CYL.h - 4} color={s.cyl.liquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={s.cyl.liquid} /> : null}
       {ev?.type === "dropSolid" && ev.container !== "beaker" ? <IronTweezers key={ev.note} x={CYL.w / 2 - 6} y={22} solid={String(ev.name)} /> : null}
     </g>
   );
@@ -137,7 +140,7 @@ function captionLines(ev: SimEvent | null, sink: string | null): [string, string
 }
 
 /** 비커만 쓰는 실행(미션 ③ 네 물질을 한 비커에)은 비커를 가운데에 크게 */
-const FOCUS_K = 1.5;
+const FOCUS_K = 1.3;
 const beakerOnly = (s: DensityState) => s.shown.bkr && !s.shown.cyl && !s.shown.scale;
 
 function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
@@ -152,7 +155,7 @@ function BeakerView({ s, ev }: { s: DensityState; ev: SimEvent | null }) {
   return (
     <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)${focus ? ` scale(${FOCUS_K})` : ""}` }}>
       {onScale ? null : <FloorShadow cx={BKR.w / 2} w={BKR.w + 8} y={BKR.h} />}
-      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} ev={ev} />} />
+      <Beaker x={0} y={0} w={BKR.w} h={BKR.h} level={0} liquid={null} label="비커" labelLeft={onScale} marks={["50", "100", "150", "200", ""]} inside={<BeakerLayers b={s.bkr} sink={sink} sinkKey={ev?.note} ev={ev} />} />
       {caption ? <SideCaption key={`c-${ev?.note}`} lines={caption} delay={sink ? 0 : 1} /> : null}
       {pouringInto(ev, "beaker") ? <PourWithHand key={ev?.note} x={BKR.w / 2} y1={-22} y2={BKR.h - 6} color={pourLiquid === "oil" ? "#e8b923" : "#7cc4f5"} liquid={pourLiquid} /> : null}
       {ev?.type === "dropSolid" && ev.container === "beaker" ? <IronTweezers key={ev.note} x={BKR.w / 2 - 6} y={10} solid={String(ev.name)} /> : null}

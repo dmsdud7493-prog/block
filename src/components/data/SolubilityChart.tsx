@@ -6,9 +6,10 @@
 import { CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { RunRecord } from "@/components/lab/types";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 const COLORS = ["#1d4ed8", "#0e7490", "#b45309"];
-const labelOf = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const labelOf = subjectLabel;
 
 export interface DissolvedRecord { subject: string; trial: number; value: number }
 

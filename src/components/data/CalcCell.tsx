@@ -11,7 +11,8 @@ import { unitOptions } from "./units";
 interface Props {
   request: CalcRequest;
   entry: CalcEntry | undefined;
-  onCheck: (value: number, unit: string) => Promise<void>;
+  /** raw: 학생이 적은 그대로(1.00처럼 끝자리 0 보존 — 보고서에 그대로 옮긴다) */
+  onCheck: (value: number, unit: string, raw: string) => Promise<void>;
 }
 
 function Feedback({ entry }: { entry: CalcEntry | undefined }) {
@@ -38,7 +39,7 @@ export default function CalcCell({ request, entry, onCheck }: Props) {
   const submit = async () => {
     setBusy(true);
     try {
-      await onCheck(Number(value.replace(",", ".")), unit);
+      await onCheck(Number(value.replace(",", ".")), unit, value.trim().replace(",", "."));
     } finally {
       setBusy(false);
     }

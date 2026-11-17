@@ -8,7 +8,7 @@ function MissionTitle({ icon, chip, index, title }: { icon: string; chip: string
   return (
     <span className="flex items-center gap-3">
       <span aria-hidden="true" className={`grid h-12 w-12 shrink-0 place-items-center rounded-full text-2xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.12)] ${chip}`}>{icon}</span>
-      <span className="min-w-0"><span className="block text-xs font-bold text-muted">미션 {index + 1}</span><span className="block font-display text-xl text-nav">{title}</span></span>
+      <span className="min-w-0"><span className="block text-xs font-bold text-muted">실험 {index + 1}</span><span className="block font-display text-xl text-nav">{title}</span></span>
     </span>
   );
 }

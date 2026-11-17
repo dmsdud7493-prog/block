@@ -6,7 +6,7 @@ import { allMissionsDone, missionProgress } from "./missions";
 
 export type LabAction =
   | { type: "program"; program: Program; blockly: object; diagnostics: Diagnostic[] }
-  | { type: "openGate"; target: string }
+  | { type: "openGate"; target: string; for?: "run" | "graph" }
   | { type: "closeGate" }
   | { type: "hint"; target: string }
   | { type: "predicted"; record: PredictionRecord }
@@ -56,7 +56,7 @@ export function labReducer(s: LabState, a: LabAction): LabState {
     case "program":
       return { ...s, program: a.program, blockly: a.blockly, diagnostics: a.diagnostics, programVersion: s.programVersion + 1, runError: null };
     case "openGate":
-      return { ...s, gateTarget: a.target, phase: "predict" };
+      return { ...s, gateTarget: a.target, gateFor: a.for ?? "run", phase: "predict" };
     case "closeGate":
       return { ...s, gateTarget: null, phase: s.runs.length > 0 ? "interpret" : "design" };
     case "hint":

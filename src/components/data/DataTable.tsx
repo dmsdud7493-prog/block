@@ -7,16 +7,19 @@ import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { CalcEntry, RunRecord } from "@/components/lab/types";
 import CalcCell from "./CalcCell";
 import { fmtMeasure } from "@/lib/engine/format";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 interface Props {
   catalog: AnyCatalog;
   run: RunRecord;
   calc: Record<string, CalcEntry>;
-  onCheck: (req: CalcRequest, value: number, unit: string) => Promise<void>;
+  onCheck: (req: CalcRequest, value: number, unit: string, raw: string) => Promise<void>;
 }
 
 interface Group {
   trial: number;
+  /** 화면에 보이는 시도 번호 — 기록이 있는 시도만 1, 2, 3 …(중탕에 넣기처럼 기록 없는 단계가 번호를 건너뛰지 않게, 2026-11-17 점검) */
+  shown: number;
   subject: string;
   measurements: Measurement[];
   requests: CalcRequest[];
@@ -25,11 +28,13 @@ interface Group {
 function groupRows(run: RunRecord): Group[] {
   const keyOf = (trial: number, subject: string) => `${trial}:${subject}`;
   const keys = [...new Set([...run.measurements, ...run.calcRequests].map((x) => keyOf(x.trial, x.subject)))];
+  const trials = [...new Set(keys.map((k) => Number(k.split(":")[0])))].sort((a, b) => a - b);
   return keys.map((k) => {
     const [t, subject] = k.split(":");
     const trial = Number(t);
     return {
       trial,
+      shown: trials.indexOf(trial) + 1,
       subject,
       measurements: run.measurements.filter((m) => m.trial === trial && m.subject === subject),
       requests: run.calcRequests.filter((c) => c.trial === trial && c.subject === subject),
@@ -37,13 +42,13 @@ function groupRows(run: RunRecord): Group[] {
   });
 }
 
-const labelOf = (catalog: AnyCatalog, id: string) => catalog.items.find((i) => i.id === id)?.label ?? id;
+const labelOf = subjectLabel;
 
 function Row({ g, catalog, calc, onCheck }: { g: Group; catalog: AnyCatalog; calc: Record<string, CalcEntry>; onCheck: Props["onCheck"] }) {
   const measured = g.measurements.map((m) => `${m.label} ${fmtMeasure(m)} ${m.unit}`).join(" · ");
   return (
     <tr className="border-t border-line align-top">
-      <td className="p-2 text-center">{g.trial}</td>
+      <td className="p-2 text-center">{g.shown}</td>
       <th scope="row" className="p-2 text-left font-semibold">{labelOf(catalog, g.subject)}</th>
       <td className="p-2 tabular-nums">{measured || "—"}</td>
       <td className="p-2">{g.requests.map((r) => <CalcField key={r.key} r={r} entry={calc[r.key]} onCheck={onCheck} />)}</td>
@@ -55,7 +60,7 @@ function CalcField({ r, entry, onCheck }: { r: CalcRequest; entry: CalcEntry | u
   return (
     <div className="mb-1">
       <p className="text-xs font-semibold text-muted">{r.label}</p>
-      <CalcCell request={r} entry={entry} onCheck={(v, u) => onCheck(r, v, u)} />
+      <CalcCell request={r} entry={entry} onCheck={(v, u, raw) => onCheck(r, v, u, raw)} />
     </div>
   );
 }

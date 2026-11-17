@@ -30,7 +30,7 @@ function StepItem({ id, label, index, current, done, lockReason, onSelect }: {
     <li className="min-w-0 flex-1">
       <button
         type="button"
-        className={`tap flex w-full items-center justify-center gap-1 rounded-full border-2 px-2 py-1 text-sm font-bold transition ${toneOf(current, done, Boolean(lockReason))} disabled:cursor-not-allowed`}
+        className={`tap flex w-full items-center justify-center gap-1 rounded-full border-2 px-1.5 py-1 text-[13px] font-bold 2xl:px-2 2xl:text-sm transition ${toneOf(current, done, Boolean(lockReason))} disabled:cursor-not-allowed`}
         aria-current={current ? "step" : undefined}
         disabled={Boolean(lockReason) || !onSelect}
         title={lockReason}

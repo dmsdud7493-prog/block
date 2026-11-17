@@ -62,6 +62,16 @@ export function mergeSeries(list: Series[], add: Series[]): Series[] {
   }, list);
 }
 
+/**
+ * 시도를 마치는 단계의 화면 — 가열 실험은 다음 시도를 위해 상태가 처음으로 돌아가 장치가 한꺼번에 사라졌다.
+ * 그 단계의 장면은 바로 앞 장치를 그대로 두고 가열만 끈 모습으로 보여 준다(다음 단계 계산은 처음 상태로). 2026-11-17 점검
+ */
+function endView(before: unknown, after: unknown): unknown {
+  if (!before || typeof before !== "object" || !("heating" in before)) return after;
+  const b = before as Record<string, unknown>;
+  return { ...b, heating: false, ...("bubbles" in b ? { bubbles: 0 } : {}), ...("vapour" in b ? { vapour: false } : {}) };
+}
+
 function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | null): Acc {
   const init: Acc = { state: catalog.initialState(), trial: 1, frames: [], measurements: [], calcRequests: [], series: [], error: null, warnings: [], stoppedAt: null };
   return program.steps.reduce<Acc>((acc, step, i) => {
@@ -72,7 +82,7 @@ function runSteps(program: Program, catalog: AnyCatalog, src: PhysicsSource | nu
       return { ...acc, error: d, stoppedAt: i };
     }
     const warns: Diagnostic[] = (out.warnings ?? []).map((w) => ({ blockId: step.blockId, severity: "warn", code: w.code, message: w.message, guideline: w.guideline ?? "3.3" }));
-    const frame: Frame = { stepIndex: i, blockId: step.blockId, event: out.event ?? { type: "noop", note: "" }, state: out.state };
+    const frame: Frame = { stepIndex: i, blockId: step.blockId, event: out.event ?? { type: "noop", note: "" }, state: out.endTrial ? endView(acc.state, out.state) : out.state };
     return {
       ...acc,
       state: out.state,

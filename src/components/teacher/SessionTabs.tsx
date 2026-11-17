@@ -15,13 +15,14 @@ import { ERROR_TYPE_LABEL } from "@/lib/events/cards";
 import type { Program } from "@/lib/engine/types";
 import ReportReadOnly from "./ReportReadOnly";
 import { predictionText } from "@/lib/events/predictionText";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 export type TabId = "blocks" | "runs" | "predictions" | "report" | "chat";
 const TABS: { id: TabId; label: string }[] = [
   { id: "blocks", label: "🧩 블록" }, { id: "runs", label: "📈 실행·계산" }, { id: "predictions", label: "🔮 예상" }, { id: "report", label: "📝 보고서" }, { id: "chat", label: "💬 AI 대화" },
 ];
 
-const itemLabel = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const itemLabel = subjectLabel;
 const varLabel = (c: AnyCatalog, id: string) => c.variableOptions.find((o) => o.id === id)?.label ?? id;
 
 /** 블록을 학생 화면과 같은 한국어 문장으로 */

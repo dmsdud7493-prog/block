@@ -79,6 +79,8 @@ export function submitChecklist(c: ReportContent): SubmitCheck[] {
   const reflections = REFLECTION_QUESTIONS.filter((q) => filled(c.reflection[q.id], 10)).length;
   return [
     { id: "evidence", label: "정리 1: 그렇게 생각한 까닭(자료의 어떤 값을 보았는지)을 5자 이상 적었어요", ok: filled(c.interpretation.evidence, 5), target: "r-evidence" },
+    // 결론(알게 된 것)도 비워 둔 채 낼 수 없게 (2026-11-17 점검) — 서버 함수는 다음 DB 반영 때 같은 기준으로 맞춘다
+    { id: "trend", label: "정리 2: 이 탐구로 알게 된 것(결론)을 10자 이상 적었어요", ok: filled(c.interpretation.trend, 10), target: "r-trend" },
     { id: "error", label: "정리 2: 값이 조금씩 달라진 까닭(오차)을 5자 이상 적었어요", ok: filled(c.interpretation.errorSources, 5), target: "r-error" },
     { id: "improve", label: "정리 2: 다음에 더 잘하려면 어떻게 할지 5자 이상 적었어요", ok: filled(c.interpretation.improvements, 5), target: "r-improve" },
     { id: "reflection", label: `정리 3: 성찰 질문 ${REFLECTION_QUESTIONS.length}개에 질문마다 10자 이상 답했어요 (지금 ${reflections}개)`, ok: reflections >= REFLECTION_QUESTIONS.length, target: `r-ref-${REFLECTION_QUESTIONS.find((q) => !filled(c.reflection[q.id], 10))?.id ?? REFLECTION_QUESTIONS[0].id}` },

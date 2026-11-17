@@ -10,9 +10,10 @@ import { fmtNum } from "@/lib/engine/format";
 import TimeTempChart, { type SketchLine } from "./TimeTempChart";
 import SolubilityChart, { dissolvedRecords } from "./SolubilityChart";
 import { sketchTimes } from "./SketchPad";
+import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 const COLORS = ["#1d4ed8", "#b45309", "#047857", "#7c3aed", "#be123c", "#0e7490"];
-const labelOf = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const labelOf = subjectLabel;
 
 function MassVolume({ catalog, run }: { catalog: AnyCatalog; run: RunRecord }) {
   const pairs = run.calcRequests.map((r) => {

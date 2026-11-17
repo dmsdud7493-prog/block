@@ -9,7 +9,7 @@ const ready = () => {
   const c = emptyReport();
   return {
     ...c,
-    interpretation: { trend: "", hypothesisVerdict: "supported" as const, evidence: "표의 밀도 값", errorSources: "눈금 오차", improvements: "여러 번 잰다" },
+    interpretation: { trend: "크기가 달라도 같은 물질이면 밀도가 같다", hypothesisVerdict: "supported" as const, evidence: "표의 밀도 값", errorSources: "눈금 오차", improvements: "여러 번 잰다" },
     reflection: { diff: "", hardest: "변인 통제가 어려웠다", curious: "다른 금속도 재 보고 싶다", realLife: "물에 뜨는 기름에서 볼 수 있다" },
   };
 };
@@ -29,7 +29,7 @@ describe("submitChecklist (지침 6.3·6.4)", () => {
   it("예상이 맞았는지(가설 판단)는 제출 조건이 아니다 — 첫 항목이 빠졌다 (ADR-P19)", () => {
     const r = ready();
     const checks = submitChecklist({ ...r, interpretation: { ...r.interpretation, hypothesisVerdict: "" } });
-    expect(checks.map((c) => c.id)).toEqual(["evidence", "error", "improve", "reflection"]);
+    expect(checks.map((c) => c.id)).toEqual(["evidence", "trend", "error", "improve", "reflection"]);
     expect(checks.every((c) => c.ok)).toBe(true);
   });
   it("보고서 칸은 탐구 활동지 순서이고 변인 칸이 없다 (ADR-P19·P20)", async () => {
@@ -59,7 +59,7 @@ describe("transcribe (지침 6.2·5.4)", () => {
     expect(r.drafts).toContain("results");
     expect(r.drafts).not.toContain("interpretation");
   });
-  it("결과는 회차·물질별 표로 옮긴다(맞힌 계산값 포함, 틀린 값은 빈칸)", () => {
+  it("결과는 번호·물질별 표로 옮긴다(맞힌 계산값 포함, 틀린 값은 빈칸)", () => {
     const run = {
       runNo: 1, ok: true, frames: [], series: [], diagnostics: [], changedVars: [], program: { experiment: "density", steps: [], variables: [] },
       measurements: [
@@ -79,12 +79,29 @@ describe("transcribe (지침 6.2·5.4)", () => {
     };
     const s = { ...state, runs: [run], calc } as unknown as typeof state;
     expect(transcribe(catalog, s).resultsTable).toEqual({
-      columns: ["회차", "물질", "질량(g)", "부피(mL)", "밀도(g/mL)"],
-      rows: [["1회", "물", "50", "50", "1"], ["2회", "식용유", "46", "50", "—"]],
+      columns: ["번호", "물질", "질량(g)", "부피(mL)", "밀도(g/mL)"],
+      rows: [["1", "물", "50", "50", "1"], ["2", "식용유", "46", "50", "—"]],
     });
   });
   it("저장된 보고서가 있으면 그대로 쓴다", () => {
     expect(initialReport(catalog, state, { title: "내 제목" }).title).toBe("내 제목");
     expect(initialReport(catalog, state, {}).title).toBe("물질마다 밀도가 다를까?");
+  });
+});
+
+describe("2026-11-17 점검 반영", () => {
+  it("결론(이 탐구로 알게 된 것)을 비우면 제출 조건이 남는다", () => {
+    const r = ready();
+    const fails = submitChecklist({ ...r, interpretation: { ...r.interpretation, trend: "" } }).filter((c) => !c.ok).map((c) => c.id);
+    expect(fails).toEqual(["trend"]);
+  });
+  it("가설 초안은 학생 이유가 '왜냐하면'으로 시작해도 한 번만 쓴다", () => {
+    const catalog = getCatalog("density") as AnyCatalog;
+    const state = initialLabState("density");
+    const target = catalog.predictionTargets[0];
+    const s = { ...state, predictions: [{ target: target.id, choice: target.choices[0].id, rationale: "왜냐하면 기름이 국 위에 뜨니까", hintsUsed: 0 }] };
+    const h = transcribe(catalog, s).hypothesis;
+    expect(h).toContain("왜냐하면 기름이 국 위에 뜨니까");
+    expect(h).not.toContain("왜냐하면 왜냐하면");
   });
 });

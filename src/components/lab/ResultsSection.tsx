@@ -94,7 +94,7 @@ export default function ResultsSection({ catalog, ctl, onNextMission }: { catalo
   return (
     <section aria-label="실험 결과" className="space-y-3">
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
-      {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u) => ctl.check(req, okRun.runNo, v, u)} /> : null}
+      {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u, raw) => ctl.check(req, okRun.runNo, v, u, raw)} /> : null}
       {catalog.resultView?.kind === "layers"
         ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} onNext={onNextMission} />
         : <GraphView catalog={catalog} ctl={ctl} onNext={onNextMission} />}

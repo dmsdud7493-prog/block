@@ -71,7 +71,8 @@ function ChoiceSet({ target, choice, onPick }: { target: PredictionTarget; choic
 
 function Actions({ ready, onCancel }: { ready: boolean; onCancel: () => void }) {
   return (
-    <div className="mt-4 flex justify-end gap-2">
+    // 그래프 그리기 칸이 있어 창이 길어도(노트북 768px 높이) 결정 단추는 늘 창 아래에 보이게 붙여 둔다
+    <div className="sticky -bottom-5 z-20 -mx-5 -mb-5 mt-4 flex justify-end gap-2 rounded-b-[26px] border-t border-violet-100 bg-white px-5 py-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6">
       <button type="button" className="tap rounded-full bg-slate-100 px-4 text-slate-700" onClick={onCancel}>나중에</button>
       <button type="submit" className="tap rounded-full bg-gradient-to-r from-violet-700 to-pink-700 px-5 font-black text-white disabled:opacity-40" disabled={!ready}>이 카드로 결정 ✨</button>
     </div>

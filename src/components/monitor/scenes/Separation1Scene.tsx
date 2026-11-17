@@ -36,7 +36,8 @@ function FlaskInside({ s, level, strength }: { s: Separation1State; level: numbe
 
 function FlaskView({ s }: { s: Separation1State }) {
   const total = s.flask.water + s.flask.ethanol;
-  const level = Math.min(0.6, total / 160);
+  // 40 mL가 바닥에 얇게 깔려 빈 플라스크처럼 보였음(2026-11-17 점검) — 넓은 바닥을 생각해 조금 높게
+  const level = Math.min(0.7, total / 100);
   const liquid = s.flask.ethanol > 0 && s.flask.water > 0 ? "mixture" : s.flask.ethanol > 0 ? "ethanol" : "water";
   const strength = s.heating && total > 0 ? (s.vapour ? 0.75 : 0.18) : 0;
   return (

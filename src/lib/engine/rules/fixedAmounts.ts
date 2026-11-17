@@ -5,8 +5,9 @@
 import type { Diagnostic, Step } from "../types";
 import type { AnyCatalog } from "../experiments/types";
 import { fixJosa } from "../format";
+import { subjectLabel } from "../subjectLabel";
 
-const labelOf = (c: AnyCatalog, id: string) => c.items.find((i) => i.id === id)?.label ?? id;
+const labelOf = subjectLabel;
 
 /** 한 블록 — 정해 둔 준비물과 양이 함께 있으면 양을 비교한다 */
 function issueOf(c: AnyCatalog, step: Step): Diagnostic | null {
