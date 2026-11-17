@@ -69,6 +69,10 @@ function TubeInside({ solute, crystal, solidH }: { solute: string | null; crysta
   );
 }
 
+function TubeGlass({ t, level, info, solidH }: { t: SolubilityState["tubes"][(typeof TUBES)[number]]; level: number; info?: TubeScene; solidH: number }) {
+  return <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={level} liquid={liquidOf(t.solute, t.water, info)} label="" inside={<TubeInside solute={t.solute} crystal={t.crystal} solidH={solidH} />} />;
+}
+
 /** 이 시험관에서 일어나는 손동작 — 물 붓기·용질 넣기·중탕에 넣기 */
 function TubeHands({ id, ev, solute }: { id: string; ev: SimEvent | null; solute: string | null }) {
   if (!ev || ev.tube !== id) return null;
@@ -91,11 +95,13 @@ function TubeView({ id, s, i, event }: { id: (typeof TUBES)[number]; s: Solubili
   // 녹지 않고 남은 고체 — 0.1 g 남짓이어도 눈에 띄게(2026-11-17 점검: 포화돼도 바닥이 비어 보였음)
   const left = info?.solid ?? 0;
   const solidH = left > 0.02 ? Math.min(16, 4 + left * 3) : 0;
+  // 넣고 흔드는 단계면 시험관이 좌우로 흔들린다
+  const shaking = (event?.type === "add" || event?.type === "repeat") && event.tube === id;
   return (
     <g>
       {t.bath ? <BathAround bath={t.bath} x={x} /> : null}
       <g className="lab-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
-        <TestTube x={0} y={0} w={TUBE.w} h={TUBE.h} level={level} liquid={liquidOf(t.solute, t.water, info)} label="" inside={<TubeInside solute={t.solute} crystal={t.crystal} solidH={solidH} />} />
+        <g key={shaking ? event?.note : "still"} className={shaking ? "lab-shake" : undefined}><TubeGlass t={t} level={level} info={info} solidH={solidH} /></g>
         <TubeHands id={id} ev={event} solute={t.solute} />
       </g>
       <Label x={x + TUBE.w / 2} y={BENCH_Y + 16} text={`${name.slice(-1)} · ${t.bath === "ice_water" ? "얼음물 " : t.bath ? "뜨거운 물 " : ""}${t.temp}℃`} />

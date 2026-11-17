@@ -44,7 +44,7 @@ export function Scale({ x, w = 150, reading, label = "전자저울", children }:
       <FloorShadow cx={w / 2} w={w + 8} y={34} />
       <path d={`M0 34 L6 8 L${w - 6} 8 L${w} 34 Z`} fill="url(#lab-body)" stroke="#94a3b8" />
       <rect x={w / 2 - 46} y="15" width="66" height="15" rx="2" fill="#0b2b1d" stroke="#1f2937" />
-      <text x={w / 2 + 16} y="26.5" textAnchor="end" fontSize="11" fontWeight="700" fill="#4ade80" fontFamily="'Courier New', monospace">{reading}</text>
+      <text x={w / 2 + 16} y="26.5" textAnchor="end" fontSize="11" fontWeight="700" fill="#4ade80" fontFamily="'Courier New', monospace" className={reading.startsWith("--") ? "lab-settle" : undefined}>{reading}</text>
       <rect x={w / 2 + 26} y="17" width="22" height="11" rx="2" fill="#2563eb" />
       <text x={w / 2 + 37} y="25" textAnchor="middle" fontSize="6" fontWeight="700" fill="#ffffff">TARE</text>
       <rect x={w * 0.18} y="1" width={w * 0.64} height="7" rx="3.5" fill="url(#lab-metal-v)" stroke="#6b7280" />

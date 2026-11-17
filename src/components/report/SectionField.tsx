@@ -51,7 +51,7 @@ export default function SectionField({ id, label, value, onChange, guide, starte
     <div className="space-y-1">
       {label ? <label htmlFor={id} className="block text-sm font-semibold"><LabelText label={label} /></label> : null}
       <Meta guide={guide} draft={draft} />
-      <textarea id={id} aria-label={label ? undefined : ariaLabel} rows={rows} value={value} readOnly={readOnly} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} className="w-full rounded border border-line p-2 text-sm read-only:bg-slate-50 print:hidden" />
+      <textarea id={id} aria-label={label ? undefined : ariaLabel} rows={rows} style={{ minHeight: `${rows * 1.25 + 1.1}rem` }} value={value} readOnly={readOnly} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} className="w-full rounded border border-line p-2 text-sm [field-sizing:content] max-h-[28rem] read-only:bg-slate-50 print:hidden" />
       <PrintText value={value} />
       {starter && !readOnly ? <button type="button" className="tap rounded border border-line px-2 text-xs print:hidden" onClick={insertStarter}>✏️ 시작어 넣기: “{starter}”</button> : null}
     </div>

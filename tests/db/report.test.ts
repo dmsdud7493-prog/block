@@ -8,7 +8,7 @@ import { asService, asUser, createUser, errorOf, pool, URL } from "./helpers";
 let T: string, S: string, L: string, sess: string, lateSess: string;
 
 const READY = {
-  interpretation: { hypothesisVerdict: "supported", evidence: "표의 밀도 값", errorSources: "눈금 읽기 오차", improvements: "여러 번 측정" },
+  interpretation: { hypothesisVerdict: "supported", evidence: "표의 밀도 값", trend: "같은 물질이면 크기가 달라도 밀도가 같다", errorSources: "눈금 읽기 오차", improvements: "여러 번 측정" },
   reflection: { diff: "예상보다 밀도가 컸다 왜냐하면", hardest: "변인 통제가 어려웠다 그래서", curious: "다른 금속도 재 보고 싶다", realLife: "" },
 };
 const NOT_READY = { ...READY, reflection: { ...READY.reflection, curious: "짧음" } };
@@ -60,6 +60,10 @@ describe("제출 게이트 (app_submit_report)", () => {
   it("예상이 맞았는지(가설 판단)를 고르지 않아도 다른 조건을 채우면 제출 조건 통과 (0011)", async () => {
     const r = await pool.query("select private.report_ready($1::jsonb) as ok", [JSON.stringify({ ...READY, interpretation: { ...READY.interpretation, hypothesisVerdict: "" } })]);
     expect(r.rows[0].ok).toBe(true);
+  });
+  it("결론(이 탐구로 알게 된 것)이 10자 미만이면 제출 조건 미충족 (0013)", async () => {
+    const r = await pool.query("select private.report_ready($1::jsonb) as ok", [JSON.stringify({ ...READY, interpretation: { ...READY.interpretation, trend: "짧다" } })]);
+    expect(r.rows[0].ok).toBe(false);
   });
   it("조건을 채우면 제출되고 세션이 잠긴다", async () => {
     await save(S, sess, READY);

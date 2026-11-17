@@ -172,7 +172,9 @@ function bathProblem(s: SolubilityState, tube: string | null, bath: string | nul
   return null;
 }
 
-function bathNote(tube: TubeId, bath: string, solid: number, crystal: boolean): string {
+function bathNote(tube: TubeId, bath: string, solid: number, crystal: boolean, hasSolute = true): string {
+  // 아직 아무것도 녹이지 않은 물만 든 시험관 — 고체 이야기 대신 온도를 맞춘다는 안내 (2026-11-17 점검)
+  if (!hasSolute) return `${L(tube)}을(를) ${L(bath)}이(가) 담긴 비커에 넣었어요. 시험관 속 물이 약 ${BATHS[bath]} °C가 될 때까지 기다려요.`;
   const look = crystal ? "녹아 있던 물질이 다시 나와 반짝이는 결정이 생겼어요."
     : solid > 0 ? "바닥에 녹지 않은 고체가 남아 있어요." : "바닥에 남은 고체가 보이지 않아요.";
   return `${L(tube)}을(를) ${L(bath)}이(가) 담긴 비커에 넣고 지켜봤어요. ${look}`;
@@ -197,7 +199,7 @@ function bath(s: SolubilityState, step: Step, ctx: ReduceContext): Out {
     ...(t.solute ? observeMeasurements(tube, t, t.temp, after.dissolved, after.solid, ctx.trial) : []),
   ];
   const extra = { tube, bath: b, sub: t.solute, water: t.water, total: t.added, fromT: t0.temp, toT: t.temp, before: { d: before.dissolved, s: before.solid }, dissolved: after.dissolved, solid: after.solid, crystal };
-  return { state, measurements, endTrial: true, event: ev("bath", bathNote(tube, b, after.solid, crystal), state, ctx, extra) };
+  return { state, measurements, endTrial: true, event: ev("bath", bathNote(tube, b, after.solid, crystal, t.solute !== null), state, ctx, extra) };
 }
 
 function observe(s: SolubilityState, step: Step, ctx: ReduceContext): Out {

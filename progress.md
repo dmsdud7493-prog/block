@@ -14,6 +14,7 @@
 | decisions_taken | ADR-P01~P19 (docs/decision-log.md). DB 변경은 Claude가 Supabase SQL Editor에 붙여 넣고 교사 확인 후 실행(DEPLOY.md 표에 기록), GitHub 자동 적용은 키 없이 건너뜀 |
 | next_steps | 사용자 계정으로 DEPLOY.md 실행(GitHub·Supabase·Vercel·Claude 키) → 스테이징 점검(교사 E2E·Realtime 10초·부하 30명) → 파일럿(docs/pilot-checklist.md) |
 | test_status | unit 686 passed(실 API 회귀 25 skipped), E2E 49 passed, verify SCORE=100 APPROVED (2026-11-17) |
+| 2026-11-17 소리·마무리 | 실행 장면 효과음(Web Audio 합성, sound/*.ts — 붓기·보글보글·퐁·똑똑·삑·딸깍, 🔊 켜기/끄기·처음 켜짐), 0013_report_trend 운영 DB 적용(결론 10자 제출 조건), 끓는점 10 mL는 25 mL 눈금 비커, 용해도 흔들기·빈 시험관 중탕 문장, 밀도 미션 ③ 예상 보기 문장, 보고서 칸 글 길이만큼 늘어남, 저울 측정 전 '--' 깜빡임 |
 | 2026-11-17 점검 | 실사이트·6개 실험 보고서 제출 조건까지 진행 점검 → 1280~1535px 세 칸 맞춤, 대상 이름 우리말(subjectLabel), 증류 '먼저 모이는 액체' 예측은 실행 전(beforeRun), 두 번째 실행부터 예측 창 저장 뒤 바로 실행(gateFor), 가설 '왜냐하면' 중복·보고서 '번호'·칸 순서·끝자리 0 보존, 결론 제출 조건(클라이언트만 — 서버 app_submit_report는 다음 DB 반영 때), 체험 도우미 칩 답, 장면 수정(밀도 배치·수면 상승·이름표, 용해도 남은 고체·용액 색, 끓는점 온도계 위치·작은 비커, 시도 끝 장치 유지, 증류 플라스크 수면, 재결정 파란 용액) |
 
 ---

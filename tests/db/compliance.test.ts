@@ -9,7 +9,7 @@ let T: string, T2: string, S: string, K: string, N: string, cls: string, asg: st
 const svc = (sql: string, params: unknown[]) => asService((q) => q(sql, params));
 const CHILD_TABLES = ["block_programs", "runs", "measurements", "predictions", "reports", "submissions", "chat_messages", "events"];
 const READY = {
-  interpretation: { hypothesisVerdict: "supported", evidence: "표의 밀도 값", errorSources: "눈금 읽기 오차", improvements: "여러 번 측정" },
+  interpretation: { hypothesisVerdict: "supported", evidence: "표의 밀도 값", trend: "같은 물질이면 크기가 달라도 밀도가 같다", errorSources: "눈금 읽기 오차", improvements: "여러 번 측정" },
   reflection: { diff: "예상보다 밀도가 컸다 왜냐하면", hardest: "변인 통제가 어려웠다 그래서", curious: "다른 금속도 재 보고 싶다", realLife: "" },
 };
 

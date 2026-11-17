@@ -4,7 +4,9 @@
  * 자동으로 바뀌는 화면이라 일시정지 버튼과 텍스트 기록(aria-live)을 제공한다 (KWCAG).
  */
 import type { Diagnostic, Frame, SimEvent } from "@/lib/engine/types";
-import { useFramePlayer } from "./useFramePlayer";
+import { BASE_STEP_MS, holdOf, useFramePlayer } from "./useFramePlayer";
+import { playStep, stopAll } from "./sound/labSound";
+import { useSoundPref } from "./sound/useSoundPref";
 import DensityScene from "./scenes/DensityScene";
 import GenericScene from "./scenes/GenericScene";
 import MeltingScene from "./scenes/MeltingScene";
@@ -43,13 +45,14 @@ function Scene({ slug, frame }: { slug: string; frame: Frame | null }) {
 
 const SPEEDS = [0.5, 1, 2];
 
-function Controls({ playing, speed, onSpeed, onPause, onResume, onReplay }: {
-  playing: boolean; speed: number; onSpeed: (n: number) => void; onPause: () => void; onResume: () => void; onReplay: () => void;
+function Controls({ playing, speed, onSpeed, onPause, onResume, onReplay, sound, onSound }: {
+  playing: boolean; speed: number; onSpeed: (n: number) => void; onPause: () => void; onResume: () => void; onReplay: () => void; sound: boolean; onSound: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <button type="button" className="tap btn-pill px-3" onClick={playing ? onPause : onResume}>{playing ? "⏸ 일시정지" : "▶ 이어 보기"}</button>
       <button type="button" className="tap btn-pill px-3" onClick={onReplay}>⟲ 처음부터</button>
+      <button type="button" className="tap btn-pill px-3" aria-pressed={sound} onClick={onSound}>{sound ? "🔊 소리 켜짐" : "🔇 소리 꺼짐"}</button>
       <span className="ml-auto font-bold text-muted" id="speed-label">재생 속도</span>
       {SPEEDS.map((s) => <button key={s} type="button" aria-describedby="speed-label" aria-pressed={speed === s} className="tap btn-pill px-2" onClick={() => onSpeed(s)}>{s}×</button>)}
     </div>
@@ -94,6 +97,16 @@ function Idle() {
 
 export default function LabMonitor({ slug, frames, runError, play, onActiveBlock, onFinish }: Props) {
   const player = useFramePlayer(frames, onFinish);
+  const [sound, toggleSound] = useSoundPref();
+  // 실행 장면에 맞춘 효과음 — 단계가 바뀔 때마다 그 단계 소리, 일시정지·소리 끄기·화면을 벗어나면 멈춘다(사용자 요청 2026-11-17)
+  useEffect(() => {
+    if (!sound || !player.playing || !player.frame) {
+      stopAll();
+      return;
+    }
+    playStep(player.frame, player.speed, (BASE_STEP_MS * holdOf(player.frame)) / player.speed / 1000);
+  }, [sound, player.playing, player.frame, player.speed]);
+  useEffect(() => () => stopAll(), []);
   const { playBlock } = player;
   const [missed, setMissed] = useState<number | null>(null);
   const activeId = player.frame?.blockId ?? null;
@@ -112,7 +125,7 @@ export default function LabMonitor({ slug, frames, runError, play, onActiveBlock
   return (
     <section aria-labelledby="monitor-title" className="flex flex-col">
       <h2 id="monitor-title" className="text-lg font-extrabold text-nav">💻 가상 실험 모니터</h2>
-      {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} /></div> : null}
+      {frames.length > 0 ? <div className="mt-2"><Controls playing={player.playing} speed={player.speed} onSpeed={player.setSpeed} onPause={player.pause} onResume={player.resume} onReplay={player.replay} sound={sound} onSound={toggleSound} /></div> : null}
       {frames.length > 0 ? <PlayHint missed={missed !== null && missed === play?.n} /> : null}
       {runError ? <p role="alert" className="mt-2 rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">⛔ {runError.message}</p> : null}
       <Status text={frames.length > 0 ? player.frame?.event.note ?? "" : "대기 중 · 블록을 조립한 뒤 실행해 보세요"} />

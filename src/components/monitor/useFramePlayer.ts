@@ -11,7 +11,7 @@ export const BASE_STEP_MS = 1600;
 /** 블록 하나만 실행할 때 앞 상태를 잠깐 보여 주는 시간 */
 const LEAD_MS = 250;
 /** 오래 보여 줄 장면(예: 부은 액체가 가라앉는 모습)은 이벤트의 hold배만큼 머문다(최대 3배) */
-const holdOf = (f: Frame | undefined): number => (typeof f?.event.hold === "number" ? Math.min(3, Math.max(1, f.event.hold)) : 1);
+export const holdOf = (f: Frame | undefined): number => (typeof f?.event.hold === "number" ? Math.min(3, Math.max(1, f.event.hold)) : 1);
 
 export function useFramePlayer(frames: Frame[], onFinish?: () => void) {
   const [index, setIndex] = useState(frames.length ? 0 : -1);

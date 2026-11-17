@@ -91,3 +91,12 @@ describe("용해도 미션 ③ — 온도에 따른 질산 칼륨의 녹는 양"
     expect(missionProgress(solubilityCatalog, state([r1, r2], calc)).done).toEqual([true, true, false]);
   });
 });
+
+describe("빈 시험관을 중탕에 넣을 때 (2026-11-17 점검)", () => {
+  it("녹인 물질이 없으면 고체 이야기 대신 온도를 맞춘다고 안내한다", () => {
+    const r = simulate(prog("solubility", [S("a1", E("tube_c"), E("water"), Q(10, "g")), S("a7", E("tube_c"), E("hot_water"))]), solubilityCatalog, src);
+    const note = r.frames.at(-1)!.event.note;
+    expect(note).toContain("약 60 °C가 될 때까지");
+    expect(note).not.toContain("고체");
+  });
+});

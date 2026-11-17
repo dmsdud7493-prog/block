@@ -25,12 +25,12 @@ const LABEL: Record<string, string> = { water: "물", ethanol: "에탄올" };
 const isThermo = (ev: SimEvent | null) => ev?.type === "fixThermo" || ev?.type === "adjust";
 
 /**
- * 비커 크기 — 적은 양은 작은 비커 눈금으로 보여 줘야 수면이 보인다(10 mL는 50 mL 눈금).
+ * 비커 크기 — 적은 양은 작은 비커 눈금으로 보여 줘야 수면이 보인다(10 mL는 25 mL 눈금 비커).
  * 2026-11-17 점검: 10 mL가 바닥에 얇게 깔려 온도계 끝이 물 밖에 있는 것처럼 보였음
  */
 function beakerScale(bk: BoilingState["bkr"]): { level: number; marks: string[] } {
-  const cap = bk.volume > 0 && bk.volume <= 20 ? 50 : bk.volume > 0 && bk.volume <= 50 ? 100 : 250;
-  const marks = cap === 50 ? ["10", "20", "30", "40", ""] : cap === 100 ? ["20", "40", "60", "80", ""] : ["50", "100", "150", "200", ""];
+  const cap = bk.volume > 0 && bk.volume <= 20 ? 25 : bk.volume > 0 && bk.volume <= 50 ? 100 : 250;
+  const marks = cap === 25 ? ["5", "10", "15", "20", ""] : cap === 100 ? ["20", "40", "60", "80", ""] : ["50", "100", "150", "200", ""];
   return { level: bk.liquid ? Math.min(1, bk.volume / cap) : 0, marks };
 }
 
