@@ -48,6 +48,12 @@ export interface TutorState {
   fail_count: number;
   report_section: string | null;
   mission: string | null;
+  /** 이번 학생 말이 생각 없이 보낸 말("몰라"·자음만·아무 글자)인가 — 집중 돌리기 */
+  off_task: boolean;
+  /** 생각 없이 보낸 말이 연달아 몇 번째인지 */
+  off_task_streak: number;
+  /** "모르겠어·어려워·헷갈려"처럼 진짜로 막혔다는 말인가 — 힌트를 한 칸 올려 돕는다 */
+  genuine_stuck: boolean;
 }
 
 function variableLines(catalog: AnyCatalog, program: Program): string[] {
@@ -67,6 +73,7 @@ export interface StateInput {
   hintLevelMax: number;
   studentAttempted: boolean;
   failCount: number;
+  engagement?: { offTask: boolean; streak: number; stuck: boolean };
 }
 
 export function buildState(i: StateInput): TutorState {
@@ -93,6 +100,9 @@ export function buildState(i: StateInput): TutorState {
     fail_count: i.failCount,
     report_section: i.ctx.reportSection,
     mission: i.ctx.mission ?? null,
+    off_task: i.engagement?.offTask ?? false,
+    off_task_streak: i.engagement?.streak ?? 0,
+    genuine_stuck: i.engagement?.stuck ?? false,
   };
 }
 

@@ -27,12 +27,26 @@ export function hintLevelMax(i: LadderInput): number {
   return clamp(stuck ? Math.max(climbed, 2) : climbed);
 }
 
-const NOT_ATTEMPT = /^(몰라|모르겠|알려\s*줘|답\s*(좀|알려|뭐)|정답|그냥|ㅇㅇ|ㄴㄴ|네|응|아니)/;
+const NOT_ATTEMPT = /^(몰라|알려\s*줘|답\s*(좀|알려|뭐)|정답|그냥|ㅇㅇ|ㄴㄴ|네|응|아니)/;
 
-/** 학생 메시지가 '시도'인지: 8자 이상이고 단순 요청이 아님 */
+/** 진짜로 막혔다는 말 — 장난이 아니라 도움이 필요한 상태로 보고 힌트를 한 칸 올린다(사용자 요청 2026-11-17) */
+export const GENUINE_STUCK = /(모르겠|어려워|어렵|헷갈|어떻게\s*(해|하|재|구)|뭘\s*해야|뭐부터|막혔|이해가\s*안)/;
+
+/** 생각 없이 보낸 말 — "몰라" 한마디, 자음·모음만, 같은 글자 반복, 이모지·기호만 (집중 돌리기 대상) */
+export function isOffTask(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.startsWith("(시스템 알림")) return false;
+  if (/^(몰라|모름|몰랑|ㅁㄹ|ㅁㄹㄹ|노잼|싫어|귀찮아|아무거나|그냥)[\s.!?~ㅋㅎ]*$/.test(t)) return true;
+  if (/^[ㄱ-ㅎㅏ-ㅣ\s.!?~]+$/.test(t)) return true;
+  if (/^(.)\1{2,}$/.test(t.replace(/\s/g, ""))) return true;
+  return !/[가-힣a-zA-Z0-9]/.test(t);
+}
+
+/** 학생 메시지가 '시도'인지: 8자 이상이고 단순 요청이 아님, 또는 진짜로 막혔다는 말 */
 export function isAttempt(text: string): boolean {
   const t = text.trim();
   if (t.startsWith("(시스템 알림")) return false;
+  if (GENUINE_STUCK.test(t)) return true;
   return t.length >= 8 && !NOT_ATTEMPT.test(t) || /\d/.test(t) && t.length >= 3;
 }
 

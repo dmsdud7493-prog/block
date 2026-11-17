@@ -8,7 +8,7 @@ import type { TutorInput } from "@/lib/server/schemas";
 import { privateExpected, runProgram } from "@/lib/server/simulation";
 import { rpc, rpcRow, normalizeError } from "@/lib/server/rpc";
 import { sessionForUser } from "@/lib/server/sessions";
-import { hintLevelMax, isAttempt } from "./ladder";
+import { GENUINE_STUCK, hintLevelMax, isAttempt, isOffTask } from "./ladder";
 import { detectRisk, redactPII } from "./safety";
 import { buildState } from "./stateInjection";
 import { respond, type ChatTurn } from "./respond";
@@ -21,7 +21,8 @@ async function sessionCtx(userId: string, input: TutorInput): Promise<Ctx> {
   const s = await sessionForUser(input.sessionId as string);
   if (s.studentId !== userId) throw new Error("forbidden");
   const t = await rpcRow<{ tone: string; scaffold_level: number; last_hint_level: number; nudge_count: number }>("app_tutor_context", { p_student: userId, p_session: s.id });
-  return { tone: t.tone === "banmal" ? "banmal" : "haeyo", scaffold: t.scaffold_level, lastHint: t.last_hint_level, nudges: t.nudge_count, seed: s.seed };
+  // 랩메이트는 언제나 친절한 반말(사용자 요청 2026-11-17)
+  return { tone: "banmal", scaffold: t.scaffold_level, lastHint: t.last_hint_level, nudges: t.nudge_count, seed: s.seed };
 }
 
 /** 아직 맞히지 않은 계산 칸의 기대값 — 누설 검사에만 쓰고 응답·상태에는 넣지 않는다 */
@@ -39,17 +40,25 @@ function cleanHistory(messages: TutorInput["messages"]): { history: ChatTurn[]; 
   return { history: out.map(({ role, content }) => ({ role, content })), redacted: out.some((m) => m.redacted) };
 }
 
+/** 학생 말의 집중 상태 — 생각 없이 보낸 말이 몇 번 이어졌는지, 진짜로 막혔다는 말인지 */
+function engagementOf(history: { role: string; content: string }[]): { offTask: boolean; streak: number; stuck: boolean } {
+  const users = history.filter((t) => t.role === "user").map((t) => t.content);
+  const last = users[users.length - 1] ?? "";
+  const streak = [...users].reverse().findIndex((u) => !isOffTask(u));
+  return { offTask: isOffTask(last), streak: streak < 0 ? users.length : streak, stuck: GENUINE_STUCK.test(last) };
+}
+
 export async function tutorTurn(input: TutorInput, userId: string | null): Promise<TutorResponse & { redacted: boolean }> {
   try {
     const catalog = getCatalog(input.slug);
     if (!catalog) throw new Error("not_found");
-    const ctx: Ctx = input.mode === "session" && userId ? await sessionCtx(userId, input) : { tone: "haeyo", scaffold: 0, lastHint: input.context.lastHintLevel, nudges: 0, seed: input.seed ?? null };
+    const ctx: Ctx = input.mode === "session" && userId ? await sessionCtx(userId, input) : { tone: "banmal", scaffold: 0, lastHint: input.context.lastHintLevel, nudges: 0, seed: input.seed ?? null };
     const { history, redacted } = cleanHistory(input.messages);
     const lastUser = history[history.length - 1]?.content ?? "";
     const attempted = isAttempt(lastUser);
     const failCount = Math.max(0, ...input.context.checks.filter((c) => c.correct === false).map((c) => c.attempts));
     const max = hintLevelMax({ failCount, idleSeconds: input.context.idleSeconds, lastHintLevel: ctx.lastHint, studentAttempted: attempted, scaffoldLevel: ctx.scaffold });
-    const state = buildState({ catalog, program: input.program, ctx: { ...input.context, nudgeSent: input.context.nudgeSent || ctx.nudges > 0 }, tone: ctx.tone, scaffoldLevel: ctx.scaffold, hintLevelMax: max, studentAttempted: attempted, failCount });
+    const state = buildState({ catalog, program: input.program, ctx: { ...input.context, nudgeSent: input.context.nudgeSent || ctx.nudges > 0 }, tone: ctx.tone, scaffoldLevel: ctx.scaffold, hintLevelMax: max, studentAttempted: attempted, failCount, engagement: engagementOf(history) });
     const risk = detectRisk(lastUser);
     const result = await respond({ model: tutorModel(input.mode), slug: input.slug, state, history, expected: expectedValues(input, ctx.seed), risk });
     const flagged = Boolean(risk) || result.reply.flag_teacher;

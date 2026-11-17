@@ -52,3 +52,17 @@ describe("제안 칩 질문 (2026-11-17 점검)", () => {
     expect(all).not.toMatch(/크기와 (관계|상관)없이|에탄올이 먼저|물이 먼저|흰색 결정|파란색 결정/);
   });
 });
+
+describe("ladder — 몰라·딴짓 판별", () => {
+  it("생각 없이 보낸 말", async () => {
+    const { isOffTask } = await import("@/lib/tutor/ladder");
+    for (const t of ["몰라", "몰라ㅋㅋ", "ㅁㄴㅇㄹ", "ㅋㅋㅋㅋ", "아아아아", "😀😀", "..."]) expect(isOffTask(t), t).toBe(true);
+    for (const t of ["모르겠어 부피는 어떻게 재?", "물이 먼저", "50", "(시스템 알림: 2분)"]) expect(isOffTask(t), t).toBe(false);
+  });
+  it("진짜로 막혔다는 말은 시도로 보고 힌트를 올린다", async () => {
+    const { isAttempt } = await import("@/lib/tutor/ladder");
+    expect(isAttempt("모르겠어")).toBe(true);
+    expect(isAttempt("어려워")).toBe(true);
+    expect(isAttempt("몰라")).toBe(false);
+  });
+});

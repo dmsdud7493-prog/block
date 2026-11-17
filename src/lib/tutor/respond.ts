@@ -12,6 +12,7 @@ import { stateBlock, type TutorState } from "./stateInjection";
 import { TUTOR_RULES } from "./prompts/common";
 import { KNOWLEDGE_BASE } from "./prompts/knowledgeBase";
 import { experimentNotes } from "./prompts";
+import { talkFor } from "./socratic";
 
 export interface ChatTurn { role: "user" | "assistant"; content: string }
 
@@ -35,7 +36,9 @@ const CACHE = { anthropic: { cacheControl: { type: "ephemeral" as const } } };
 
 /** AI SDK v7: 시스템 프롬프트는 instructions로 (블록마다 캐시 지정 가능) */
 export function buildPrompt(slug: string, state: TutorState, history: ChatTurn[], correction?: string): { instructions: SystemModelMessage[]; messages: ModelMessage[] } {
-  const notes = `<실험>\n${state.unit} — 학습 목표: ${state.goal}\n${experimentNotes(slug)}\n</실험>\n<참고_자료>\n${KNOWLEDGE_BASE}\n</참고_자료>`;
+  const t = talkFor(slug);
+  const talk = `<대화_재료>\n쉬운 질문: ${t.easy}\n둘 중 고르기: ${t.choice}\n개념 힌트(1단계): ${t.concept}\n받아치는 한마디 예: ${t.joke.join(" / ")}\n</대화_재료>`;
+  const notes = `<실험>\n${state.unit} — 학습 목표: ${state.goal}\n${experimentNotes(slug)}\n</실험>\n${talk}\n<참고_자료>\n${KNOWLEDGE_BASE}\n</참고_자료>`;
   const instructions: SystemModelMessage[] = [
     { role: "system", content: TUTOR_RULES, providerOptions: CACHE },
     { role: "system", content: notes, providerOptions: CACHE },
