@@ -9,11 +9,11 @@ import ScientistFace from "@/components/ui/ScientistFace";
 
 const POLL_MS = 60_000;
 const AFTER: Record<"yes" | "no", string> = {
-  yes: "알겠어! 선생님이 곧 갈게. 손을 번쩍 들고 기다려 줘 🙋",
+  yes: "알겠어! 선생님이 곧 갈게.\n손을 번쩍 들고 기다려 줘 🙋",
   no: "멋져! 혼자 해 보다가 막히면 랩메이트에게 물어보거나 손을 들어 줘 💪",
 };
 
-/** 선생님 캐리커처(남자 선생님, 윙크·엄지 척) — 위아래로 살짝 떠다닌다 */
+/** 선생님 캐리커처(남자 선생님, 엄지 척) — 위아래로 살짝 떠다닌다 */
 export function HelpMascot() {
   return <ScientistFace look="teacher" size={104} className="float-y mx-auto" />;
 }
@@ -78,7 +78,7 @@ export default function HelpBubble({ sessionId, active }: { sessionId: string; a
     <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
       <div role={offer ? "alertdialog" : "status"} aria-labelledby="help-q" className="pop-in pointer-events-auto relative max-w-sm rounded-3xl border-4 border-sky bg-white px-5 py-4 text-center shadow-2xl">
         <HelpMascot />
-        <p id="help-q" className="mt-1 text-lg font-extrabold text-nav">{offer ? "선생님이 도와줄까?" : AFTER[after!]}</p>
+        <p id="help-q" className="mt-1 whitespace-pre-line text-lg font-extrabold text-nav">{offer ? "선생님이 도와줄까?" : AFTER[after!]}</p>
         {offer ? <Choices yesRef={yesRef} onAnswer={(a) => void answer(a)} /> : null}
         <span aria-hidden="true" className="absolute -bottom-3 left-1/2 h-5 w-5 -translate-x-1/2 rotate-45 border-b-4 border-r-4 border-sky bg-white" />
       </div>
