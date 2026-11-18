@@ -91,7 +91,7 @@ export default function HelpBubble({ sessionId, active }: { sessionId: string; a
     <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
       <div role={offer ? "alertdialog" : "status"} aria-labelledby="help-q" className="pop-in pointer-events-auto relative max-w-sm rounded-3xl border-4 border-sky bg-white px-5 py-4 text-center shadow-2xl">
         <HelpMascot />
-        <p id="help-q" className="mt-1 text-lg font-extrabold text-nav">{offer ? "선생님이 물어봐요: 도와줄까? 🤗" : AFTER[after!]}</p>
+        <p id="help-q" className="mt-1 text-lg font-extrabold text-nav">{offer ? "선생님이 도와줄까?" : AFTER[after!]}</p>
         {offer ? <Choices yesRef={yesRef} onAnswer={(a) => void answer(a)} /> : null}
         <span aria-hidden="true" className="absolute -bottom-3 left-1/2 h-5 w-5 -translate-x-1/2 rotate-45 border-b-4 border-r-4 border-sky bg-white" />
       </div>
