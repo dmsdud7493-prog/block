@@ -34,6 +34,7 @@ git checkout -b develop && git push -u origin develop               # develop = 
   | 0012_revision_once | 2026-11-12 적용·함수 서명(6인자)·권한(service_role만) 확인 | SQL Editor(Claude, 교사 확인 후 실행) |
   | 0013_report_trend | 2026-11-17 적용·확인 쿼리(결론 빈칸 false / 채움 true) | SQL Editor(Claude, 교사 "실행해" 후 실행) |
   | 0014_help_offer_resubmit | 2026-11-18 적용·확인 쿼리(help_offers 표·RLS on, previous_snapshot 열, 함수 3개 authenticated 실행 불가·service_role만, app_return_submission 6인자) | SQL Editor(Claude, 교사 "실행해" 후 실행) |
+  | 0015_help_offer_resend | **미적용** — 교사 "실행해" 후 SQL Editor에서 실행(app_offer_help 재사용 창 10분→1분). 미적용이면 "한 번 더"를 눌러도 같은 물음이 돌아와 화난 말풍선이 뜨지 않음 | SQL Editor |
   - 저장소 **Settings → Secrets and variables → Actions**에 추가:
     `SUPABASE_ACCESS_TOKEN`, `STAGING_PROJECT_ID`, `PRODUCTION_PROJECT_ID`, `STAGING_DB_PASSWORD`, `PRODUCTION_DB_PASSWORD`
 

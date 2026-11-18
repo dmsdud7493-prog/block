@@ -35,7 +35,10 @@ export interface FoldOptions {
   activeWindowSec: number;
 }
 
-export const HELP_OPEN_SEC = 600;
+/** "도와줄까?"에 이만큼 답이 없으면 다시 보낼 수 있다(0015, 사용자 요청 2026-11-18) */
+export const HELP_OPEN_SEC = 60;
+/** 답 없는 물음은 이만큼 지나면 보드에서 지운다(학생 화면 말풍선도 10분까지만 뜬다, lib/help/pending) */
+export const HELP_FORGET_SEC = 600;
 
 export const DEFAULT_FOLD: Omit<FoldOptions, "now"> = { medianFactor: 2, minDwellSec: 300, simErrorK: 3, calcWrongK: 3, activeWindowSec: 1200 };
 
@@ -55,10 +58,12 @@ export interface StudentFold extends SessionInfo {
   predictionsMismatched: number;
   flagged: number;
   aiReplies: number;
-  /** 교사 "도와줄까?" — 보냄(답 기다림) / 예 / 아니요 */
-  help: "offered" | "yes" | "no" | null;
-  /** 마지막 "도와줄까?" 이벤트 시각 — 답 없이 10분이 지나면 물음이 끝난 것으로 본다(다시 물을 수 있게) */
+  /** 교사 "도와줄까?" — 보냄(답 기다림) / 1분 넘게 답 없음(다시 보낼 수 있음) / 예 / 아니요 */
+  help: "offered" | "silent" | "yes" | "no" | null;
+  /** 마지막 "도와줄까?" 이벤트 시각 */
   helpAt: string | null;
+  /** 답 없이 이어서 보낸 물음 수(두 번째부터 학생 화면에 화난 선생님) */
+  helpTries: number;
   stuck: StuckReason[];
   nextAction: string | null;
 }
@@ -85,6 +90,7 @@ function initial(info: SessionInfo): Acc {
     aiReplies: 0,
     help: null,
     helpAt: null,
+    helpTries: 0,
   };
 }
 
@@ -112,9 +118,9 @@ function applyCounters(a: Acc, e: EventRow): Acc {
     case "ai_nudge":
       return { ...a, aiReplies: a.aiReplies + 1 };
     case "help_offered":
-      return { ...a, help: "offered", helpAt: e.ts };
+      return { ...a, help: "offered", helpAt: e.ts, helpTries: a.help === "offered" && a.helpAt && sec(Date.parse(e.ts), a.helpAt) <= HELP_FORGET_SEC ? a.helpTries + 1 : 1 };
     case "help_answered":
-      return { ...a, help: p.answer === "yes" ? "yes" : "no", helpAt: e.ts };
+      return { ...a, help: p.answer === "yes" ? "yes" : "no", helpAt: e.ts, helpTries: 0 };
     default:
       return a;
   }
@@ -127,14 +133,20 @@ function applyEvent(a: Acc, e: EventRow): Acc {
   return applyCounters({ ...a, ...moved, lastActivity: e.ts > a.lastActivity ? e.ts : a.lastActivity }, e);
 }
 
+/** 답 없이 1분이 지나면 다시 보낼 수 있는 상태, 10분이 지나면 지운다 */
+function helpState(acc: Acc, now: number): StudentFold["help"] {
+  if (acc.help !== "offered" || !acc.helpAt) return acc.help;
+  const waited = sec(now, acc.helpAt);
+  if (waited > HELP_FORGET_SEC) return null;
+  return waited > HELP_OPEN_SEC ? "silent" : "offered";
+}
+
 /** 한 세션의 이벤트(시간순 아니어도 됨)를 접는다 */
 export function foldSession(info: SessionInfo, events: EventRow[], opts: FoldOptions): StudentFold {
   const sorted = [...events].sort((x, y) => x.ts.localeCompare(y.ts));
   const acc = sorted.reduce(applyEvent, initial(info));
   const active = acc.step !== "submitted" && sec(opts.now, acc.lastActivity) <= opts.activeWindowSec;
-  // 학생 화면의 물음은 10분 동안만 열려 있다(api/help) — 답이 없으면 보드도 다시 물을 수 있는 상태로
-  const help = acc.help === "offered" && acc.helpAt && sec(opts.now, acc.helpAt) > HELP_OPEN_SEC ? null : acc.help;
-  return { ...info, ...acc, help, dwellSec: sec(opts.now, acc.stepSince), active, stuck: [], nextAction: null };
+  return { ...info, ...acc, help: helpState(acc, opts.now), dwellSec: sec(opts.now, acc.stepSince), active, stuck: [], nextAction: null };
 }
 
 export function median(values: number[]): number {

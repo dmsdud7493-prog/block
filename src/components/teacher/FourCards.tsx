@@ -22,7 +22,7 @@ function Card({ id, icon, title, count, tone, next, children }: { id: string; ic
 
 function StuckList({ card }: { card: StuckCard }) {
   if (card.students.length === 0) return <p className="text-muted">지금 막힌 학생이 없어요.</p>;
-  return <ul className="space-y-1">{card.students.slice(0, 8).map((s) => <li key={s.sessionId}><Link className="font-semibold underline" href={sessionHref(s.sessionId)}>{s.studentNo}</Link>{s.title ? <span className="text-muted"> ({s.title})</span> : null} — {s.reasons.join(", ")}<HelpButton sessionId={s.sessionId} help={s.help} studentNo={s.studentNo} /></li>)}</ul>;
+  return <ul className="space-y-1">{card.students.slice(0, 8).map((s) => <li key={s.sessionId}><Link className="font-semibold underline" href={sessionHref(s.sessionId)}>{s.studentNo}</Link>{s.title ? <span className="text-muted"> ({s.title})</span> : null} — {s.reasons.join(", ")}<HelpButton sessionId={s.sessionId} help={s.help} helpAt={s.helpAt} tries={s.helpTries} studentNo={s.studentNo} /></li>)}</ul>;
 }
 
 function SubmissionList({ card, subOf }: { card: SubmissionCard; subOf: Record<string, string> }) {

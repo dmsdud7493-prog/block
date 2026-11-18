@@ -5,7 +5,7 @@
  */
 import type { Scientist } from "./scientists";
 
-export type CharacterLook = Scientist["look"] | "teacher";
+export type CharacterLook = Scientist["look"] | "teacher" | "teacher-angry";
 
 export default function ScientistFace({ look, size = 64, gray = false, className = "" }: { look: CharacterLook; happy?: boolean; size?: number; gray?: boolean; className?: string }) {
   return (

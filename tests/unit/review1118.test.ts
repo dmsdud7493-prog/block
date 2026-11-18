@@ -9,6 +9,7 @@ import { predictionMatched } from "@/lib/engine/predictionKey";
 import { CATALOGS } from "@/lib/engine/experiments";
 import { graphTargets, runTarget } from "@/lib/engine/predictionScope";
 import { localTutor } from "@/lib/tutor/localTutor";
+import { readPending } from "@/lib/help/pending";
 import { state } from "./tutor/helpers";
 
 const T0 = Date.parse("2026-11-18T00:00:00Z");
@@ -32,10 +33,27 @@ describe("교사 대시보드", () => {
     expect(f.nextAction).toContain("평평한 구간");
   });
   it("도와줄까? — 보냄 → 예/아니요가 보드 상태로 접힌다", () => {
-    expect(foldSession(info("1"), [ev("1", "help_offered", 25)], opts).help).toBe("offered");
+    expect(foldSession(info("1"), [ev("1", "help_offered", 29.5)], opts).help).toBe("offered");
     expect(foldSession(info("1"), [ev("1", "help_offered", 10), ev("1", "help_answered", 11, { answer: "yes" })], opts).help).toBe("yes");
-    // 답 없이 10분이 지나면 다시 물을 수 있다
+    // 답 없이 1분이 지나면 다시 보낼 수 있고(0015), 10분이 지나면 보드에서 지운다
+    expect(foldSession(info("1"), [ev("1", "help_offered", 28.5)], opts).help).toBe("silent");
     expect(foldSession(info("1"), [ev("1", "help_offered", 15)], opts).help).toBeNull();
+  });
+  it("도와줄까? — 답 없이 한 번 더 보내면 두 번째 물음으로 센다(답하면 처음부터)", () => {
+    const twice = foldSession(info("1"), [ev("1", "help_offered", 27), ev("1", "help_offered", 29)], opts);
+    expect([twice.help, twice.helpTries]).toEqual(["offered", 2]);
+    const after = foldSession(info("1"), [ev("1", "help_offered", 25), ev("1", "help_answered", 26, { answer: "no" }), ev("1", "help_offered", 29)], opts);
+    expect(after.helpTries).toBe(1);
+  });
+  it("학생 화면: 바로 앞 물음에도 답이 없었으면 화난 선생님 말풍선(repeat)", () => {
+    const t = (m: number) => new Date(T0 + m * 60_000).toISOString();
+    const now = T0 + 30 * 60_000;
+    expect(readPending([], now)).toEqual({ offerId: null, repeat: false });
+    expect(readPending([{ id: "b", answer: null, created_at: t(29) }], now)).toEqual({ offerId: "b", repeat: false });
+    expect(readPending([{ id: "b", answer: null, created_at: t(29) }, { id: "a", answer: null, created_at: t(27.5) }], now)).toEqual({ offerId: "b", repeat: true });
+    expect(readPending([{ id: "b", answer: null, created_at: t(29) }, { id: "a", answer: "no", created_at: t(27.5) }], now)).toEqual({ offerId: "b", repeat: false });
+    expect(readPending([{ id: "b", answer: "yes", created_at: t(29) }, { id: "a", answer: null, created_at: t(27) }], now).offerId).toBeNull();
+    expect(readPending([{ id: "b", answer: null, created_at: t(10) }], now).offerId).toBeNull();
   });
   it("첫 화면은 실험 여러 개의 카드를 합친다(막힌 학생·채점 기다림에 실험 이름, 시작 안 함은 아무 것도 시작 안 한 학생)", () => {
     const roster = [{ studentId: "u-1", studentNo: "1" }, { studentId: "u-2", studentNo: "2" }];

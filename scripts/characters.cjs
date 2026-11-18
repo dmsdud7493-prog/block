@@ -125,20 +125,20 @@ const NOSE = {
 };
 
 function caricNose(key, skin) {
-  return `<path d="${NOSE[key]}" fill="${skin[0]}" ${O(2.6)}/>`;
+  return `<path d="${NOSE_ALL[key]}" fill="${skin[0]}" ${O(2.6)}/>`;
 }
 
 const stOf = (c) => (c.clean ? { ...ST, sw: 2.2 } : ST);
 
 function headGroup(key, k, ty, faceSvg) {
-  const c = PEOPLE[key];
+  const c = PEOPLE_ALL[key];
   const st = stOf(c);
   const inner = [c.back(st), head(c.skin, st), faceSvg, caricNose(key, c.skin), c.front(st)].join("");
   return `<g transform="translate(100 ${92 + ty}) scale(${k}) translate(-100 -92)">${inner}</g>`;
 }
 
 function bodyGroup(key, k) {
-  const c = PEOPLE[key];
+  const c = PEOPLE_ALL[key];
   const st = stOf(c);
   return `<g transform="translate(100 200) scale(${k}) translate(-100 -200)">${body(c, st)}${neck(c.skin, st)}${c.outfit(st)}</g>`;
 }
@@ -175,6 +175,8 @@ function idea2(key) {
 
 /* 3안 표정·상황 — 실험 장면 속 한 순간을 과장된 표정으로 */
 const MOOD = {
+  // 두 번 물어도 답이 없을 때(2026-11-18 사용자 요청): 찌푸린 눈썹·가는 눈·벌린 입·빨간 볼, 머리 위 화난 표시와 김
+  teacherAngry: { mouth: "yell", eyes: "angry", cheek: "#ef4444", fx: `<g transform="translate(-16 14)" stroke="#dc2626" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M150 30 q6 8 14 6 M178 30 q-8 6 -6 14 M178 58 q-6 -8 -14 -6 M150 58 q8 -6 6 -14"/></g><path d="M40 76 q-9 -10 0 -18 q9 -8 0 -18 M56 62 q-7 -8 0 -14" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>` },
   teacher: { mouth: "smile", eyes: "normal", fx: `<g transform="translate(160 150)" ${O()}><path d="M-10 6 v-16 q0 -6 6 -6 q6 0 6 6 v4 h10 q6 0 5 6 l-3 14 q-1 4 -6 4 h-18z" fill="#ffe1c6"/></g>` },
   density: { mouth: "shout", eyes: "wide", fx: `<g ${O(2.4)}><path d="M122 34 h56 v28 h-36 l-12 12 v-12 h-8z" fill="#fff"/></g><text x="150" y="53" font-size="13" font-weight="900" text-anchor="middle" fill="${INK}" font-family="Noto Sans CJK KR, sans-serif">유레카!</text><g fill="#38bdf8" ${O(2)}><path d="M30 150 q8 10 0 16 q-8 -6 0 -16z"/><path d="M44 130 q6 8 0 12 q-6 -4 0 -12z"/></g>` },
   solubility: { mouth: "smile", eyes: "up", fx: `<path d="M160 76 L150 112" stroke="#78350f" stroke-width="2"/><path d="M160 36 q18 0 18 18 q0 16 -18 22 q-18 -6 -18 -22 q0 -18 18 -18z" fill="#ef4444" ${O(2.4)}/><path d="M24 70 q10 -6 20 0 M30 56 q10 -6 20 0" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>` },
@@ -184,12 +186,16 @@ const MOOD = {
   separation2: { mouth: "smile", eyes: "spark", glow: true, fx: `<g transform="translate(150 158)" ${O()}><path d="M-7 -20 h14 v30 q0 10 -7 10 q-7 0 -7 -10z" fill="#bbf7d0"/></g><g fill="#fde047"><path d="M40 60 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3z"/><path d="M168 54 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z"/></g>` },
 };
 
+// 화난 선생님은 선생님과 같은 얼굴·옷
+const PEOPLE_ALL = { ...PEOPLE, teacherAngry: PEOPLE.teacher };
+const NOSE_ALL = { ...NOSE, teacherAngry: NOSE.teacher };
+
 function moodFace(c, m) {
-  const brows = { soft: "M74 79 q10 -6 20 -3 M106 76 q10 -3 20 3", worried: "M74 74 q10 6 20 4 M106 78 q10 2 20 -4", up: "M74 74 q10 -10 20 -4 M106 70 q10 -6 20 4", half: "M74 80 q10 -4 20 0 M106 78 q10 -6 20 0" }[m.eyes] ?? "M74 78 q10 -9 20 -2 M106 76 q10 -7 20 2";
+  const brows = { angry: "M72 72 q12 2 22 11 M106 83 q10 -9 22 -11", soft: "M74 79 q10 -6 20 -3 M106 76 q10 -3 20 3", worried: "M74 74 q10 6 20 4 M106 78 q10 2 20 -4", up: "M74 74 q10 -10 20 -4 M106 70 q10 -6 20 4", half: "M74 80 q10 -4 20 0 M106 78 q10 -6 20 0" }[m.eyes] ?? "M74 78 q10 -9 20 -2 M106 76 q10 -7 20 2";
   // 자연스러운 눈 — 아몬드 모양 흰자 + 갈색 눈동자 + 윗눈꺼풀 선 (표정은 눈썹·눈꺼풀·눈동자 위치로)
   const eye = (x, i) => {
     if (m.eyes === "wink" && i === 1) return `<path d="M${x - 9} 95 q9 -7 18 0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
-    const tall = m.eyes === "wide" ? 12 : 9.5;
+    const tall = m.eyes === "wide" ? 12 : m.eyes === "angry" ? 7 : 9.5;
     const almond = `M${x - 10} 96 q10 -${tall} 20 0 q-10 ${tall * 0.7} -20 0z`;
     const dy = m.eyes === "up" ? -2.2 : 0;
     const ir = m.eyes === "wide" ? 4.6 : 5.2;
@@ -204,6 +210,7 @@ function moodFace(c, m) {
     shout: `<ellipse cx="100" cy="122" rx="12" ry="14" fill="#9f1239" ${O(2.6)}/><ellipse cx="100" cy="128" rx="7" ry="5" fill="#fb7185"/>`,
     o: `<ellipse cx="100" cy="121" rx="7" ry="9" fill="#9f1239" ${O(2.6)}/>`,
     chatter: `<path d="M84 118 h32 v8 h-32z" fill="#fff" ${O(2.4)}/><path d="M90 118 v8 M96 118 v8 M102 118 v8 M108 118 v8" stroke="${INK}" stroke-width="1.6"/>`,
+    yell: `<path d="M83 128 q17 -22 34 0 q-17 6 -34 0z" fill="#9f1239" ${O(2.6)}/><path d="M88 122 q12 -9 24 0" fill="#fff"/>`,
     smirk: `<path d="M88 118 q14 6 24 -4" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`,
     gentle: `<path d="M88 116 q12 10 24 0" fill="#fff" ${O(2.8)}/><path d="M92 119 q8 4 16 0" fill="#fb7185" opacity=".55"/>`,
   };
@@ -216,7 +223,7 @@ function moodFace(c, m) {
 function idea3(key) {
   const m = MOOD[key];
   const glow = m.glow ? `<circle cx="100" cy="96" r="80" fill="#86efac" opacity=".35"/>` : "";
-  return glow + bodyGroup(key, 0.72) + headGroup(key, 1.22, 2, moodFace(PEOPLE[key], m)) + m.fx;
+  return glow + bodyGroup(key, 0.72) + headGroup(key, 1.22, 2, moodFace(PEOPLE_ALL[key], m)) + m.fx;
 }
 
 const IDEAS_ALL = {
@@ -235,7 +242,9 @@ fs.writeFileSync(process.argv[2], `<!doctype html><meta charset="utf-8"><style>b
 if (process.argv[3]) {
   const LOOK = { teacher: "teacher", density: "archimedes", solubility: "gaylussac", melting: "black", boiling: "celsius", separation1: "jabir", separation2: "curie" };
   const BG = { teacher: "#e0f2fe", density: "#e0f2fe", solubility: "#dcfce7", melting: "#fce7f3", boiling: "#fef3c7", separation1: "#ccfbf1", separation2: "#f3e8ff" };
-  for (const k of ORD) {
+  LOOK.teacherAngry = "teacher-angry";
+  BG.teacherAngry = "#fee2e2";
+  for (const k of [...ORD, "teacherAngry"]) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><clipPath id="frame"><circle cx="100" cy="100" r="98"/></clipPath></defs><circle cx="100" cy="100" r="98" fill="${BG[k]}"/><g clip-path="url(#frame)">${idea3(k)}</g><circle cx="100" cy="100" r="97" fill="none" stroke="${INK}" stroke-width="3"/></svg>`;
     fs.writeFileSync(`${process.argv[3]}/${LOOK[k]}.svg`, svg);
   }

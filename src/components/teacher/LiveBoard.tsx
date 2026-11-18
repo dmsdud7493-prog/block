@@ -52,7 +52,7 @@ function Row({ f, subId }: { f: StudentFold; subId?: string }) {
   const wrong = maxWrong(f);
   return (
     <tr className={f.stuck.length ? "bg-amber-50" : ""}>
-      <th scope="row" className="px-2 py-1 text-left"><Link className="underline" href={`/dashboard/sessions/${f.sessionId}`}>{f.studentNo}</Link>{f.stuck.length ? <span className="ml-1 rounded bg-amber-200 px-1 text-xs" title={f.stuck.map((s) => s.text).join(" / ")}>막힘</span> : null}{f.stuck.length || f.help ? <HelpButton sessionId={f.sessionId} help={f.help} studentNo={f.studentNo} /> : null}</th>
+      <th scope="row" className="px-2 py-1 text-left"><Link className="underline" href={`/dashboard/sessions/${f.sessionId}`}>{f.studentNo}</Link>{f.stuck.length ? <span className="ml-1 rounded bg-amber-200 px-1 text-xs" title={f.stuck.map((s) => s.text).join(" / ")}>막힘</span> : null}{f.stuck.length || f.help ? <HelpButton sessionId={f.sessionId} help={f.help} helpAt={f.helpAt} tries={f.helpTries} studentNo={f.studentNo} /> : null}</th>
       <td className="px-2 py-1">{STEP_LABEL[f.step]}</td>
       <td className="px-2 py-1 tabular-nums">{f.step === "submitted" ? "—" : `${Math.round(f.dwellSec / 60)}분`}</td>
       <td className="px-2 py-1 tabular-nums">{f.runs}{f.simErrorStreak ? ` (오류 연속 ${f.simErrorStreak})` : ""}</td>

@@ -7,7 +7,7 @@ import type { StudentFold } from "./fold";
 
 export interface RosterEntry { studentId: string; studentNo: string }
 
-export interface StuckCard { students: { sessionId: string; studentNo: string; reasons: string[]; nextAction: string | null; help: StudentFold["help"]; title?: string }[] }
+export interface StuckCard { students: { sessionId: string; studentNo: string; reasons: string[]; nextAction: string | null; help: StudentFold["help"]; helpAt: string | null; helpTries: number; title?: string }[] }
 
 export interface SubmissionCard {
   notStarted: string[];
@@ -44,7 +44,7 @@ export function stuckCard(folds: StudentFold[]): StuckCard {
   const students = folds
     .filter((f) => f.stuck.length > 0)
     .sort((a, b) => b.stuck.length - a.stuck.length || b.dwellSec - a.dwellSec)
-    .map((f) => ({ sessionId: f.sessionId, studentNo: f.studentNo, reasons: f.stuck.map((r) => r.text), nextAction: f.nextAction, help: f.help }));
+    .map((f) => ({ sessionId: f.sessionId, studentNo: f.studentNo, reasons: f.stuck.map((r) => r.text), nextAction: f.nextAction, help: f.help, helpAt: f.helpAt, helpTries: f.helpTries }));
   return { students };
 }
 

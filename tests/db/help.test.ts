@@ -1,5 +1,5 @@
 /**
- * 0014: 교사 "도와줄까?"(help_offers), 다시 낸 보고서의 처음 제출 보존(previous_snapshot), 코멘트만으로 돌려주기
+ * 0014·0015: 교사 "도와줄까?"(help_offers), 다시 낸 보고서의 처음 제출 보존(previous_snapshot), 코멘트만으로 돌려주기
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { applyAll } from "../../scripts/db-apply.mjs";
@@ -33,6 +33,15 @@ describe("도와줄까?", () => {
     const b = (await svc("select public.app_offer_help($1, $2) as id", [T, sess])).rows[0].id;
     expect(b).toBe(a);
     expect((await pool.query("select count(*)::int n from public.events where session_id = $1 and event_type = 'help_offered'", [sess])).rows[0].n).toBe(1);
+  });
+  it("0015: 1분 동안 답이 없으면 다시 보낼 수 있다(새 물음이 생긴다)", async () => {
+    const a = (await pool.query("select id from public.help_offers where session_id = $1", [sess])).rows[0].id;
+    await pool.query("update public.help_offers set created_at = now() - interval '61 seconds' where id = $1", [a]);
+    const b = (await svc("select public.app_offer_help($1, $2) as id", [T, sess])).rows[0].id;
+    expect(b).not.toBe(a);
+    expect((await pool.query("select count(*)::int n from public.events where session_id = $1 and event_type = 'help_offered'", [sess])).rows[0].n).toBe(2);
+    await pool.query("delete from public.help_offers where id = $1", [b]);
+    await pool.query("update public.help_offers set created_at = now() where id = $1", [a]);
   });
   it("학생 자신만 읽고 답하며, 답은 한 번만 남는다", async () => {
     const id = (await pool.query("select id from public.help_offers where session_id = $1", [sess])).rows[0].id;
