@@ -58,14 +58,10 @@ function face(c, skin, st) {
 /* ── 인물별 머리·옷·소품 ───────────────────────────── */
 const PEOPLE = {
   teacher: {
-    name: "선생님", skin: SKIN.light, cloth: "#1f2937", iris: "#3b2a20", glasses: "#111827", rectGlasses: true, bushy: true, brow: "#2f1f17", clean: true,
-    // 참고 그림: 헝클어진 갈색 머리, 뒤·옆으로 삐져나온 머리카락, 검은 사각 안경, 짙은 정장 — 선은 가늘고 적게
-    back: (st) => P("M48 98 Q36 54 66 34 Q94 16 128 26 Q162 40 154 96 Q150 72 140 64 L60 64 Q52 78 48 98Z", "#4a2f22", st) +
-      P("M53 80 Q42 79 37 71 Q47 73 55 70Z", "#4a2f22", st) + P("M147 72 Q158 69 162 59 Q158 72 148 78Z", "#4a2f22", st) + P("M151 88 Q162 90 167 82 Q162 95 151 97Z", "#4a2f22", st) + P("M132 30 Q142 22 152 21 Q146 28 138 35Z", "#4a2f22", st),
-    front: (st) => P("M52 94 Q46 54 76 38 Q104 24 134 36 Q158 50 150 92 Q144 76 134 72 Q130 84 120 86 Q118 72 104 66 Q100 80 86 82 Q88 70 78 66 Q66 76 60 90 Q57 92 52 94Z", "#5a3828", st) +
-      P("M102 40 q0 -13 15 -16 q-9 6 -7 16z", "#5a3828", st),
-    outfit: (st) => P("M76 148 L100 176 L124 148 Q100 158 76 148Z", "#e2e8f0", st) + P("M96 160 h8 l3 28 l-7 8 l-7 -8z", "#334155", st) + P("M64 152 L92 200 L74 200 L52 162Z", "#111827", st) + P("M136 152 L108 200 L126 200 L148 162Z", "#111827", st) +
-      `<path d="M84 154 L92 184" fill="none" stroke="#f59e0b" stroke-width="2.2"/>` + P("M86 182 h14 v12 h-14z", "#ffffff", st),
+    name: "선생님", skin: SKIN.light, cloth: "#475569", iris: "#3b2a20", glasses: "#334155", bushy: true,
+    back: (st) => "",
+    front: (st) => P("M57 92 Q52 44 100 40 Q148 44 143 92 Q141 70 130 62 Q118 72 92 64 Q84 58 80 52 Q70 62 64 72 Q60 80 57 92Z", "#2f241d", st) + `<path d="M80 52 q20 -8 44 4" fill="none" stroke="#4b3a2f" stroke-width="2.4" stroke-linecap="round"/>`,
+    outfit: (st) => P("M74 148 L100 172 L126 148 Q100 158 74 148Z", "#e0f2fe", st) + P("M96 160 h8 l4 30 l-8 8 l-8 -8z", "#1d4ed8", st) + `<path d="M80 152 L90 182 M120 152 L110 182" fill="none" stroke="#f59e0b" stroke-width="2.6"/>` + P("M104 182 h16 v14 h-16z", "#ffffff", st) + `<rect x="107" y="186" width="10" height="2" fill="#1d4ed8"/><rect x="107" y="190" width="7" height="2" fill="#93c5fd"/>`,
   },
   density: {
     name: "아르키메데스", skin: SKIN.olive, cloth: "#f5f0e6", old: true, brow: "#e5e7eb", bushy: true, beardMouth: true, browY: 79,
@@ -179,7 +175,7 @@ function idea2(key) {
 
 /* 3안 표정·상황 — 실험 장면 속 한 순간을 과장된 표정으로 */
 const MOOD = {
-  teacher: { mouth: "gentle", eyes: "soft", fx: `<g transform="translate(160 152) rotate(-12)" ${O()}><path d="M-12 10 l-8 -10 q-3 -5 2 -7 q3 -1 6 3 l4 5 v-22 q0 -4 4 -4 q4 0 4 4 v14 v-18 q0 -4 4 -4 q4 0 4 4 v18 v-15 q0 -4 4 -4 q4 0 4 4 v16 v-10 q0 -4 4 -4 q4 0 4 4 v18 q0 14 -14 16 h-6 q-10 -2 -16 -12z" fill="#ffe1c6"/></g>` },
+  teacher: { mouth: "smile", eyes: "normal", fx: `<g transform="translate(160 150)" ${O()}><path d="M-10 6 v-16 q0 -6 6 -6 q6 0 6 6 v4 h10 q6 0 5 6 l-3 14 q-1 4 -6 4 h-18z" fill="#ffe1c6"/></g>` },
   density: { mouth: "shout", eyes: "wide", fx: `<g ${O(2.4)}><path d="M122 34 h56 v28 h-36 l-12 12 v-12 h-8z" fill="#fff"/></g><text x="150" y="53" font-size="13" font-weight="900" text-anchor="middle" fill="${INK}" font-family="Noto Sans CJK KR, sans-serif">유레카!</text><g fill="#38bdf8" ${O(2)}><path d="M30 150 q8 10 0 16 q-8 -6 0 -16z"/><path d="M44 130 q6 8 0 12 q-6 -4 0 -12z"/></g>` },
   solubility: { mouth: "smile", eyes: "up", fx: `<path d="M160 76 L150 112" stroke="#78350f" stroke-width="2"/><path d="M160 36 q18 0 18 18 q0 16 -18 22 q-18 -6 -18 -22 q0 -18 18 -18z" fill="#ef4444" ${O(2.4)}/><path d="M24 70 q10 -6 20 0 M30 56 q10 -6 20 0" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>` },
   melting: { mouth: "chatter", eyes: "worried", cheek: "#93c5fd", fx: `<path d="M38 80 l-8 -4 l8 -4 M38 100 l-8 -4 l8 -4 M162 80 l8 -4 l-8 -4 M162 100 l8 -4 l-8 -4" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/><g transform="translate(150 160) rotate(10)" ${O()}><rect x="-14" y="-14" width="28" height="28" rx="6" fill="#bae6fd"/></g>` },
