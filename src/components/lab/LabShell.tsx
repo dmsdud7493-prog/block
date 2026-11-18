@@ -97,7 +97,7 @@ function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics,
 }) {
   return (
     <section aria-label="블록 실험 설계" className="dot-grid flex min-h-[560px] flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-line p-2 xl:min-h-fit xl:overflow-visible xl:rounded-none xl:border-0 xl:border-r">
-      <MissionBar progress={missions} fixedText={fixedText} />
+      <MissionBar progress={missions} fixedText={fixedText} slug={slug} />
       {missions.missions.length > 0 && missions.done[0] ? null : <ExampleSteps steps={examples} />}
       <BlockHelp />
       {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}

@@ -41,7 +41,7 @@ function subjectsOf(r: RunLine, c: AnyCatalog): string {
 function RunBlocks({ r, c, open }: { r: RunLine; c: AnyCatalog; open: boolean }) {
   return (
     <details open={open} className="rounded border border-line bg-white p-2">
-      <summary className="cursor-pointer text-sm font-semibold">{r.run_no}회차 실행 {r.ok ? "✅ 끝까지 실행" : "⚠️ 중간에 멈춤"} · 다룬 물질: {subjectsOf(r, c) || "—"} <span className="font-normal text-muted">({new Date(r.created_at).toLocaleTimeString("ko-KR")})</span></summary>
+      <summary className="cursor-pointer text-sm font-semibold">{r.run_no}회차 실행 {r.ok ? "✅ 끝까지 실행" : "⚠️ 중간에 멈춤"} · 다룬 물질: {subjectsOf(r, c) || "—"} <span className="font-normal text-muted">({new Date(r.created_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul" })})</span></summary>
       <div className="mt-1"><Steps program={r.program} c={c} /></div>
     </details>
   );
@@ -111,7 +111,7 @@ function Report({ d }: { d: SessionDetail }) {
   if (!d.report) return <p className="text-muted">아직 보고서를 쓰기 시작하지 않았어요. 보고서는 오늘의 미션을 모두 마치면 열려요.</p>;
   return (
     <div className="space-y-2">
-      <p role="note" className="rounded bg-amber-50 p-2 text-sm">{d.submissionId ? "제출한 보고서예요. 채점은 위의 '보고서 채점하기'에서 해요." : "✏️ 학생이 아직 쓰고 있는 보고서예요(제출 전). 채점은 학생이 제출한 뒤에 할 수 있어요."} 마지막 저장 {new Date(d.report.updatedAt).toLocaleString("ko-KR")}</p>
+      <p role="note" className="rounded bg-amber-50 p-2 text-sm">{d.submissionId ? "제출한 보고서예요. 채점은 위의 '보고서 채점하기'에서 해요." : "✏️ 학생이 아직 쓰고 있는 보고서예요(제출 전). 채점은 학생이 제출한 뒤에 할 수 있어요."} 마지막 저장 {new Date(d.report.updatedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p>
       <ReportReadOnly content={d.report.content} aiAssisted={d.report.aiAssisted} />
     </div>
   );
@@ -123,7 +123,7 @@ function Chat({ d }: { d: SessionDetail }) {
   return (
     <div className="space-y-2">
       {flagged ? <p role="note" className="rounded bg-red-50 p-2 text-sm text-err">🚩 확인이 필요한 메시지 {flagged}개 — 빨간 테두리로 표시했어요.</p> : null}
-      <ol className="space-y-1 text-sm">{d.chat.map((m, i) => <li key={i} className={`rounded p-2 ${m.role === "user" ? "bg-sky-50" : "bg-slate-50"} ${m.flagged ? "border-2 border-err" : ""}`}><span className="font-semibold">{m.role === "user" ? "학생" : "AI"}</span> <span className="text-xs text-muted">{new Date(m.created_at).toLocaleTimeString("ko-KR")}</span><p className="whitespace-pre-wrap">{m.content}</p></li>)}</ol>
+      <ol className="space-y-1 text-sm">{d.chat.map((m, i) => <li key={i} className={`rounded p-2 ${m.role === "user" ? "bg-sky-50" : "bg-slate-50"} ${m.flagged ? "border-2 border-err" : ""}`}><span className="font-semibold">{m.role === "user" ? "학생" : "AI"}</span> <span className="text-xs text-muted">{new Date(m.created_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul" })}</span><p className="whitespace-pre-wrap">{m.content}</p></li>)}</ol>
     </div>
   );
 }

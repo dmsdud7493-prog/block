@@ -36,6 +36,6 @@ const GATE_MESSAGES: Partial<Record<string, string>> = {
   session_locked: "제출한 실험은 고칠 수 없어요. 선생님이 돌려주면 다시 고칠 수 있어요.",
   revision_limit: "고쳐서 다시 내기는 한 번만 할 수 있어요.",
   forbidden: "이 작업을 할 권한이 없어요.",
-  invalid_rubric: "루브릭 4항목을 모두 골라야 반환할 수 있어요.",
+  invalid_rubric: "확정하려면 루브릭 4항목을 모두 골라요. 돌려줄 때는 루브릭이나 코멘트를 채워 주세요.",
   not_submitted: "제출된 보고서만 반환할 수 있어요. (이미 반환했거나 학생이 고치는 중)",
 };

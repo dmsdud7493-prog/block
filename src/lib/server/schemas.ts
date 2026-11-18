@@ -110,6 +110,11 @@ export const gradeSchema = z.object({
   feedback: z.string().max(2000),
   reason: z.string().max(200).optional(),
 });
+export const helpSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("offer"), sessionId: uuid }),
+  z.object({ action: z.literal("poll"), sessionId: uuid }),
+  z.object({ action: z.literal("answer"), offerId: uuid, answer: z.enum(["yes", "no"]) }),
+]);
 export const assignmentUpdateSchema = z.object({
   assignmentId: uuid,
   dueAt: z.string().datetime({ offset: true }).nullable(),

@@ -29,7 +29,7 @@ export default async function SessionPage(props: Props) {
     <main id="main" className="mx-auto max-w-5xl space-y-3 p-4">
       <p className="text-sm"><Link className="underline" href={`/dashboard/classes/${detail.classId}/live`}>← 실시간 보드</Link></p>
       <h1 className="text-2xl font-bold">{detail.studentNo} · {detail.title}</h1>
-      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR")} · 상태 {STATUS_LABEL[detail.status] ?? detail.status}{detail.submissionId ? <> · <Link className="underline" href={`/dashboard/submissions/${detail.submissionId}`}>보고서 채점하기</Link></> : null}</p>
+      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 상태 {STATUS_LABEL[detail.status] ?? detail.status}{detail.submissionId ? <> · <Link className="underline" href={`/dashboard/submissions/${detail.submissionId}`}>보고서 채점하기</Link></> : null}</p>
       <SessionTabs detail={detail} initial={tab} />
     </main>
   );

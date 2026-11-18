@@ -68,7 +68,8 @@ describe("용해도 미션 ③ — 온도에 따른 질산 칼륨의 녹는 양"
 
   it("실행 전 예측은 온도 질문(얼음물·뜨거운 물을 함께 쓰면)", () => {
     expect(runTarget(solubilityCatalog, mission3)).toBe("kno3_temp");
-    expect(runTarget(solubilityCatalog, roomOnly("kno3", "tube_a"))).toBe("more_at_room");
+    // 질산 칼륨만 다루면(미션 ①) 질산 칼륨 하나에 대한 예측을 묻는다 — 두 물질 비교는 황산 구리(II)까지 다룰 때
+    expect(runTarget(solubilityCatalog, roomOnly("kno3", "tube_a"))).toBe("kno3_room");
   });
 
   it("미션 ①② 뒤 세 온도의 계산을 맞히면 미션 ③ 완료, 보고서 활동 3은 미션 ③ 실행", () => {

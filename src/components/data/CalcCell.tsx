@@ -13,11 +13,13 @@ interface Props {
   entry: CalcEntry | undefined;
   /** raw: 학생이 적은 그대로(1.00처럼 끝자리 0 보존 — 보고서에 그대로 옮긴다) */
   onCheck: (value: number, unit: string, raw: string) => Promise<void>;
+  /** graph: 그래프에서 읽는 값 — 맞혔을 때 "잘 읽었어요" */
+  kind?: "graph" | "calc";
 }
 
-function Feedback({ entry }: { entry: CalcEntry | undefined }) {
+function Feedback({ entry, kind }: { entry: CalcEntry | undefined; kind: "graph" | "calc" }) {
   if (!entry || entry.correct === null) return <p className="min-h-5 text-xs" aria-live="polite" />;
-  if (entry.correct) return <p className="text-sm font-semibold text-ok" aria-live="polite">✓ 좋아요! 계산이 맞아요.</p>;
+  if (entry.correct) return <p className="text-sm font-semibold text-ok" aria-live="polite">{kind === "graph" ? "✓ 잘 읽었어요! 평평한 구간을 정확히 찾았어요." : "✓ 좋아요! 계산이 맞아요."}</p>;
   return <p className="text-sm text-warn" aria-live="polite">💡 {entry.hint} <span className="text-muted">(도전 {entry.attempts}번째 · 몇 번이든 다시 해 볼 수 있어요)</span></p>;
 }
 
@@ -30,7 +32,7 @@ function UnitSelect({ id, options, value, onChange, disabled }: { id: string; op
   );
 }
 
-export default function CalcCell({ request, entry, onCheck }: Props) {
+export default function CalcCell({ request, entry, onCheck, kind = "calc" }: Props) {
   const options = unitOptions(request.unit, request.key);
   const [value, setValue] = useState(entry?.value ?? "");
   const [unit, setUnit] = useState(entry?.unit ?? "");
@@ -53,7 +55,7 @@ export default function CalcCell({ request, entry, onCheck }: Props) {
         <UnitSelect id={`${id}-u`} options={options} value={unit} onChange={setUnit} disabled={entry?.correct === true} />
         <button type="button" className="tap rounded bg-brand px-3 text-sm font-bold text-white disabled:opacity-50" onClick={submit} disabled={busy || !value || !unit || entry?.correct === true}>확인</button>
       </div>
-      <Feedback entry={entry} />
+      <Feedback entry={entry} kind={kind} />
     </div>
   );
 }

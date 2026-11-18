@@ -5,7 +5,8 @@
 import "server-only";
 import { rpc, rpcRow, normalizeError } from "./rpc";
 import { checkValue, runProgram } from "./simulation";
-import { assignmentOptions, latestRunProgram, runForUser, sessionForUser } from "./sessions";
+import { assignmentOptions, recentRunPrograms, runForUser, sessionForUser } from "./sessions";
+import { usedSubjects } from "@/lib/engine/predictionScope";
 import { getCatalog } from "@/lib/engine/experiments";
 import { changedVariables } from "@/lib/engine/rules/variables";
 import type { Program } from "@/lib/engine/types";
@@ -15,13 +16,16 @@ interface Begin { seed: string; slug: string; next_run_no: number; program_versi
 /** 실행 (지침 3.1·3.2·3.4): DB가 예측 여부 확인 → 세션 seed로 서버 시뮬레이션 → runs 누적 */
 export async function runForStudent(userId: string, sessionId: string, program: Program) {
   try {
+    if (program.steps.length === 0) throw new Error("invalid_input");
     const begin = await rpcRow<Begin>("app_begin_run", { p_student: userId, p_session: sessionId });
     if (begin.max_runs && begin.next_run_no > begin.max_runs) throw new Error("forbidden");
     const catalog = getCatalog(begin.slug);
     if (!catalog) throw new Error("not_found");
     // 교사가 넣는 양을 정해 준 배정이면 다른 양으로는 실행되지 않는다(학생 화면 점검과 같은 규칙, ADR-P26)
     const result = runProgram(begin.slug, program, begin.seed, begin.next_run_no, await assignmentOptions(sessionId));
-    const prev = (await latestRunProgram(sessionId)) as Program | null;
+    // 같은 물질을 다룬 지난 실행과만 비교한다 — 다음 미션으로 넘어가 물질이 바뀐 것은 '한꺼번에 바꾼 변인'이 아니다
+    const mine = [...usedSubjects(program)].sort().join(",");
+    const prev = ((await recentRunPrograms(sessionId)) as Program[]).find((p) => [...usedSubjects(p)].sort().join(",") === mine) ?? null;
     const changed = changedVariables(prev, program, catalog.variableOptions, catalog.isTrialEnd);
     await rpc("app_record_run", {
       p_student: userId, p_session: sessionId, p_run_no: begin.next_run_no, p_program_version: begin.program_version,

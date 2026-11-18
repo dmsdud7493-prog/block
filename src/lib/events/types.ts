@@ -9,6 +9,7 @@ export const CLIENT_EVENTS = ["block_edit", "playback_done", "graph_opened"] as 
 export const SERVER_EVENTS = [
   "session_started", "run_completed", "sim_error_flagged", "prediction_made", "prediction_explained", "calc_checked",
   "ai_reply", "ai_nudge", "ai_flagged", "report_submitted", "report_resubmitted", "report_returned",
+  "help_offered", "help_answered",
 ] as const;
 
 export type ClientEventType = (typeof CLIENT_EVENTS)[number];

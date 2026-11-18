@@ -90,6 +90,8 @@ export function initialReport(c: AnyCatalog, s: LabState, saved: Partial<ReportC
   const base = { ...emptyReport(), ...saved } as ReportContent;
   if (s.runs.length === 0) return base;
   // 예전 보고서(활동 없이 과정 글만)는 활동 하나로 옮겨 보여 준다. 자료는 실험 기록에서 새로 만들고, 학생이 쓴 "알 수 있는 점"은 이어 받는다
-  const activities = base.activities.length > 0 ? base.activities : activitiesOf(c, s);
+  // 저장된 활동이 실험 기록의 활동보다 적으면(예전 보고서·미션을 더 한 뒤) 모자란 활동을 뒤에 이어 붙인다 — 학생이 고친 활동은 그대로
+  const fresh = activitiesOf(c, s);
+  const activities = base.activities.length >= fresh.length ? base.activities : [...base.activities, ...fresh.slice(base.activities.length)];
   return { ...base, resultsTable: resultsTableOf(c, s), activities, data: dataOf(c, s, base.data.map((d) => d.note)) };
 }

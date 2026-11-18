@@ -10,6 +10,8 @@ interface Props {
   error: string | null;
   mode: "demo" | "session";
   locked: boolean;
+  /** 선생님이 돌려준 보고서를 고쳐서 다시 내는가 */
+  resubmit?: boolean;
 }
 
 /** 칸을 채우면 저절로 ✅가 된다. 아직이면 [쓰러 가기]로 그 칸으로 옮겨 간다 */
@@ -37,7 +39,7 @@ function AiHelp({ aiAssisted, setAi, locked }: { aiAssisted: string[]; setAi: (v
   );
 }
 
-export default function SubmitGate({ content, aiAssisted, setAi, onSubmit, error, mode, locked }: Props) {
+export default function SubmitGate({ content, aiAssisted, setAi, onSubmit, error, mode, locked, resubmit = false }: Props) {
   const checks = submitChecklist(content);
   const ready = checks.every((c) => c.ok);
   return (
@@ -48,7 +50,7 @@ export default function SubmitGate({ content, aiAssisted, setAi, onSubmit, error
       <AiHelp aiAssisted={aiAssisted} setAi={setAi} locked={locked} />
       {error ? <p role="alert" className="mt-2 text-sm text-err">{error}</p> : null}
       {mode === "demo" ? <p className="mt-2 text-sm text-muted">체험 모드에서는 제출되지 않아요. 인쇄해서 확인해 볼 수 있어요.</p> : null}
-      <button type="button" className="tap mt-2 w-full rounded-lg bg-brand font-bold text-white disabled:opacity-50" disabled={!ready || locked || mode === "demo"} onClick={onSubmit}>{ready ? "제출하기" : "위 항목이 모두 ✅가 되면 제출할 수 있어요"}</button>
+      <button type="button" className="tap mt-2 w-full rounded-lg bg-brand font-bold text-white disabled:opacity-50" disabled={!ready || locked || mode === "demo"} onClick={onSubmit}>{ready ? (resubmit ? "✏️ 고쳐서 다시 내기" : "제출하기") : "위 항목이 모두 ✅가 되면 제출할 수 있어요"}</button>
     </section>
   );
 }

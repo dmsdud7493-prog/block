@@ -97,6 +97,21 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
 
   predictionTargets: [
     {
+      id: "kno3_room",
+      subjects: ["kno3"],
+      question: "실온(20 °C)의 물 10 g에 질산 칼륨을 조금씩 계속 넣고 흔들면 어떻게 될까요?",
+      choices: [
+        { id: "limit", label: "어느 만큼 넣은 뒤부터는 더 녹지 않고 바닥에 남는다" },
+        { id: "endless", label: "넣는 만큼 끝까지 모두 녹는다" },
+        { id: "none", label: "처음부터 하나도 녹지 않는다" },
+      ],
+      hints: [
+        "코코아 가루를 우유에 자꾸자꾸 넣으면 바닥에 가루가 남던가요?",
+        "물 10 g이 받아들일 수 있는 가루의 양에 한계가 있을까요?",
+        "더 녹지 않고 남기 시작할 때까지 넣은 양을 재면, 무엇을 알 수 있을까요?",
+      ],
+    },
+    {
       id: "more_at_room",
       subjects: ["kno3", "cuso4"],
       question: "실온(20 °C)의 물 10 g에 질산 칼륨과 황산 구리(II) 중 어느 쪽이 더 많이 녹을까요?",
@@ -138,16 +153,19 @@ export const solubilityCatalog: ExperimentCatalog<SolubilityState> = {
       id: "kno3", icon: "🧂", title: "질산 칼륨은 실온의 물 10 g에 얼마나 녹을까? 녹인 양으로 물 100 g에 녹는 양을 구해 봐",
       cheer: "🎉 미션 ① 성공! 질산 칼륨이 녹는 양을 구했네. 다른 물질도 똑같이 녹을까? 이제 미션 ② 황산 구리(II) 차례야 💪",
       done: { solved: ["kno3@20"] },
+      predict: ["kno3_room"],
     },
     {
       id: "cuso4", icon: "💎", title: "황산 구리(II)도 같은 방법으로! 두 물질이 녹는 양을 비교해 봐",
       cheer: "🎉 미션 ② 성공! 두 물질이 녹는 양은 같았어? 이번엔 온도를 바꿔 볼 차례야. 미션 ③으로 가 보자 🌡️",
       done: { solved: ["cuso4@20"] },
+      predict: ["more_at_room"],
     },
     {
       id: "kno3_temp", icon: "🌡️", title: "질산 칼륨을 얼음물·실온·뜨거운 물에서! 온도에 따라 녹는 양을 비교해 봐",
       cheer: "🏆 미션 ③ 성공! 온도가 바뀌니 녹는 양도 달라졌어? 세 온도의 값을 보고서에서 비교해 보자 ✨",
       done: { solved: ["kno3@0", "kno3@20", "kno3@60"] },
+      predict: ["kno3_temp"],
       report: "온도에 따른 질산 칼륨의 용해도 비교하기",
     },
   ],

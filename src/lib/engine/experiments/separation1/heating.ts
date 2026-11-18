@@ -92,7 +92,7 @@ export function observeTube(s: Separation1State, step: Step, ctx: ReduceContext)
   const run: DistRun = { ...s.run, observed: true };
   const state = advance(s, run, timesObserve(run, last), ctx, "plateau");
   const seen = round1(ctx.noise(state.etube.collected, { abs: 0.2, resolution: 0.5 }));
-  const m = mk(`observe.collected.t${ctx.trial}`, "관찰하는 동안 시험관에 모인 액체의 양", seen, "mL", "ethanol", ctx.trial);
+  const m = mk(`observe.collected.t${ctx.trial}`, "온도가 일정할 때(관찰 중) 모인 양", seen, "mL", "ethanol", ctx.trial);
   const out = ok(state, "observe", `시험관 안에 액체가 맺혀 조금씩 모이고 있어요! (약 ${fmtNum(seen)}mL) 끓어 나온 기체가 얼음물 속에서 식어 다시 액체가 되었어요.`);
   return { ...out, measurements: [m] };
 }
@@ -135,7 +135,7 @@ export function checkLiquid(s: Separation1State, step: Step, ctx: ReduceContext)
   const raw = which === "tube" ? s.etube.collected : s.flask.water + s.flask.ethanol;
   const volume = round1(ctx.noise(raw, { abs: 0.2, resolution: 0.5 }));
   const m = which === "tube"
-    ? mk(`volume.collected.t${ctx.trial}`, "시험관에 모인 액체의 부피", volume, "mL", "ethanol", ctx.trial)
+    ? mk(`volume.collected.t${ctx.trial}`, "가열을 멈춘 뒤 모인 액체의 전체 부피", volume, "mL", "ethanol", ctx.trial)
     : mk(`volume.remaining.t${ctx.trial}`, "플라스크에 남은 액체의 부피", volume, "mL", "water", ctx.trial);
   const note = which === "tube"
     ? `시험관에 모인 액체를 확인했어요 (약 ${fmtNum(volume)}mL). 손으로 바람을 일으켜 냄새를 맡아 보니 에탄올 냄새가 나요.`

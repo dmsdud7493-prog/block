@@ -47,11 +47,11 @@ function Title({ title, author }: { title: string; author?: string }) {
   );
 }
 
-function Editor({ r, readOnly, mode, onFocusSection }: { r: ReturnType<typeof useReport>; readOnly: boolean; mode: "demo" | "session"; onFocusSection: (s: string) => void }) {
+function Editor({ r, readOnly, mode, onFocusSection, resubmit }: { r: ReturnType<typeof useReport>; readOnly: boolean; mode: "demo" | "session"; onFocusSection: (s: string) => void; resubmit: boolean }) {
   return (
     <div className="space-y-4">
       <ReportForm content={r.content} update={r.update} readOnly={readOnly} onFocusSection={onFocusSection} />
-      <div className="print:hidden"><SubmitGate content={r.content} aiAssisted={r.aiAssisted} setAi={r.setAi} onSubmit={() => void r.submit()} error={r.submitError} mode={mode} locked={readOnly} /></div>
+      <div className="print:hidden"><SubmitGate content={r.content} aiAssisted={r.aiAssisted} setAi={r.setAi} onSubmit={() => void r.submit()} error={r.submitError} mode={mode} locked={readOnly} resubmit={resubmit} /></div>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export default function ReportView({ ctl, catalog, mode, sessionId, saved, statu
       <div className="print:hidden"><StatusBar locked={locked} graded={Boolean(returnNote)} submitted={r.submitted} saved={r.saved} mode={mode} /></div>
       {returnNote ? <div className="print:hidden"><FeedbackBox data={returnNote} /></div> : null}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] print:block">
-        <Editor r={r} readOnly={readOnly} mode={mode} onFocusSection={setSection} />
+        <Editor r={r} readOnly={readOnly} mode={mode} onFocusSection={setSection} resubmit={status === "returned"} />
         <div className="space-y-3 print:hidden"><MyRecordsPanel catalog={catalog} state={ctl.state} />{tutor(section)}</div>
       </div>
     </div>

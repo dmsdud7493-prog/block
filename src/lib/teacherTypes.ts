@@ -57,5 +57,9 @@ export interface SubmissionDetail {
   rubric: Record<string, string>;
   feedback: string;
   draft: { rubric: Record<string, string>; feedback: string; updatedAt: string } | null;
+  /** 고쳐서 다시 낸 보고서에서 바뀐 칸(첫 제출이면 null) */
+  changed: string[] | null;
+  /** 서버에서 읽은 시각(실시간 표시용) */
+  loadedAt?: number;
   history: { reason: string; at: string }[];
 }

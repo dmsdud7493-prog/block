@@ -4,18 +4,19 @@
  * 예상과 결과 비교는 실험실에서 따로 묻지 않고 보고서의 '탐구 결과 해석'에서 쓴다(사용자 요청 2026-11-13).
  */
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import DataTable from "@/components/data/DataTable";
 import LayerResult from "@/components/data/LayerResult";
 import ReferencePanel from "@/components/data/ReferencePanel";
 import type { LabController } from "./useLabController";
 import { latestRun, missingPrediction, reportReady } from "./state";
-import { allMissionsDone, missionProgress } from "./missions";
+import { allMissionsDone, missionPredict, missionProgress } from "./missions";
 
 const ResultChart = dynamic(() => import("@/components/data/ResultChart"), { ssr: false, loading: () => <p className="text-muted">그래프를 그리는 중…</p> });
 
 function GraphGate({ ctl, catalog }: { ctl: LabController; catalog: AnyCatalog }) {
-  const missing = missingPrediction(ctl.state, catalog.predictionTargets.map((t) => t.id));
+  const missing = missingPrediction(ctl.state, missionPredict(catalog, ctl.state) ?? catalog.predictionTargets.map((t) => t.id));
   return (
     <div className="rounded-xl border-2 border-dashed border-[#4c97ff] bg-[#f4f8ff] p-3 text-sm font-semibold">
       <p>{missing ? "그래프를 보기 전에 결과를 먼저 예상해요." : "예상을 모두 적었어요. 이제 그래프로 확인해 볼까요?"}</p>
@@ -42,8 +43,12 @@ function NextMission({ n, numbered, onStart }: { n: number; numbered: boolean; o
 
 function ToReport({ ctl, catalog, onNextMission }: { ctl: LabController; catalog: AnyCatalog; onNextMission: () => void }) {
   const p = missionProgress(catalog, ctl.state);
+  // 다음 미션으로 넘어간 뒤에는 버튼을 숨기고 지금 하는 미션을 알려 준다(2026-11-18 점검)
+  const [started, setStarted] = useState(-1);
   if (p.missions.length > 0 && !allMissionsDone(p)) {
-    return p.current > 0 ? <NextMission n={p.current + 1} numbered={p.missions.length > 1} onStart={onNextMission} /> : <p className="text-sm text-muted">🎯 오늘의 미션을 마치면 다음 단계가 열려요.</p>;
+    if (p.current === 0) return <p className="text-sm text-muted">🎯 오늘의 미션을 마치면 다음 단계가 열려요.</p>;
+    if (started === p.current) return <p className="text-sm font-semibold text-nav">🎯 지금은 미션 {p.current + 1}을 하는 중이에요. 지금 블록은 그대로 남아 있어요 — 물질이나 순서를 바꿔 실행해 봐요!</p>;
+    return <NextMission n={p.current + 1} numbered={p.missions.length > 1} onStart={() => { setStarted(p.current); onNextMission(); }} />;
   }
   const ready = reportReady(ctl.state, catalog);
   return (
@@ -94,7 +99,7 @@ export default function ResultsSection({ catalog, ctl, onNextMission }: { catalo
   return (
     <section aria-label="실험 결과" className="space-y-3">
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
-      {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} onCheck={(req, v, u, raw) => ctl.check(req, okRun.runNo, v, u, raw)} /> : null}
+      {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} graphReady={state.graphOpened} shownNo={state.runs.filter((r) => r.ok && r.runNo <= okRun.runNo).length} onCheck={(req, v, u, raw) => ctl.check(req, okRun.runNo, v, u, raw)} /> : null}
       {catalog.resultView?.kind === "layers"
         ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} onNext={onNextMission} />
         : <GraphView catalog={catalog} ctl={ctl} onNext={onNextMission} />}

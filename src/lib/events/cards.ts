@@ -7,13 +7,13 @@ import type { StudentFold } from "./fold";
 
 export interface RosterEntry { studentId: string; studentNo: string }
 
-export interface StuckCard { students: { sessionId: string; studentNo: string; reasons: string[]; nextAction: string | null }[] }
+export interface StuckCard { students: { sessionId: string; studentNo: string; reasons: string[]; nextAction: string | null; help: StudentFold["help"]; title?: string }[] }
 
 export interface SubmissionCard {
   notStarted: string[];
   inProgress: number;
   overdue: { sessionId: string; studentNo: string }[];
-  toGrade: { sessionId: string; studentNo: string; late: boolean; resubmitted: boolean }[];
+  toGrade: { sessionId: string; studentNo: string; late: boolean; resubmitted: boolean; title?: string }[];
   returned: number;
 }
 
@@ -44,7 +44,7 @@ export function stuckCard(folds: StudentFold[]): StuckCard {
   const students = folds
     .filter((f) => f.stuck.length > 0)
     .sort((a, b) => b.stuck.length - a.stuck.length || b.dwellSec - a.dwellSec)
-    .map((f) => ({ sessionId: f.sessionId, studentNo: f.studentNo, reasons: f.stuck.map((r) => r.text), nextAction: f.nextAction }));
+    .map((f) => ({ sessionId: f.sessionId, studentNo: f.studentNo, reasons: f.stuck.map((r) => r.text), nextAction: f.nextAction, help: f.help }));
   return { students };
 }
 
@@ -94,6 +94,32 @@ export function commonErrors(events: EventRow[], n = 3): CommonError[] {
     .map(([key, v]) => ({ key, label: v.label, count: v.count, students: v.students.size }))
     .sort((a, b) => b.students - a.students || b.count - a.count)
     .slice(0, n);
+}
+
+/**
+ * 대시보드 첫 화면 — 한 반의 여러 실험(과제) 카드를 하나로 모은다. 학생 이름 옆에 실험 이름을 붙인다.
+ * 시작 안 함은 "어느 실험도 시작하지 않은 학생", 오답은 실험마다 상위 3을 모아 다시 상위 3.
+ */
+export function mergeCards(parts: { title: string; cards: FourCards }[]): FourCards {
+  const tag = <T extends object>(title: string, xs: T[]) => xs.map((x) => ({ ...x, title }));
+  const notStarted = parts.length ? parts.map((p) => new Set(p.cards.submission.notStarted)).reduce((a, b) => new Set([...a].filter((x) => b.has(x)))) : new Set<string>();
+  const errors = new Map<string, CommonError>();
+  parts.flatMap((p) => p.cards.errors).forEach((e) => {
+    const cur = errors.get(e.key);
+    errors.set(e.key, cur ? { ...cur, count: cur.count + e.count, students: Math.max(cur.students, e.students) } : e);
+  });
+  return {
+    stuck: { students: parts.flatMap((p) => tag(p.title, p.cards.stuck.students)) },
+    submission: {
+      notStarted: [...notStarted],
+      inProgress: parts.reduce((n, p) => n + p.cards.submission.inProgress, 0),
+      overdue: parts.flatMap((p) => p.cards.submission.overdue),
+      toGrade: parts.flatMap((p) => tag(p.title, p.cards.submission.toGrade)),
+      returned: parts.reduce((n, p) => n + p.cards.submission.returned, 0),
+    },
+    flags: { items: parts.flatMap((p) => p.cards.flags.items).sort((a, b) => b.ts.localeCompare(a.ts)) },
+    errors: [...errors.values()].sort((a, b) => b.students - a.students || b.count - a.count).slice(0, 3),
+  };
 }
 
 export function fourCards(folds: StudentFold[], events: EventRow[], roster: RosterEntry[], now: number): FourCards {

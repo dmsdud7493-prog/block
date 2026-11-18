@@ -38,6 +38,32 @@ function Bank({ onAdd }: { onAdd: (p: string) => void }) {
   );
 }
 
+function History({ history }: { history: SubmissionDetail["history"] }) {
+  if (!history.length) return null;
+  return <p className="text-xs text-muted">채점 기록: {history.map((h) => `${REASON_LABEL[h.reason] ?? h.reason} ${new Date(h.at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`).join(" · ")}</p>;
+}
+
+/** 채점을 끝낸 보고서 — 버튼 없이 결과만 */
+function GradedNote({ done, history }: { done: string | null; history: SubmissionDetail["history"] }) {
+  return (
+    <section aria-labelledby="grade-title" className="space-y-2 rounded-lg border-2 border-ok bg-panel p-3">
+      <h2 id="grade-title" className="text-lg font-bold">✅ 채점을 마친 보고서예요</h2>
+      <p className="text-sm">{done ?? "학생에게 루브릭과 코멘트가 보여요. 이 보고서는 더 고치거나 다시 채점하지 않아요."}</p>
+      <History history={history} />
+    </section>
+  );
+}
+
+/** 다시 낸 보고서에서 고친 칸 */
+function ChangedList({ items }: { items: string[] }) {
+  return (
+    <div role="note" className="rounded border-2 border-amber-300 bg-amber-50 p-2 text-sm">
+      <p className="font-semibold">✏️ 학생이 고친 칸 {items.length}곳</p>
+      {items.length ? <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">{items.map((x) => <li key={x}>· {x}</li>)}</ul> : <p className="mt-1">처음 낸 보고서와 달라진 칸이 없어요.</p>}
+    </div>
+  );
+}
+
 export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
   const start = detail.draft ?? { rubric: detail.rubric, feedback: detail.feedback };
   const [rubric, setRubric] = useState<Record<string, string>>(start.rubric);
@@ -45,14 +71,20 @@ export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
   const [reason, setReason] = useState("");
   const [done, setDone] = useState<string | null>(null);
   const act = useAction<{ saved: boolean; returnedAt: string | null }>("/api/grade");
-  const canReturn = detail.status === "submitted" || detail.status === "resubmitted";
+  const graded = Boolean(detail.returnedAt) && (detail.status === "submitted" || detail.status === "resubmitted") && detail.returnedAt! >= detail.submittedAt;
+  const [finished, setFinished] = useState(graded);
+  const canReturn = !finished && (detail.status === "submitted" || detail.status === "resubmitted");
   const complete = RUBRIC.every((r) => rubric[r.id]);
   const canRevise = detail.version < 2;
   const send = (action: "draft" | "return" | "final") => {
     setDone(null);
     void act.run({ submissionId: detail.submissionId, action, rubric, feedback: comment, reason: reason || undefined })
-      .then((r) => setDone(r ? DONE[action] : null));
+      .then((r) => {
+        setDone(r ? DONE[action] : null);
+        if (r && action !== "draft") setFinished(true);
+      });
   };
+  if (finished) return <GradedNote done={done} history={detail.history} />;
   return (
     <section aria-labelledby="grade-title" className="space-y-3 rounded-lg border-2 border-brand bg-panel p-3">
       <h2 id="grade-title" className="text-lg font-bold">✍️ 루브릭 채점·코멘트</h2>
@@ -60,19 +92,20 @@ export default function RubricGrader({ detail }: { detail: SubmissionDetail }) {
       <label htmlFor="grade-comment" className="block font-semibold">학생에게 남길 말 (행동을 짚어 격려해 주세요)</label>
       <textarea id="grade-comment" rows={4} maxLength={2000} value={comment} onChange={(e) => setComment(e.target.value)} className="w-full rounded border border-line p-2 text-sm" />
       <Bank onAdd={(p) => setComment((c) => (c.trim() ? `${c}\n${p}` : p))} />
-      {detail.returnedAt ? <label className="block text-sm font-semibold">다시 채점하는 까닭 (기록에 남아요)<input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} className="tap mt-1 block w-full rounded border border-line px-2 font-normal" /></label> : null}
+      {detail.changed ? <ChangedList items={detail.changed} /> : null}
+      {detail.history.length && canReturn ? <label className="block text-sm font-semibold">다시 채점하는 까닭 (기록에 남아요)<input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} className="tap mt-1 block w-full rounded border border-line px-2 font-normal" /></label> : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={act.busy} onClick={() => send("draft")} className="tap rounded border border-brand px-3 font-semibold text-brand">초안 저장</button>
         <button type="button" disabled={act.busy || !complete || !canReturn} onClick={() => send("final")} className="tap rounded bg-brand px-4 font-bold text-white disabled:opacity-50">✅ 확정하고 끝내기</button>
-        <button type="button" disabled={act.busy || !complete || !canReturn || !canRevise} onClick={() => send("return")} className="tap rounded border-2 border-ok bg-white px-4 font-bold text-ok disabled:opacity-50">↩️ 한 번 더 고치게 돌려주기</button>
+        <button type="button" disabled={act.busy || !canReturn || !canRevise || (!complete && !comment.trim())} onClick={() => send("return")} className="tap rounded border-2 border-ok bg-white px-4 font-bold text-ok disabled:opacity-50">↩️ 한 번 더 고치게 돌려주기</button>
       </div>
       <p className="text-xs text-muted">{canRevise ? "끝내기: 채점이 끝나고 학생은 보고서를 고칠 수 없어요. 돌려주기: 학생이 한 번만 고쳐 다시 낼 수 있어요(다시 낸 보고서는 끝내기만 돼요)." : "이미 한 번 고쳐 낸 보고서예요. '확정하고 끝내기'로 채점을 마쳐 주세요."}</p>
       {!canReturn ? <p className="text-sm text-muted">학생이 고치는 중이에요. 다시 제출하면 채점할 수 있어요.</p> : null}
-      {!complete && canReturn ? <p className="text-sm text-muted">4항목을 모두 골라야 확정할 수 있어요.</p> : null}
+      {!complete && canReturn ? <p className="text-sm text-muted">확정하려면 4항목을 모두 골라요. 돌려주기는 코멘트만 써도 돼요.</p> : null}
       <p className="text-xs text-muted">채점 기준 근거: NRC(2012) 과학 실천, 주장–증거–추론(McNeill et al., 2006), 과학 글쓰기 발견법(Keys et al., 1999), 실험 보고서 범용 루브릭(Timmerman et al., 2011)</p>
       <p aria-live="polite" className="text-sm text-ok">{done}</p>
       {act.error ? <p role="alert" className="text-sm text-err">{act.error}</p> : null}
-      {detail.history.length ? <p className="text-xs text-muted">채점 기록: {detail.history.map((h) => `${REASON_LABEL[h.reason] ?? h.reason} ${new Date(h.at).toLocaleString("ko-KR")}`).join(" · ")}</p> : null}
+      <History history={detail.history} />
     </section>
   );
 }

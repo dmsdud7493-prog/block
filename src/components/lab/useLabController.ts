@@ -11,7 +11,9 @@ import type { CalcRequest, Program } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import { dryRun, type SimOptions } from "@/lib/engine/simulator/run";
 import { changedVariables } from "@/lib/engine/rules/variables";
-import { graphTargets, runTarget } from "@/lib/engine/predictionScope";
+import { ERROR_HINTS_MORE } from "@/lib/engine/hintsMore";
+import { graphTargets, runTarget, usedSubjects } from "@/lib/engine/predictionScope";
+import { missionPredict } from "./missions";
 import type { LabBackend } from "./backend";
 import { initialLabState, labReducer, latestRun, missingPrediction } from "./state";
 import type { LabState, PredictionRecord, RunRecord } from "./types";
@@ -41,8 +43,14 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
   }, [backend, program, blockly, inquiry, programVersion]);
 
   const run = useCallback(async (justSaved?: PredictionRecord) => {
+    // 블록이 하나도 없으면 실행하지 않는다(빈 실행이 '성공'으로 남지 않도록, 2026-11-18 점검)
+    if (state.program.steps.length === 0) {
+      dispatch({ type: "runFail", message: "실험 과정 블록을 먼저 조립해 주세요. 꾸러미에서 행동 블록을 끌어 와 '실험 과정' 아래에 붙여요." });
+      return;
+    }
     // 블록에 쓰인 물질에 맞는 예측을 묻는다(물·식용유만 다루면 철조각 예측은 묻지 않음)
-    const first = runTarget(catalog, state.program);
+    const scope = missionPredict(catalog, state);
+    const first = runTarget(catalog, state.program, scope);
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
     // 방금 예측을 저장했다면 그대로 실행한다(그 사이 블록이 바뀌어 다른 예측이 맞아져도 같은 창을 다시 띄우지 않음)
     if (!justSaved && first && missingPrediction({ ...state, predictions }, [first])) {
@@ -50,7 +58,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
       return;
     }
     // 결과표가 답을 드러내는 예측(beforeRun)은 실행 전에 함께 묻는다
-    const early = missingPrediction({ ...state, predictions }, catalog.predictionTargets.filter((t) => t.beforeRun && t.id !== first).map((t) => t.id));
+    const early = missingPrediction({ ...state, predictions }, catalog.predictionTargets.filter((t) => t.beforeRun && t.id !== first && (!scope || scope.includes(t.id))).map((t) => t.id));
     if (early) {
       dispatch({ type: "openGate", target: early, for: "run" });
       return;
@@ -69,7 +77,9 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
       dispatch({ type: "runFail", message: res.error?.message ?? "실행하지 못했어요." });
       return;
     }
-    const prev = latestRun(state)?.program ?? null;
+    // 같은 물질을 다룬 지난 실행과만 비교 — 다음 미션으로 넘어가 물질이 바뀐 것은 '한꺼번에 바꾼 변인'이 아니다
+    const subjectsKey = (p: Program) => [...usedSubjects(p)].sort().join(",");
+    const prev = [...state.runs].reverse().find((r) => r.ok && subjectsKey(r.program) === subjectsKey(state.program))?.program ?? null;
     const changed = changedVariables(prev, state.program, catalog.variableOptions, catalog.isTrialEnd);
     const record: RunRecord = { ...res.data, runNo, program: state.program, changedVars: changed };
     dispatch({ type: "runDone", run: record });
@@ -88,13 +98,15 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const res = await backend.check(latestRun(state)?.program ?? state.program, runNo, req.key, value, unit);
     const attempts = (prev?.attempts ?? 0) + 1;
     const data = res.data;
-    const entry = { key: req.key, runNo, value: raw && Number(raw) === value ? raw : String(value), unit, attempts, correct: data?.correct ?? false, errorType: data?.errorType ?? null, hint: data?.hint ?? res.error?.message ?? null };
+    // 같은 칸을 3번째 이상 틀리면 한 단계 더 구체적인 안내로 바꾼다(값은 말하지 않음)
+    const more = !data?.correct && attempts >= 3 && data?.errorType ? ERROR_HINTS_MORE[data.errorType] : undefined;
+    const entry = { key: req.key, runNo, value: raw && Number(raw) === value ? raw : String(value), unit, attempts, correct: data?.correct ?? false, errorType: data?.errorType ?? null, hint: more ?? data?.hint ?? res.error?.message ?? null };
     dispatch({ type: "calc", entry });
   }, [backend, state]);
 
   const openGraph = useCallback((justSaved?: PredictionRecord) => {
     const predictions = justSaved ? [...state.predictions.filter((p) => p.target !== justSaved.target), justSaved] : state.predictions;
-    const missing = missingPrediction({ ...state, predictions }, graphTargets(catalog, latestRun(state)?.program ?? state.program));
+    const missing = missingPrediction({ ...state, predictions }, graphTargets(catalog, latestRun(state)?.program ?? state.program, missionPredict(catalog, state)));
     if (missing) {
       dispatch({ type: "openGate", target: missing, for: "graph" });
       return;

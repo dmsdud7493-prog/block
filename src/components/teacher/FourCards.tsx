@@ -5,9 +5,10 @@
 import Link from "next/link";
 import type { ClassBoard } from "@/lib/teacherTypes";
 import type { CommonError, FlagCard, StuckCard, SubmissionCard } from "@/lib/events/cards";
+import HelpButton from "./HelpButton";
 
 const sessionHref = (id: string) => `/dashboard/sessions/${id}`;
-const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" });
 
 function Card({ id, icon, title, count, tone, next, children }: { id: string; icon: string; title: string; count: number; tone: string; next: string; children: React.ReactNode }) {
   return (
@@ -21,11 +22,11 @@ function Card({ id, icon, title, count, tone, next, children }: { id: string; ic
 
 function StuckList({ card }: { card: StuckCard }) {
   if (card.students.length === 0) return <p className="text-muted">지금 막힌 학생이 없어요.</p>;
-  return <ul className="space-y-1">{card.students.slice(0, 6).map((s) => <li key={s.sessionId}><Link className="font-semibold underline" href={sessionHref(s.sessionId)}>{s.studentNo}</Link> — {s.reasons.join(", ")}</li>)}</ul>;
+  return <ul className="space-y-1">{card.students.slice(0, 8).map((s) => <li key={s.sessionId}><Link className="font-semibold underline" href={sessionHref(s.sessionId)}>{s.studentNo}</Link>{s.title ? <span className="text-muted"> ({s.title})</span> : null} — {s.reasons.join(", ")}<HelpButton sessionId={s.sessionId} help={s.help} studentNo={s.studentNo} /></li>)}</ul>;
 }
 
 function SubmissionList({ card, subOf }: { card: SubmissionCard; subOf: Record<string, string> }) {
-  const grade = card.toGrade.slice(0, 6).map((g) => <li key={g.sessionId}><Link className="font-semibold underline" href={`/dashboard/submissions/${subOf[g.sessionId]}`}>{g.studentNo}</Link>{g.resubmitted ? " (재제출)" : ""}{g.late ? " (마감 뒤)" : ""}</li>);
+  const grade = card.toGrade.slice(0, 12).map((g) => <li key={g.sessionId}><Link className="font-semibold underline" href={`/dashboard/submissions/${subOf[g.sessionId]}`}>{g.studentNo}</Link>{g.title ? <span className="text-muted"> ({g.title})</span> : null}{g.resubmitted ? " (재제출)" : ""}{g.late ? " (마감 뒤)" : ""}</li>);
   return (
     <div className="space-y-1">
       <p>시작 안 함 {card.notStarted.length} · 진행 중 {card.inProgress} · 마감 지남 {card.overdue.length} · 돌려줌 {card.returned}</p>

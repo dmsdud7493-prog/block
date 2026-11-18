@@ -82,6 +82,8 @@ export interface MissionDef {
   done: { solved?: string[]; event?: { type?: string; settled?: string[] } };
   /** 보고서 과정에서 이 미션 활동의 제목(없으면 같은 물질을 다루는 기본 활동 제목, 그것도 없으면 미션 문장) */
   report?: string;
+  /** 이 미션에서 물을 예측(첫째: 실행 전, 나머지: 그래프 전) — 미션과 맞지 않는 예측을 묻지 않도록 */
+  predict?: string[];
 }
 
 export interface ExperimentCatalog<S> {

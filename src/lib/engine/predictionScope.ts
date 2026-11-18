@@ -18,20 +18,22 @@ const covered = (t: PredictionTarget, used: Set<string>) => Boolean(t.subjects?.
  * 모두 다루는 게 없으면 겹치는 비율이 가장 큰 예측, 그래도 같으면 앞의 것.
  * 예: 철조각 부피를 재려고 물을 부어도, 식용유가 없으니 철조각 예측을 묻는다.
  */
-export function runTarget(catalog: AnyCatalog, program: Program): string | null {
+export function runTarget(catalog: AnyCatalog, program: Program, mission?: string[]): string | null {
   const targets = catalog.predictionTargets;
   if (targets.length === 0) return null;
   const used = usedSubjects(program);
   const full = targets.filter((t) => covered(t, used));
   if (full.length > 0) return full.reduce((a, t) => ((t.subjects?.length ?? 0) > (a.subjects?.length ?? 0) ? t : a), full[0]).id;
+  // 블록이 다루는 물질로 정할 수 없으면 지금 미션이 정한 예측(물질 구분이 없는 녹는점·끓는점·분리 실험)
+  if (mission?.length) return mission[0];
   const ratio = (t: PredictionTarget) => (t.subjects?.length ? overlap(t, used) / t.subjects.length : 0);
   return targets.reduce((a, t) => (ratio(t) > ratio(a) ? t : a), targets[0]).id;
 }
 
 /** 그래프를 보기 전에 물을 예측 — 실행 전 예측 + 블록이 다루는 물질을 모두 포함하는 예측 */
-export function graphTargets(catalog: AnyCatalog, program: Program): string[] {
+export function graphTargets(catalog: AnyCatalog, program: Program, mission?: string[]): string[] {
   const targets = catalog.predictionTargets;
-  if (!targets.some((t) => t.subjects?.length)) return targets.map((t) => t.id);
+  if (!targets.some((t) => t.subjects?.length)) return mission?.length ? mission : targets.map((t) => t.id);
   const used = usedSubjects(program);
   const first = runTarget(catalog, program);
   return targets.filter((t) => t.id === first || covered(t, used)).map((t) => t.id);

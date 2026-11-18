@@ -3,7 +3,7 @@
  * 순수 함수: 같은 입력이면 같은 결과. 학생 화면에서는 쓰지 않는다(반 평균·순위 비노출).
  *
  * 막힘 판정 (plan S7):
- *  - 체류: 같은 단계에 머문 시간 ≥ max(최소 체류, 활동 중인 학생 체류 시간 중앙값 × N)
+ *  - 체류: 같은 단계에 머문 시간 ≥ max(최소 체류, 활동 중인 학생 체류 시간 중앙값 × N) — 활동 중 3명 미만이면 최소 체류만
  *  - 실행 오류 연속 k회 이상
  *  - 같은 계산값 칸을 k회 이상 다시 시도 중(아직 맞히지 못함)
  */
@@ -37,7 +37,7 @@ export interface FoldOptions {
 
 export const DEFAULT_FOLD: Omit<FoldOptions, "now"> = { medianFactor: 2, minDwellSec: 300, simErrorK: 3, calcWrongK: 3, activeWindowSec: 1200 };
 
-export interface StuckReason { code: "dwell" | "sim_errors" | "calc_retry"; text: string }
+export interface StuckReason { code: "dwell" | "sim_errors" | "calc_retry" | "graph_retry" | "table_retry"; text: string }
 
 export interface StudentFold extends SessionInfo {
   step: Step;
@@ -53,6 +53,8 @@ export interface StudentFold extends SessionInfo {
   predictionsMismatched: number;
   flagged: number;
   aiReplies: number;
+  /** 교사 "도와줄까?" — 보냄(답 기다림) / 예 / 아니요 */
+  help: "offered" | "yes" | "no" | null;
   stuck: StuckReason[];
   nextAction: string | null;
 }
@@ -77,6 +79,7 @@ function initial(info: SessionInfo): Acc {
     predictionsMismatched: 0,
     flagged: 0,
     aiReplies: 0,
+    help: null,
   };
 }
 
@@ -103,6 +106,10 @@ function applyCounters(a: Acc, e: EventRow): Acc {
     case "ai_reply":
     case "ai_nudge":
       return { ...a, aiReplies: a.aiReplies + 1 };
+    case "help_offered":
+      return { ...a, help: "offered" };
+    case "help_answered":
+      return { ...a, help: p.answer === "yes" ? "yes" : "no" };
     default:
       return a;
   }
@@ -130,20 +137,28 @@ export function median(values: number[]): number {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
+/** 계산 칸 이름으로 무엇을 하다 막혔는지 — 그래프 읽기(녹는점·끓는점·증류 온도), 용해도 표 읽기, 그 밖은 계산식 */
+const calcKind = (key: string): "graph" | "table" | "formula" => (/^(mp|bp|dist)_/.test(key) ? "graph" : /^precip_/.test(key) ? "table" : "formula");
+const KIND_TEXT = { graph: "그래프에서 읽는 값을", table: "용해도 표로 구하는 값을", formula: "같은 계산값을" } as const;
+
 function reasonsOf(f: StudentFold, threshold: number, opts: FoldOptions): StuckReason[] {
-  const maxWrong = Math.max(0, ...Object.values(f.openCalcWrong));
+  const worst = Object.entries(f.openCalcWrong).sort((x, y) => y[1] - x[1])[0];
+  const maxWrong = worst?.[1] ?? 0;
+  const kind = worst ? calcKind(worst[0]) : "formula";
   const dwell: StuckReason[] = f.active && f.dwellSec >= threshold
     ? [{ code: "dwell", text: `${STEP_LABEL[f.step]} 단계에 ${Math.round(f.dwellSec / 60)}분째 머물러 있어요` }] : [];
   const sim: StuckReason[] = f.step !== "submitted" && f.simErrorStreak >= opts.simErrorK
     ? [{ code: "sim_errors", text: `실행 오류가 ${f.simErrorStreak}번 이어졌어요` }] : [];
   const calc: StuckReason[] = f.step !== "submitted" && maxWrong >= opts.calcWrongK
-    ? [{ code: "calc_retry", text: `같은 계산값을 ${maxWrong}번 다시 시도하고 있어요` }] : [];
+    ? [{ code: kind === "graph" ? "graph_retry" : kind === "table" ? "table_retry" : "calc_retry", text: `${KIND_TEXT[kind]} ${maxWrong}번 다시 시도하고 있어요` }] : [];
   return [...dwell, ...sim, ...calc];
 }
 
 const NEXT_ACTION: Record<StuckReason["code"], string> = {
   sim_errors: "모니터의 오류 블록을 함께 보며 ‘어느 블록에서 멈췄는지’ 물어보기",
   calc_retry: "계산식에 어떤 측정값을 넣었는지 말로 설명하게 하기",
+  graph_retry: "그래프에서 온도가 한동안 변하지 않는 평평한 구간을 손가락으로 짚어 보게 하기",
+  table_retry: "용해도 표에서 식힌 온도의 값을 어떻게 찾았는지, 넣은 양에서 무엇을 뺐는지 말해 보게 하기",
   dwell: "지금 무엇을 하려는지 한 문장으로 말해 보게 하기",
 };
 
@@ -157,7 +172,9 @@ export function groupBySession(events: EventRow[]): Map<string, EventRow[]> {
 export function foldClass(sessions: SessionInfo[], events: EventRow[], opts: FoldOptions): StudentFold[] {
   const bySession = groupBySession(events);
   const folds = sessions.map((s) => foldSession(s, bySession.get(s.sessionId) ?? [], opts));
-  const med = median(folds.filter((f) => f.active).map((f) => f.dwellSec));
+  // 활동 중인 학생이 3명 미만이면 중앙값이 자기 자신이 되어 막힘이 뜨지 않으므로 최소 체류 시간만 쓴다
+  const activeDwell = folds.filter((f) => f.active).map((f) => f.dwellSec);
+  const med = activeDwell.length >= 3 ? median(activeDwell) : 0;
   const threshold = Math.max(opts.minDwellSec, med * opts.medianFactor);
   return folds.map((f) => {
     const stuck = reasonsOf(f, threshold, opts);

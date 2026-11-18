@@ -26,3 +26,4 @@ export const ERROR_HINTS: Record<ErrorType, string> = {
   not_number: "숫자로 입력해 주세요.",
   other: "아직 아니에요. 표의 값을 하나씩 짚어 가며 다시 계산해 볼까요?",
 };
+

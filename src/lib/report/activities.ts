@@ -67,13 +67,20 @@ function tableOf(c: AnyCatalog, s: LabState, run: RunRecord, trials: number[]): 
   const rank = (col: string) => (order.indexOf(col) < 0 ? order.length : order.indexOf(col));
   const cols = [...new Set(cells.map((x) => x.col))].sort((a, b) => rank(a) - rank(b)).slice(0, 10);
   const keys = [...new Set(cells.map((x) => `${x.trial}|${x.subject}`))].slice(0, 60);
-  const multi = new Set(cells.map((x) => x.trial)).size > 1;
+  // 번호는 표마다 1, 2, 3 …(실행 속 회차 번호가 건너뛰어도 표에서는 이어지게, 2026-11-18 점검)
+  const shown = new Map([...new Set(cells.map((x) => x.trial))].sort((x, y) => x - y).map((t, i) => [t, String(i + 1)]));
+  const filled = keys.reduce((n, k) => n + new Set(cells.filter((x) => `${x.trial}|${x.subject}` === k).map((x) => x.col)).size, 0);
+  // 대상마다 다른 값을 재서 칸 대부분이 "—"인 넓은 표(혼합물 분리)는 '측정한 것 · 값' 한 줄씩으로 바꾼다
+  if (cols.length >= 4 && filled < keys.length * cols.length * 0.5) {
+    const sorted = [...cells].sort((x, y) => x.trial - y.trial || rank(x.col) - rank(y.col)).slice(0, 60);
+    return { columns: ["번호", "대상", "측정한 것", "값"], rows: sorted.map((x) => [shown.get(x.trial) ?? "1", itemLabel(c, x.subject), x.col, x.value]) };
+  }
   const rows = keys.map((k) => {
     const [trial, subject] = k.split("|");
     const here = cells.filter((x) => `${x.trial}|${x.subject}` === k);
-    return [...(multi ? [trial] : []), itemLabel(c, subject), ...cols.map((col) => here.filter((x) => x.col === col).map((x) => x.value).join(", ") || "—")];
+    return [shown.get(Number(trial)) ?? "1", itemLabel(c, subject), ...cols.map((col) => here.filter((x) => x.col === col).map((x) => x.value).join(", ") || "—")];
   });
-  return { columns: [...(multi ? ["번호"] : []), "물질", ...cols], rows };
+  return { columns: ["번호", "물질", ...cols], rows };
 }
 
 /** 관찰 — 비커 속에서 자리 잡은 순서처럼 표로 나타내기 어려운 결과 */

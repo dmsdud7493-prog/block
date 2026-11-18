@@ -11,6 +11,7 @@ import ResultsTable from "./ResultsTable";
 import SeriesChart from "./SeriesChart";
 import ReflectionForm from "./ReflectionForm";
 import type { Updater } from "./useReport";
+import { fixJosa } from "@/lib/engine/format";
 
 interface Props { content: ReportContent; update: (fn: Updater) => void; readOnly: boolean; onFocusSection: (title: string) => void; aiFlags?: string[] }
 
@@ -73,7 +74,7 @@ function DataBlock({ d, i, p }: { d: ReportContent["data"][number]; i: number; p
       {d.rows.length ? <ResultsTable table={{ columns: d.columns, rows: d.rows }} caption={`자료 ${n} ${d.title}`} /> : null}
       {d.observations.map((o) => <p key={o} className="rounded bg-[#f4f8ff] px-2 py-1 text-sm">👀 관찰: {o}</p>)}
       <SeriesChart series={d.series} title={`자료 ${n}`} />
-      <SectionField id={`r-data-${n}`} label={`자료 ${n}에서 알 수 있는 점`} starter={`자료 ${n}을(를) 보면`} rows={2} readOnly={p.readOnly} value={d.note} maxLength={800} onChange={setNote} />
+      <SectionField id={`r-data-${n}`} label={`자료 ${n}에서 알 수 있는 점`} starter={fixJosa(`자료 ${n}을(를) 보면`)} rows={2} readOnly={p.readOnly} value={d.note} maxLength={800} onChange={setNote} />
     </li>
   );
 }

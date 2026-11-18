@@ -77,6 +77,20 @@ const PREDICTIONS: PredictionTarget[] = [
     ],
   },
   {
+    id: "two_mp",
+    question: "팔미트산의 녹는점은 로르산의 녹는점과 같을까요?",
+    choices: [
+      { id: "different", label: "두 물질의 녹는점은 서로 다르다" },
+      { id: "same", label: "고체가 녹는 온도는 모두 같으니 두 녹는점도 같다" },
+      { id: "depends_mass", label: "넣은 양에 따라 그때그때 달라진다" },
+    ],
+    hints: [
+      "버터와 얼음은 같은 온도에서 녹기 시작하나요?",
+      "녹는점이 물질마다 같다면, 녹는점으로 물질을 구별할 수 있을까요?",
+      "두 물질을 같은 양, 같은 방법(물중탕)으로 가열해서 평평한 구간의 온도를 비교해 보세요.",
+    ],
+  },
+  {
     id: "mass_same_mp",
     question: "로르산 3 g과 6 g의 녹는점은 어떨까요?",
     choices: [
@@ -132,11 +146,13 @@ export const meltingCatalog: ExperimentCatalog<MeltingState> = {
       id: "lauric", icon: "🧊", title: "로르산은 몇 ℃에서 녹을까? 로르산의 녹는점을 구해 봐",
       cheer: "🎉 미션 ① 성공! 로르산의 녹는점을 구했네. 팔미트산도 같은 온도에서 녹을까? 이제 미션 ② 차례야 💪",
       done: { solved: ["lauric_acid"] },
+      predict: ["graph_shape"],
     },
     {
       id: "palmitic", icon: "🕯️", title: "팔미트산의 녹는점도 구해서 로르산과 비교해 봐",
       cheer: "🏆 미션 ② 성공! 두 물질의 녹는점은 같았어? 녹는 동안 온도는 어땠는지도 떠올려 봐. 보고서에서 정리해 보자 ✨",
       done: { solved: ["palmitic_acid"] },
+      predict: ["two_mp"],
     },
   ],
   requiredSubjects: ["lauric_acid", "palmitic_acid"],

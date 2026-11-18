@@ -32,10 +32,21 @@ export async function runForUser(sessionId: string, runNo: number) {
 export async function latestRunProgram(sessionId: string): Promise<unknown | null> {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.from("runs").select("program").eq("session_id", sessionId).order("run_no", { ascending: false }).limit(1);
+    const { data } = await supabase.from("runs").select("program").eq("session_id", sessionId).eq("ok", true).order("run_no", { ascending: false }).limit(1);
     return data?.[0]?.program ?? null;
   } catch {
     return null;
+  }
+}
+
+/** 최근 성공한 실행의 블록(최신순, 최대 20개) — '바꾼 변인'을 같은 물질을 다룬 실행끼리 비교하려고 */
+export async function recentRunPrograms(sessionId: string): Promise<unknown[]> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from("runs").select("program").eq("session_id", sessionId).eq("ok", true).order("run_no", { ascending: false }).limit(20);
+    return (data ?? []).map((r) => r.program);
+  } catch {
+    return [];
   }
 }
 

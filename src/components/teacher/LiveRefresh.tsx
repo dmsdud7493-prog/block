@@ -47,6 +47,6 @@ export default function LiveRefresh({ classIds, generatedAt }: { classIds: strin
     };
   }, [key, refresh]);
 
-  const time = new Date(generatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const time = new Date(generatedAt).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", second: "2-digit" });
   return <p className="text-xs text-muted" role="status" aria-live="polite">{LABEL[status]} · 마지막 갱신 {time}</p>;
 }

@@ -59,7 +59,7 @@ const run = {
 };
 
 describe("a11y — 결과 영역", () => {
-  it("DataTable", () => noViolations(<DataTable catalog={densityCatalog} run={run} calc={{}} onCheck={async () => undefined} />));
+  it("DataTable", () => noViolations(<DataTable catalog={densityCatalog} run={run} calc={{}} graphReady shownNo={1} onCheck={async () => undefined} />));
   it("AfterExplain", () => noViolations(<AfterExplain targets={densityCatalog.predictionTargets} predictions={[{ target: "same_density", choice: "same", rationale: "같은 철이라서", hintsUsed: 0 }]} onSave={() => undefined} />));
   it("ReferencePanel (용해도 표)", () => noViolations(<ReferencePanel table={separation2Catalog.reference![0]} />));
 });

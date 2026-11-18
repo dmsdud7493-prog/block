@@ -97,6 +97,20 @@ const PREDICTIONS: PredictionTarget[] = [
     ],
   },
   {
+    id: "two_bp",
+    question: "에탄올의 끓는점은 물의 끓는점과 같을까요?",
+    choices: [
+      { id: "lower", label: "에탄올이 물보다 낮은 온도에서 끓는다" },
+      { id: "same", label: "액체는 모두 같은 온도에서 끓으니 끓는점도 같다" },
+      { id: "higher", label: "에탄올이 물보다 높은 온도에서 끓는다" },
+    ],
+    hints: [
+      "손 소독제(에탄올)를 바르면 물보다 빨리 마르던가요?",
+      "끓는점이 물질마다 같다면, 끓는점으로 물질을 구별할 수 있을까요?",
+      "같은 방법으로 시간–온도를 재서 두 그래프의 평평한 구간 온도를 비교해 보세요.",
+    ],
+  },
+  {
     id: "amount_or_heat_bp",
     question: "물의 양을 10 mL에서 20 mL로 늘리거나 더 세게 가열하면, 물의 끓는점은 어떻게 될까요?",
     choices: [
@@ -143,11 +157,13 @@ export const boilingCatalog: ExperimentCatalog<BoilingState> = {
       id: "water", icon: "💧", title: "물은 몇 ℃에서 끓을까? 물의 끓는점을 구해 봐",
       cheer: "🎉 미션 ① 성공! 물의 끓는점을 구했네. 에탄올도 같은 온도에서 끓을까? 이제 미션 ② 차례야 💪",
       done: { solved: ["water"] },
+      predict: ["graph_while_boiling"],
     },
     {
       id: "ethanol", icon: "🧪", title: "에탄올의 끓는점도 구해서 물과 비교해 봐",
       cheer: "🏆 미션 ② 성공! 두 액체의 끓는점은 같았어? 끓는점이 물질마다 다르다면 무엇을 알 수 있을까? 보고서에서 정리해 보자 ✨",
       done: { solved: ["ethanol"] },
+      predict: ["two_bp"],
     },
   ],
   requiredSubjects: ["water", "ethanol"],

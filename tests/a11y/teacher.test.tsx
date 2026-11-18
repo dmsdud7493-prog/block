@@ -28,7 +28,7 @@ const board: ClassBoard = {
 };
 const detail: SubmissionDetail = {
   submissionId: "sub-3", sessionId: "s-3", classId: "c1", studentNo: "3", slug: "density", title: "밀도", status: "submitted",
-  submittedAt: "2026-10-27T01:50:00Z", late: false, version: 1, returnedAt: null, content: {}, aiAssisted: ["results"], rubric: {}, feedback: "", draft: null, history: [],
+  submittedAt: "2026-10-27T01:50:00Z", late: false, version: 1, returnedAt: null, content: {}, aiAssisted: ["results"], rubric: {}, feedback: "", draft: null, changed: null, history: [],
 };
 
 afterEach(() => cleanup());

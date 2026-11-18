@@ -215,3 +215,11 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 /* 저울 표시가 안정되기 전(측정 전) — 실제 전자저울처럼 '- -' 표시가 깜빡인다 */
 .lab-settle { animation: lab-settle 1.1s steps(2, jump-none) infinite; }
 @keyframes lab-settle { 50% { opacity: .35; } }
+
+/* 미션 축하 — 과학자 짝꿍 옆 비커가 차오르고(높이), 방울이 올라오고, 다 차면 거품이 넘친다 (2026-11-18) */
+.lab-fill { transition: y .9s cubic-bezier(.3,1.4,.5,1), height .9s cubic-bezier(.3,1.4,.5,1); }
+.lab-rise { animation: lab-rise 1.2s ease-in infinite; }
+@keyframes lab-rise { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .9; } 100% { transform: translateY(-58px); opacity: 0; } }
+.lab-foam { transform-box: fill-box; transform-origin: 50% 100%; animation: lab-foam 1.6s ease-in-out infinite; }
+@keyframes lab-foam { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12) translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .lab-rise, .lab-foam { animation: none; } .lab-fill { transition: none; } }

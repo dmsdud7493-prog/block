@@ -4,6 +4,7 @@
  * 미션이 하나뿐이면 번호(①)와 진행 수(0/1)를 붙이지 않는다. 번호 앞뒤 아이콘은 두지 않는다. 마친 미션은 "완료" 글자, 지금 할 미션은 굵게, 다음 미션은 흐리게(화면 읽기용 글자로도 상태를 적는다).
  */
 import type { MissionProgress } from "@/components/lab/missions";
+import ScientistBeaker from "./ScientistBeaker";
 
 const NUM = ["①", "②", "③", "④", "⑤", "⑥"];
 
@@ -18,7 +19,7 @@ function Row({ n, title, state, numbered }: { n: number; title: string; state: "
   );
 }
 
-export default function MissionBar({ progress, fixedText = null }: { progress: MissionProgress; fixedText?: string | null }) {
+export default function MissionBar({ progress, fixedText = null, slug = "" }: { progress: MissionProgress; fixedText?: string | null; slug?: string }) {
   const { missions, done, current } = progress;
   if (missions.length === 0) return null;
   const all = current >= missions.length;
@@ -28,9 +29,10 @@ export default function MissionBar({ progress, fixedText = null }: { progress: M
         🎯 오늘의 미션
         {missions.length > 1 ? <span className="ml-auto rounded-full bg-white px-2 font-sans text-sm font-bold text-muted">{done.filter(Boolean).length}/{missions.length}</span> : null}
       </h3>
-      <ol className="mt-1 space-y-1">
-        {missions.map((m, i) => <Row key={m.id} n={i} title={m.title} numbered={missions.length > 1} state={done[i] ? "done" : i === current ? "now" : "locked"} />)}
-      </ol>
+      <div className="mt-1 flex items-start gap-3">
+        <ol className="min-w-0 flex-1 space-y-1">{missions.map((m, i) => <Row key={m.id} n={i} title={m.title} numbered={missions.length > 1} state={done[i] ? "done" : i === current ? "now" : "locked"} />)}</ol>
+        <ScientistBeaker slug={slug} done={done.filter(Boolean).length} total={missions.length} />
+      </div>
       {fixedText ? <p className="mt-1 rounded bg-white px-2 py-1 text-sm font-semibold text-nav">📏 이번 실험은 넣는 양이 정해져 있어요: {fixedText}</p> : null}
       {all ? <p className="mt-1 font-bold text-ok">🏆 미션을 {missions.length > 1 ? "모두 " : ""}마쳤어요! 결과 해석과 보고서로 정리해 봐요.</p> : null}
     </section>

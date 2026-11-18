@@ -31,10 +31,12 @@ const lv = (n: number) => Math.max(0, Math.min(3, n)) as 0 | 1 | 2 | 3;
 const slugOf = (s: TutorState) => Object.values(CATALOGS).find((c) => c.title === s.unit)?.slug ?? null;
 const pick = <T,>(xs: T[], n: number) => xs[Math.abs(n) % xs.length];
 
-/** 생각 없이 보낸 말 — 유머 한마디 + 아주 쉬운 질문, 연달아면 둘 중 하나 고르기 */
+/** 생각 없이 보낸 말 — 유머 한마디 + 아주 쉬운 질문, 연달아면 둘 중 하나 고르기. 화면에 고칠 칸이 있으면 그 칸으로 데려온다 */
 function refocus(s: TutorState): TutorReply {
   const t = talkFor(slugOf(s));
   const joke = pick(t.joke, s.off_task_streak + s.blocks_summary.length);
+  const issue = screenIssue(s);
+  if (issue) return { ...issue, reply: `${joke} ${issue.reply}` };
   const q = s.off_task_streak >= 2 ? t.choice : t.easy;
   return reply(`${joke} ${q}`, 0, "ask_rationale");
 }
@@ -80,7 +82,8 @@ export function localTutor(state: TutorState, lastUser: string, risk: string | n
   if (!state.prediction_submitted && ASKS_RESULT.test(said)) {
     return reply("결과를 보기 전에 먼저 예상해 보는 게 중요해. 실행 버튼을 누르면 예상을 적는 칸이 나와. 너는 어떻게 될 것 같아?", 0, "predict");
   }
-  if (state.genuine_stuck || /뭐부터|막혔/.test(said)) return ladder(state);
+  // 진짜로 막혔으면 지금 막힌 칸(틀린 계산 칸·점검 오류)부터, 없으면 힌트 사다리
+  if (state.genuine_stuck || /뭐부터|막혔/.test(said)) return screenIssue(state) ?? ladder(state);
   const issue = screenIssue(state);
   if (issue) return issue;
   if (state.changed_vars.length >= 2) {

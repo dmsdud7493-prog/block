@@ -33,6 +33,7 @@ git checkout -b develop && git push -u origin develop               # develop = 
   | 0011_report_no_verdict | 2026-11-02 적용·`report_ready` 확인 쿼리 true | SQL Editor(Claude, 교사 확인 후 실행) |
   | 0012_revision_once | 2026-11-12 적용·함수 서명(6인자)·권한(service_role만) 확인 | SQL Editor(Claude, 교사 확인 후 실행) |
   | 0013_report_trend | 2026-11-17 적용·확인 쿼리(결론 빈칸 false / 채움 true) | SQL Editor(Claude, 교사 "실행해" 후 실행) |
+  | 0014_help_offer_resubmit | **코드 배포 전에 먼저 적용** — help_offers 표(도와줄까?), submissions.previous_snapshot, 코멘트만으로 돌려주기 | SQL Editor(Claude, 교사 "실행해" 후 실행) |
   - 저장소 **Settings → Secrets and variables → Actions**에 추가:
     `SUPABASE_ACCESS_TOKEN`, `STAGING_PROJECT_ID`, `PRODUCTION_PROJECT_ID`, `STAGING_DB_PASSWORD`, `PRODUCTION_DB_PASSWORD`
 

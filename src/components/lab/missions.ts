@@ -59,6 +59,13 @@ export function missionProgress(catalog: AnyCatalog, s: LabState): MissionProgre
   return { missions, done, current: first < 0 ? missions.length : first };
 }
 
+/** 지금 미션이 물을 예측(미션을 모두 마쳤으면 마지막 미션 것) — 미션이 없거나 정하지 않았으면 undefined */
+export function missionPredict(catalog: AnyCatalog, s: LabState): string[] | undefined {
+  const p = missionProgress(catalog, s);
+  const m = p.missions[Math.min(p.current, p.missions.length - 1)];
+  return m?.predict;
+}
+
 /** 튜터에게 알려 줄 지금 미션 문장 */
 export const currentMissionTitle = (p: MissionProgress): string | null => p.missions[p.current]?.title ?? null;
 

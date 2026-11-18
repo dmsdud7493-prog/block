@@ -5,9 +5,12 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_FOLD, foldClass, type SessionInfo, type SessionStatus } from "@/lib/events/fold";
-import { fourCards } from "@/lib/events/cards";
+import { fourCards, mergeCards } from "@/lib/events/cards";
 import type { EventRow } from "@/lib/events/types";
 import { classDetail, teacherClasses } from "./teacher";
+import { predictionMatched } from "@/lib/engine/predictionKey";
+import { reportContentSchema } from "@/lib/report/template";
+import { changedSections } from "@/lib/report/diff";
 import type { ClassBoard, ChatLine, RunLine, SessionDetail, SubmissionDetail } from "@/lib/teacherTypes";
 
 const EVENT_LIMIT = 5000;
@@ -24,11 +27,12 @@ interface SessionRow {
   started_at: string;
   submitted_at: string | null;
   submissions: Embedded<{ id: string; submitted_at: string; returned_at: string | null; late: boolean }>;
+  predictions: { target: string; choice: string }[] | null;
 }
 
 async function loadSessions(db: Db, assignmentId: string): Promise<SessionRow[]> {
   const { data } = await db.from("sessions")
-    .select("id, student_id, status, current_step, started_at, submitted_at, submissions(id, submitted_at, returned_at, late)")
+    .select("id, student_id, status, current_step, started_at, submitted_at, submissions(id, submitted_at, returned_at, late), predictions(target, choice)")
     .eq("assignment_id", assignmentId);
   return (data ?? []) as unknown as SessionRow[];
 }
@@ -63,7 +67,10 @@ export async function classBoard(classId: string, assignmentId?: string | null):
         returnedAt: sub?.returned_at ?? null, dueAt: assignment.dueAt, late: sub?.late ?? false,
       };
     });
-    const folds = foldClass(infos, events, { ...DEFAULT_FOLD, now }).sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+    const verdicts = new Map(rows.map((r) => [r.id, (r.predictions ?? []).map((p) => predictionMatched(assignment.slug, p.target, p.choice))]));
+    const folds = foldClass(infos, events, { ...DEFAULT_FOLD, now })
+      .map((f) => ({ ...f, predictionsMatched: (verdicts.get(f.sessionId) ?? []).filter((v) => v === true).length, predictionsMismatched: (verdicts.get(f.sessionId) ?? []).filter((v) => v === false).length }))
+      .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
     const roster = cls.students.map((s) => ({ studentId: s.id, studentNo: s.studentNo }));
     const submissionIdOf = Object.fromEntries(rows.flatMap((r) => { const s = one(r.submissions); return s ? [[r.id, s.id]] : []; }));
     return { ...empty, folds, cards: fourCards(folds, events, roster, now), submissionIdOf, generatedAt: now };
@@ -72,11 +79,26 @@ export async function classBoard(classId: string, assignmentId?: string | null):
   }
 }
 
-/** T-03: 내 반 모두의 4카드 (각 반의 최근 과제 기준) */
+/** 한 반의 배정한 실험 모두를 모은 4카드 — 어느 실험에서 막혔든 첫 화면에 보이도록 (2026-11-18 점검) */
+async function classOverview(classId: string): Promise<ClassBoard | null> {
+  const first = await classBoard(classId);
+  if (!first || first.assignments.length <= 1) return first;
+  const rest = await Promise.all(first.assignments.filter((a) => a.id !== first.assignment?.id).map((a) => classBoard(classId, a.id)));
+  const boards = [first, ...rest].filter((b): b is ClassBoard => b !== null && b.assignment !== null);
+  return {
+    ...first,
+    assignment: null,
+    folds: boards.flatMap((b) => b.folds),
+    cards: mergeCards(boards.map((b) => ({ title: b.assignment!.title, cards: b.cards }))),
+    submissionIdOf: Object.assign({}, ...boards.map((b) => b.submissionIdOf)),
+  };
+}
+
+/** T-03: 내 반 모두의 4카드 (배정한 실험 모두 합친 것) */
 export async function dashboardOverview(): Promise<ClassBoard[]> {
   try {
     const classes = await teacherClasses();
-    const boards = await Promise.all(classes.map((c) => classBoard(c.id)));
+    const boards = await Promise.all(classes.map((c) => classOverview(c.id)));
     return boards.filter((b): b is ClassBoard => b !== null);
   } catch {
     return [];
@@ -128,7 +150,7 @@ export async function sessionDetail(sessionId: string): Promise<SessionDetail | 
 
 interface SubmissionRow {
   id: string; session_id: string; submitted_at: string; late: boolean; version: number; report_snapshot: Record<string, unknown>;
-  rubric_scores: Record<string, string> | null; teacher_feedback: string | null; returned_at: string | null;
+  rubric_scores: Record<string, string> | null; teacher_feedback: string | null; returned_at: string | null; previous_snapshot: Record<string, unknown> | null;
   sessions: Embedded<SessionHead>;
 }
 
@@ -137,7 +159,7 @@ export async function submissionDetail(submissionId: string): Promise<Submission
   try {
     const db = await createClient();
     const row = (await db.from("submissions")
-      .select("id, session_id, submitted_at, late, version, report_snapshot, rubric_scores, teacher_feedback, returned_at, sessions(id, student_id, class_id, status, current_step, started_at, assignments(due_at, experiments(slug, title)), submissions(id))")
+      .select("id, session_id, submitted_at, late, version, report_snapshot, rubric_scores, teacher_feedback, returned_at, previous_snapshot, sessions(id, student_id, class_id, status, current_step, started_at, assignments(due_at, experiments(slug, title)), submissions(id))")
       .eq("id", submissionId).maybeSingle()).data as unknown as SubmissionRow | null;
     const sess = row ? one(row.sessions) : null;
     if (!row || !sess) return null;
@@ -148,13 +170,21 @@ export async function submissionDetail(submissionId: string): Promise<Submission
       db.from("grade_audit_log").select("reason, created_at, after").eq("submission_id", submissionId).order("created_at", { ascending: false }),
     ]);
     const snap = row.report_snapshot as { content?: Record<string, unknown>; ai_assisted_sections?: string[] };
+    const audits = (gradeAuditLog.data ?? []) as { reason: string; created_at: string; after: { rubric?: Record<string, string>; feedback?: string } | null }[];
+    // 다시 낸 보고서는 지난 채점(감사 로그의 마지막 값)을 미리 채워 둔다 — 고친 칸만 다시 보면 되도록
+    const last = audits[0]?.after ?? null;
+    const prevContent = (row.previous_snapshot as { content?: unknown } | null)?.content;
+    const prevParsed = prevContent ? reportContentSchema.safeParse(prevContent) : null;
+    const curParsed = reportContentSchema.safeParse(snap.content ?? {});
     return {
       submissionId, sessionId: sess.id, classId: sess.class_id, studentNo: no, slug: exp?.slug ?? "", title: exp?.title ?? "",
       status: sess.status, submittedAt: row.submitted_at, late: row.late, version: row.version, returnedAt: row.returned_at,
       content: snap.content ?? {}, aiAssisted: snap.ai_assisted_sections ?? [],
-      rubric: row.rubric_scores ?? {}, feedback: row.teacher_feedback ?? "",
+      rubric: row.rubric_scores ?? last?.rubric ?? {}, feedback: row.teacher_feedback ?? last?.feedback ?? "",
+      changed: prevParsed?.success && curParsed.success ? changedSections(prevParsed.data, curParsed.data) : null,
+      loadedAt: Date.now(),
       draft: draft.data ? { rubric: draft.data.rubric as Record<string, string>, feedback: draft.data.feedback as string, updatedAt: draft.data.updated_at as string } : null,
-      history: (gradeAuditLog.data ?? []).map((a) => ({ reason: a.reason as string, at: a.created_at as string })),
+      history: audits.map((a) => ({ reason: a.reason, at: a.created_at })),
     };
   } catch {
     return null;

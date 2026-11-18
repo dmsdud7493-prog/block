@@ -7,7 +7,7 @@ import { useAction } from "./useAction";
 import { fixedAmountsText } from "@/lib/engine/rules/fixedAmounts";
 
 function Row({ a }: { a: AssignmentRow }) {
-  const due = a.dueAt ? new Date(a.dueAt).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : "마감 없음";
+  const due = a.dueAt ? new Date(a.dueAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" }) : "마감 없음";
   return <li className="text-sm">📌 {a.title} · {due} · {a.allowLate ? "지각 제출 허용" : "마감 후 제출 불가"}{a.fixedAmounts ? " · 넣는 양 정해 줌" : ""}</li>;
 }
 
