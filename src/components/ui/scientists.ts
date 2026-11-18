@@ -7,7 +7,7 @@ export interface Scientist {
   /** 배지 아래 작은 글씨(한 줄) */
   story: string;
   /** 얼굴 꾸미기 — ScientistFace가 그린다 */
-  look: "archimedes" | "gaylussac" | "black" | "celsius" | "maria" | "curie";
+  look: "archimedes" | "gaylussac" | "black" | "celsius" | "jabir" | "curie";
   /** 비커 속 액체 색 */
   liquid: string;
 }
@@ -17,7 +17,7 @@ export const SCIENTISTS: Record<string, Scientist> = {
   solubility: { name: "게이뤼삭", look: "gaylussac", liquid: "#34d399", story: "온도에 따라 녹는 양이 어떻게 바뀌는지 처음으로 그래프(용해도 곡선)로 그렸어요." },
   melting: { name: "조지프 블랙", look: "black", liquid: "#f472b6", story: "얼음이 녹는 동안 열을 받아도 온도가 오르지 않는다는 걸 밝혔어요." },
   boiling: { name: "셀시우스", look: "celsius", liquid: "#fbbf24", story: "물이 얼고 끓는 온도로 우리가 쓰는 온도 눈금(°C)을 만들었어요." },
-  separation1: { name: "마리아 히브레아", look: "maria", liquid: "#60a5fa", story: "고대 이집트 알렉산드리아의 연금술사로, 증류 장치와 물중탕을 만들었다고 전해져요." },
+  separation1: { name: "자비르", look: "jabir", liquid: "#2dd4bf", story: "8세기 연금술사 자비르 이븐 하이얀. 증류 장치를 다듬고 실험을 강조해 '화학의 아버지'로 불려요." },
   separation2: { name: "마리 퀴리", look: "curie", liquid: "#a78bfa", story: "녹이고 식혀 결정을 거르는 일을 수천 번 되풀이해 라듐을 찾아냈어요." },
 };
 

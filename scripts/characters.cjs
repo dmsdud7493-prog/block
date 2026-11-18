@@ -58,14 +58,14 @@ function face(c, skin, st) {
 /* ── 인물별 머리·옷·소품 ───────────────────────────── */
 const PEOPLE = {
   teacher: {
-    name: "선생님", skin: SKIN.light, cloth: "#1f2937", iris: "#3b2a20", glasses: "#111827", rectGlasses: true, bushy: true, brow: "#2f1f17",
-    // 참고 그림: 살짝 헝클어진 갈색 머리(밝은 결), 삐죽 솟은 머리카락, 검은 사각 안경, 짙은 정장
-    back: (st) => P("M50 100 Q38 56 66 36 Q92 18 126 26 Q160 38 154 98 Q150 72 140 64 L60 64 Q54 76 50 100Z", "#4a2f22", st),
-    front: (st) => P("M52 96 Q46 54 74 38 Q100 22 132 34 Q158 48 150 94 Q147 82 141 77 Q140 90 133 93 Q131 77 121 69 Q121 83 112 87 Q108 71 96 65 Q95 79 85 83 Q87 69 79 63 Q71 74 66 89 Q63 79 60 73 Q56 83 52 96Z", "#5a3828", st) +
-      `<path d="M74 44 q22 -12 48 -4 M84 52 q16 -6 30 0" fill="none" stroke="#9a6a4f" stroke-width="3.4" stroke-linecap="round"/>` +
+    name: "선생님", skin: SKIN.light, cloth: "#1f2937", iris: "#3b2a20", glasses: "#111827", rectGlasses: true, bushy: true, brow: "#2f1f17", clean: true,
+    // 참고 그림: 헝클어진 갈색 머리, 뒤·옆으로 삐져나온 머리카락, 검은 사각 안경, 짙은 정장 — 선은 가늘고 적게
+    back: (st) => P("M48 98 Q36 54 66 34 Q94 16 128 26 Q162 40 154 96 Q150 72 140 64 L60 64 Q52 78 48 98Z", "#4a2f22", st) +
+      P("M53 80 Q42 79 37 71 Q47 73 55 70Z", "#4a2f22", st) + P("M147 72 Q158 69 162 59 Q158 72 148 78Z", "#4a2f22", st) + P("M151 88 Q162 90 167 82 Q162 95 151 97Z", "#4a2f22", st) + P("M132 30 Q142 22 152 21 Q146 28 138 35Z", "#4a2f22", st),
+    front: (st) => P("M52 94 Q46 54 76 38 Q104 24 134 36 Q158 50 150 92 Q144 76 134 72 Q130 84 120 86 Q118 72 104 66 Q100 80 86 82 Q88 70 78 66 Q66 76 60 90 Q57 92 52 94Z", "#5a3828", st) +
       P("M102 40 q0 -13 15 -16 q-9 6 -7 16z", "#5a3828", st),
     outfit: (st) => P("M76 148 L100 176 L124 148 Q100 158 76 148Z", "#e2e8f0", st) + P("M96 160 h8 l3 28 l-7 8 l-7 -8z", "#334155", st) + P("M64 152 L92 200 L74 200 L52 162Z", "#111827", st) + P("M136 152 L108 200 L126 200 L148 162Z", "#111827", st) +
-      `<path d="M84 154 L92 184" fill="none" stroke="#f59e0b" stroke-width="2.6"/>` + P("M86 182 h14 v12 h-14z", "#ffffff", st),
+      `<path d="M84 154 L92 184" fill="none" stroke="#f59e0b" stroke-width="2.2"/>` + P("M86 182 h14 v12 h-14z", "#ffffff", st),
   },
   density: {
     name: "아르키메데스", skin: SKIN.olive, cloth: "#f5f0e6", old: true, brow: "#e5e7eb", bushy: true, beardMouth: true, browY: 79,
@@ -96,10 +96,12 @@ const PEOPLE = {
       `<g transform="translate(144 172)"><rect x="-3" y="-20" width="6" height="22" rx="3" fill="#ffffff" stroke="${st.stroke === "none" ? "#64748b" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/><rect x="-1.2" y="-12" width="2.4" height="12" fill="#ef4444"/><circle cx="0" cy="5" r="5" fill="#ef4444" stroke="${st.stroke === "none" ? "#b91c1c" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/></g>`,
   },
   separation1: {
-    name: "마리아 히브레아", skin: SKIN.warm, cloth: "#c2410c", iris: "#3f2a1d",
-    back: (st) => P("M46 112 Q40 36 100 32 Q160 36 154 112 L166 196 L34 196 Z", "#6d28d9", st),
-    front: (st) => P("M58 80 Q62 46 100 44 Q138 46 142 80 Q124 64 100 64 Q76 64 58 80Z", "#5b21b6", st) + `<path d="M60 76 Q100 54 140 76" fill="none" stroke="#eab308" stroke-width="4"/>` + `<circle cx="100" cy="64" r="4" fill="#eab308"/>` + `<circle cx="64" cy="112" r="3" fill="#eab308"/><circle cx="136" cy="112" r="3" fill="#eab308"/>`,
-    outfit: (st) => `<g transform="translate(142 172)"><path d="M-8 6 q-4 -12 8 -14 q12 2 8 14 z" fill="#fde68a" stroke="${st.stroke === "none" ? "#ca8a04" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/><path d="M4 -8 q10 -6 14 6" fill="none" stroke="${st.stroke === "none" ? "#ca8a04" : st.stroke}" stroke-width="2.4"/><circle cx="0" cy="-10" r="3" fill="#fde68a"/></g>`,
+    name: "자비르", skin: SKIN.olive, cloth: "#0f766e", iris: "#3f2a1d", bushy: true, brow: "#2b1d14",
+    back: (st) => "",
+    front: (st) => P("M70 104 Q70 150 100 156 Q130 150 130 104 Q126 124 116 128 Q100 136 84 128 Q74 124 70 104Z", "#3b2618", st) + P("M88 111 q12 -6 24 0 q-6 3 -12 1.5 q-6 1.5 -12 -1.5z", "#3b2618", st) +
+      P("M52 82 Q46 30 100 26 Q154 30 148 82 Q130 70 100 72 Q70 70 52 82Z", "#f8fafc", st) + `<path d="M56 68 Q100 44 144 68 M60 56 Q100 34 140 56" fill="none" stroke="#cbd5e1" stroke-width="3"/>` + P("M92 52 l8 -10 l8 10 l-8 10z", "#14b8a6", st),
+    outfit: (st) => P("M84 146 L100 168 L116 146 Q100 154 84 146Z", "#f5f5f4", st) + `<path d="M40 186 Q100 168 160 186" fill="none" stroke="#eab308" stroke-width="5"/>` +
+      `<g transform="translate(142 172)"><path d="M-8 6 q-4 -12 8 -14 q12 2 8 14 z" fill="#fde68a" stroke="${st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/><path d="M4 -8 q10 -6 14 6" fill="none" stroke="${st.stroke}" stroke-width="2.4"/><circle cx="0" cy="-10" r="3" fill="#fde68a"/></g>`,
   },
   separation2: {
     name: "마리 퀴리", skin: SKIN.light, cloth: "#1f2937", iris: "#4b5563",
@@ -130,15 +132,19 @@ function caricNose(key, skin) {
   return `<path d="${NOSE[key]}" fill="${skin[0]}" ${O(2.6)}/>`;
 }
 
+const stOf = (c) => (c.clean ? { ...ST, sw: 2.2 } : ST);
+
 function headGroup(key, k, ty, faceSvg) {
   const c = PEOPLE[key];
-  const inner = [c.back(ST), head(c.skin, ST), faceSvg, caricNose(key, c.skin), c.front(ST)].join("");
+  const st = stOf(c);
+  const inner = [c.back(st), head(c.skin, st), faceSvg, caricNose(key, c.skin), c.front(st)].join("");
   return `<g transform="translate(100 ${92 + ty}) scale(${k}) translate(-100 -92)">${inner}</g>`;
 }
 
 function bodyGroup(key, k) {
   const c = PEOPLE[key];
-  return `<g transform="translate(100 200) scale(${k}) translate(-100 -200)">${body(c, ST)}${neck(c.skin, ST)}${c.outfit(ST)}</g>`;
+  const st = stOf(c);
+  return `<g transform="translate(100 200) scale(${k}) translate(-100 -200)">${body(c, st)}${neck(c.skin, st)}${c.outfit(st)}</g>`;
 }
 
 /** 기본 얼굴(코는 따로 크게) — 눈은 크게, 입은 활짝 */
@@ -173,12 +179,12 @@ function idea2(key) {
 
 /* 3안 표정·상황 — 실험 장면 속 한 순간을 과장된 표정으로 */
 const MOOD = {
-  teacher: { mouth: "gentle", eyes: "soft", fx: `<g transform="translate(160 152) rotate(-12)" ${O()}><path d="M-12 10 l-8 -10 q-3 -5 2 -7 q3 -1 6 3 l4 5 v-22 q0 -4 4 -4 q4 0 4 4 v14 v-18 q0 -4 4 -4 q4 0 4 4 v18 v-15 q0 -4 4 -4 q4 0 4 4 v16 v-10 q0 -4 4 -4 q4 0 4 4 v18 q0 14 -14 16 h-6 q-10 -2 -16 -12z" fill="#ffe1c6"/></g><path d="M176 128 q6 -4 10 0 M178 140 q6 -2 10 2" fill="none" stroke="#94a3b8" stroke-width="2.6" stroke-linecap="round"/>` },
+  teacher: { mouth: "gentle", eyes: "soft", fx: `<g transform="translate(160 152) rotate(-12)" ${O()}><path d="M-12 10 l-8 -10 q-3 -5 2 -7 q3 -1 6 3 l4 5 v-22 q0 -4 4 -4 q4 0 4 4 v14 v-18 q0 -4 4 -4 q4 0 4 4 v18 v-15 q0 -4 4 -4 q4 0 4 4 v16 v-10 q0 -4 4 -4 q4 0 4 4 v18 q0 14 -14 16 h-6 q-10 -2 -16 -12z" fill="#ffe1c6"/></g>` },
   density: { mouth: "shout", eyes: "wide", fx: `<g ${O(2.4)}><path d="M122 34 h56 v28 h-36 l-12 12 v-12 h-8z" fill="#fff"/></g><text x="150" y="53" font-size="13" font-weight="900" text-anchor="middle" fill="${INK}" font-family="Noto Sans CJK KR, sans-serif">유레카!</text><g fill="#38bdf8" ${O(2)}><path d="M30 150 q8 10 0 16 q-8 -6 0 -16z"/><path d="M44 130 q6 8 0 12 q-6 -4 0 -12z"/></g>` },
   solubility: { mouth: "smile", eyes: "up", fx: `<path d="M160 76 L150 112" stroke="#78350f" stroke-width="2"/><path d="M160 36 q18 0 18 18 q0 16 -18 22 q-18 -6 -18 -22 q0 -18 18 -18z" fill="#ef4444" ${O(2.4)}/><path d="M24 70 q10 -6 20 0 M30 56 q10 -6 20 0" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>` },
   melting: { mouth: "chatter", eyes: "worried", cheek: "#93c5fd", fx: `<path d="M38 80 l-8 -4 l8 -4 M38 100 l-8 -4 l8 -4 M162 80 l8 -4 l-8 -4 M162 100 l8 -4 l-8 -4" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/><g transform="translate(150 160) rotate(10)" ${O()}><rect x="-14" y="-14" width="28" height="28" rx="6" fill="#bae6fd"/></g>` },
   boiling: { mouth: "o", eyes: "wide", cheek: "#f87171", fx: `<g fill="#7dd3fc" ${O(2)}><path d="M150 70 q8 10 0 16 q-8 -6 0 -16z"/><path d="M40 84 q7 9 0 14 q-7 -5 0 -14z"/></g><path d="M56 26 q-8 -10 0 -18 M100 18 q-8 -10 0 -18 M144 26 q-8 -10 0 -18" fill="none" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>` },
-  separation1: { mouth: "smirk", eyes: "half", fx: `<path d="M150 150 q-10 -14 4 -24 q14 -10 2 -24 q-10 -12 6 -22" fill="none" stroke="#c4b5fd" stroke-width="5" stroke-linecap="round"/><path d="M40 160 q-8 -12 4 -20 q12 -8 2 -20" fill="none" stroke="#c4b5fd" stroke-width="5" stroke-linecap="round"/>` },
+  separation1: { mouth: "smile", eyes: "soft", fx: `<path d="M150 150 q-10 -14 4 -24 q14 -10 2 -24 q-10 -12 6 -22" fill="none" stroke="#99f6e4" stroke-width="5" stroke-linecap="round"/><path d="M40 160 q-8 -12 4 -20 q12 -8 2 -20" fill="none" stroke="#99f6e4" stroke-width="5" stroke-linecap="round"/>` },
   separation2: { mouth: "smile", eyes: "spark", glow: true, fx: `<g transform="translate(150 158)" ${O()}><path d="M-7 -20 h14 v30 q0 10 -7 10 q-7 0 -7 -10z" fill="#bbf7d0"/></g><g fill="#fde047"><path d="M40 60 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3z"/><path d="M168 54 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z"/></g>` },
 };
 
@@ -193,7 +199,7 @@ function moodFace(c, m) {
     const ir = m.eyes === "wide" ? 4.6 : 5.2;
     const iris = `<circle cx="${x + 0.6}" cy="${94.5 + dy}" r="${ir}" fill="${c.iris ?? "#4a3426"}"/><circle cx="${x + 0.6}" cy="${94.5 + dy}" r="${ir * 0.5}" fill="${INK}"/>`;
     const shine = m.eyes === "spark" ? `<path d="M${x + 2} ${90.6 + dy} l1.2 2.6 l2.6 1.2 l-2.6 1.2 l-1.2 2.6 l-1.2 -2.6 l-2.6 -1.2 l2.6 -1.2z" fill="#fde047"/>` : `<circle cx="${x + 2.6}" cy="${92.6 + dy}" r="1.7" fill="#fff"/>`;
-    const smileLid = m.eyes === "soft" ? `<path d="M${x - 11} 103 q11 -3.5 22 0 v6 h-22z" fill="${c.skin[0]}"/><path d="M${x - 9} 102.5 q9 -2.6 18 0" fill="none" stroke="${INK}" stroke-width="1.4" opacity=".5"/>` : "";
+    const smileLid = m.eyes === "soft" ? `<path d="M${x - 11} 103 q11 -3.5 22 0 v6 h-22z" fill="${c.skin[0]}"/>` : "";
     const lid = m.eyes === "half" ? `<path d="M${x - 11} 96 q11 -${tall + 1} 22 0 z" fill="${c.skin[0]}"/><path d="M${x - 11} 95.5 h22" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M${x - 10} 96 q10 ${tall * 0.7} 20 0" fill="none" stroke="${INK}" stroke-width="1.2" opacity=".5"/>` : `<path d="M${x - 10} 96 q10 -${tall} 20 0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M${x - 10} 96 q10 ${tall * 0.7} 20 0" fill="none" stroke="${INK}" stroke-width="1.2" opacity=".5"/>`;
     return `<clipPath id="e${x}${i}${m.eyes}"><path d="${almond}"/></clipPath><path d="${almond}" fill="#fff"/><g clip-path="url(#e${x}${i}${m.eyes})">${iris}${shine}</g>${smileLid}${lid}`;
   };
@@ -206,7 +212,7 @@ function moodFace(c, m) {
     gentle: `<path d="M88 116 q12 10 24 0" fill="#fff" ${O(2.8)}/><path d="M92 119 q8 4 16 0" fill="#fb7185" opacity=".55"/>`,
   };
   const mouth = c.beardMouth && m.mouth !== "shout" ? "" : mouths[m.mouth];
-  const glasses = c.rectGlasses ? `<g fill="none" stroke="${c.glasses}" stroke-width="3.6" stroke-linejoin="round"><rect x="72" y="85" width="27" height="19" rx="4"/><rect x="101" y="85" width="27" height="19" rx="4"/><path d="M99 92 h2 M72 90 l-10 -3 M128 90 l10 -3"/></g>` : c.glasses ? `<g fill="none" stroke="${c.glasses}" stroke-width="3"><circle cx="86" cy="94" r="12"/><circle cx="114" cy="94" r="12"/><path d="M98 94 h4"/></g>` : "";
+  const glasses = c.rectGlasses ? `<g fill="none" stroke="${c.glasses}" stroke-width="3" stroke-linejoin="round"><rect x="72" y="85" width="27" height="19" rx="5"/><rect x="101" y="85" width="27" height="19" rx="5"/><path d="M99 92 h2"/></g>` : c.glasses ? `<g fill="none" stroke="${c.glasses}" stroke-width="3"><circle cx="86" cy="94" r="12"/><circle cx="114" cy="94" r="12"/><path d="M98 94 h4"/></g>` : "";
   const cheek = m.cheek ?? "#fb7185";
   return `<path d="${brows}" fill="none" stroke="${c.brow ?? INK}" stroke-width="${c.bushy ? 6 : 4}" stroke-linecap="round"/>` + eye(86, 0) + eye(114, 1) + mouth + glasses + `<ellipse cx="74" cy="110" rx="7" ry="4" fill="${cheek}" opacity=".5"/><ellipse cx="126" cy="110" rx="7" ry="4" fill="${cheek}" opacity=".5"/>`;
 }
@@ -231,8 +237,8 @@ fs.writeFileSync(process.argv[2], `<!doctype html><meta charset="utf-8"><style>b
 
 // 앱용 SVG 파일 내보내기: public/characters/<look>.svg
 if (process.argv[3]) {
-  const LOOK = { teacher: "teacher", density: "archimedes", solubility: "gaylussac", melting: "black", boiling: "celsius", separation1: "maria", separation2: "curie" };
-  const BG = { teacher: "#e0f2fe", density: "#e0f2fe", solubility: "#dcfce7", melting: "#fce7f3", boiling: "#fef3c7", separation1: "#ede9fe", separation2: "#f3e8ff" };
+  const LOOK = { teacher: "teacher", density: "archimedes", solubility: "gaylussac", melting: "black", boiling: "celsius", separation1: "jabir", separation2: "curie" };
+  const BG = { teacher: "#e0f2fe", density: "#e0f2fe", solubility: "#dcfce7", melting: "#fce7f3", boiling: "#fef3c7", separation1: "#ccfbf1", separation2: "#f3e8ff" };
   for (const k of ORD) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><clipPath id="frame"><circle cx="100" cy="100" r="98"/></clipPath></defs><circle cx="100" cy="100" r="98" fill="${BG[k]}"/><g clip-path="url(#frame)">${idea3(k)}</g><circle cx="100" cy="100" r="97" fill="none" stroke="${INK}" stroke-width="3"/></svg>`;
     fs.writeFileSync(`${process.argv[3]}/${LOOK[k]}.svg`, svg);
