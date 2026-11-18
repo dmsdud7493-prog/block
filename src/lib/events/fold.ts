@@ -35,6 +35,8 @@ export interface FoldOptions {
   activeWindowSec: number;
 }
 
+export const HELP_OPEN_SEC = 600;
+
 export const DEFAULT_FOLD: Omit<FoldOptions, "now"> = { medianFactor: 2, minDwellSec: 300, simErrorK: 3, calcWrongK: 3, activeWindowSec: 1200 };
 
 export interface StuckReason { code: "dwell" | "sim_errors" | "calc_retry" | "graph_retry" | "table_retry"; text: string }
@@ -55,6 +57,8 @@ export interface StudentFold extends SessionInfo {
   aiReplies: number;
   /** 교사 "도와줄까?" — 보냄(답 기다림) / 예 / 아니요 */
   help: "offered" | "yes" | "no" | null;
+  /** 마지막 "도와줄까?" 이벤트 시각 — 답 없이 10분이 지나면 물음이 끝난 것으로 본다(다시 물을 수 있게) */
+  helpAt: string | null;
   stuck: StuckReason[];
   nextAction: string | null;
 }
@@ -80,6 +84,7 @@ function initial(info: SessionInfo): Acc {
     flagged: 0,
     aiReplies: 0,
     help: null,
+    helpAt: null,
   };
 }
 
@@ -107,9 +112,9 @@ function applyCounters(a: Acc, e: EventRow): Acc {
     case "ai_nudge":
       return { ...a, aiReplies: a.aiReplies + 1 };
     case "help_offered":
-      return { ...a, help: "offered" };
+      return { ...a, help: "offered", helpAt: e.ts };
     case "help_answered":
-      return { ...a, help: p.answer === "yes" ? "yes" : "no" };
+      return { ...a, help: p.answer === "yes" ? "yes" : "no", helpAt: e.ts };
     default:
       return a;
   }
@@ -127,7 +132,9 @@ export function foldSession(info: SessionInfo, events: EventRow[], opts: FoldOpt
   const sorted = [...events].sort((x, y) => x.ts.localeCompare(y.ts));
   const acc = sorted.reduce(applyEvent, initial(info));
   const active = acc.step !== "submitted" && sec(opts.now, acc.lastActivity) <= opts.activeWindowSec;
-  return { ...info, ...acc, dwellSec: sec(opts.now, acc.stepSince), active, stuck: [], nextAction: null };
+  // 학생 화면의 물음은 10분 동안만 열려 있다(api/help) — 답이 없으면 보드도 다시 물을 수 있는 상태로
+  const help = acc.help === "offered" && acc.helpAt && sec(opts.now, acc.helpAt) > HELP_OPEN_SEC ? null : acc.help;
+  return { ...info, ...acc, help, dwellSec: sec(opts.now, acc.stepSince), active, stuck: [], nextAction: null };
 }
 
 export function median(values: number[]): number {

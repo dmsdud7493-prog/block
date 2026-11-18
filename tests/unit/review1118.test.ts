@@ -32,8 +32,10 @@ describe("교사 대시보드", () => {
     expect(f.nextAction).toContain("평평한 구간");
   });
   it("도와줄까? — 보냄 → 예/아니요가 보드 상태로 접힌다", () => {
-    expect(foldSession(info("1"), [ev("1", "help_offered", 10)], opts).help).toBe("offered");
+    expect(foldSession(info("1"), [ev("1", "help_offered", 25)], opts).help).toBe("offered");
     expect(foldSession(info("1"), [ev("1", "help_offered", 10), ev("1", "help_answered", 11, { answer: "yes" })], opts).help).toBe("yes");
+    // 답 없이 10분이 지나면 다시 물을 수 있다
+    expect(foldSession(info("1"), [ev("1", "help_offered", 15)], opts).help).toBeNull();
   });
   it("첫 화면은 실험 여러 개의 카드를 합친다(막힌 학생·채점 기다림에 실험 이름, 시작 안 함은 아무 것도 시작 안 한 학생)", () => {
     const roster = [{ studentId: "u-1", studentNo: "1" }, { studentId: "u-2", studentNo: "2" }];
