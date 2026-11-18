@@ -92,7 +92,7 @@ const PEOPLE = {
       `<g transform="translate(144 172)"><rect x="-3" y="-20" width="6" height="22" rx="3" fill="#ffffff" stroke="${st.stroke === "none" ? "#64748b" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/><rect x="-1.2" y="-12" width="2.4" height="12" fill="#ef4444"/><circle cx="0" cy="5" r="5" fill="#ef4444" stroke="${st.stroke === "none" ? "#b91c1c" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/></g>`,
   },
   separation1: {
-    name: "마리아", skin: SKIN.warm, cloth: "#c2410c", iris: "#3f2a1d",
+    name: "마리아 히브레아", skin: SKIN.warm, cloth: "#c2410c", iris: "#3f2a1d",
     back: (st) => P("M46 112 Q40 36 100 32 Q160 36 154 112 L166 196 L34 196 Z", "#6d28d9", st),
     front: (st) => P("M58 80 Q62 46 100 44 Q138 46 142 80 Q124 64 100 64 Q76 64 58 80Z", "#5b21b6", st) + `<path d="M60 76 Q100 54 140 76" fill="none" stroke="#eab308" stroke-width="4"/>` + `<circle cx="100" cy="64" r="4" fill="#eab308"/>` + `<circle cx="64" cy="112" r="3" fill="#eab308"/><circle cx="136" cy="112" r="3" fill="#eab308"/>`,
     outfit: (st) => `<g transform="translate(142 172)"><path d="M-8 6 q-4 -12 8 -14 q12 2 8 14 z" fill="#fde68a" stroke="${st.stroke === "none" ? "#ca8a04" : st.stroke}" stroke-width="${Math.max(1.2, st.sw * 0.6)}"/><path d="M4 -8 q10 -6 14 6" fill="none" stroke="${st.stroke === "none" ? "#ca8a04" : st.stroke}" stroke-width="2.4"/><circle cx="0" cy="-10" r="3" fill="#fde68a"/></g>`,
