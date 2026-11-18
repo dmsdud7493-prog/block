@@ -223,7 +223,3 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .lab-foam { transform-box: fill-box; transform-origin: 50% 100%; animation: lab-foam 1.6s ease-in-out infinite; }
 @keyframes lab-foam { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12) translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .lab-rise, .lab-foam { animation: none; } .lab-fill { transition: none; } }
-/* 도와줄까? 캐릭터가 손을 흔든다 */
-.lab-wave { transform-box: fill-box; transform-origin: 50% 100%; animation: lab-wave 1.2s ease-in-out infinite; }
-@keyframes lab-wave { 0%, 100% { rotate: -12deg; } 50% { rotate: 14deg; } }
-@media (prefers-reduced-motion: reduce) { .lab-wave { animation: none; } }

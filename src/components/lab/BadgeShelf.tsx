@@ -14,7 +14,7 @@ function Badge({ a }: { a: AssignmentItem }) {
   const got = EARNED.has(a.status ?? "");
   return (
     <li className="flex w-24 flex-col items-center text-center" title={got ? s.story : `${a.title}을(를) 마치면 받을 수 있어요`}>
-      <span className={`rounded-full p-1 ${got ? "bg-sun/30 ring-2 ring-sun" : "bg-slate-100"}`}><ScientistFace look={s.look} happy={got} size={52} gray={!got} /></span>
+      <span className={`rounded-full p-1 ${got ? "bg-sun/30 ring-2 ring-sun" : "bg-slate-100"}`}><ScientistFace look={s.look} happy={got} size={60} gray={!got} /></span>
       <span className={`mt-1 text-xs font-bold ${got ? "text-nav" : "text-muted"}`}>{got ? `🏅 ${s.name}` : "？"}</span>
       <span className="sr-only">{got ? `${s.name} 배지를 모았어요. ${s.story}` : `${a.title} 배지는 아직이에요`}</span>
     </li>

@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { postJson } from "./api";
+import ScientistFace from "@/components/ui/ScientistFace";
 
 const POLL_MS = 60_000;
 const AFTER: Record<"yes" | "no", string> = {
@@ -12,23 +13,9 @@ const AFTER: Record<"yes" | "no", string> = {
   no: "멋져! 혼자 해 보다가 막히면 랩메이트에게 물어보거나 손을 들어 줘 💪",
 };
 
-/** 귀여운 선생님 캐릭터 — 동그란 얼굴, 반짝이는 큰 눈, 볼터치, 동글 안경, 손 흔들기와 하트 */
+/** 선생님 캐리커처(남자 선생님, 윙크·엄지 척) — 위아래로 살짝 떠다닌다 */
 export function HelpMascot() {
-  return (
-    <svg viewBox="0 0 120 100" width="112" height="94" aria-hidden="true" className="float-y mx-auto">
-      <path d="M96 14 c-4 -7 -14 -3 -10 5 l10 10 l10 -10 c4 -8 -6 -12 -10 -5z" fill="#fb7185" />
-      <g fill="#fde68a"><path d="M18 18 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z" /><path d="M104 52 l1.5 4 l4 1.5 l-4 1.5 l-1.5 4 l-1.5 -4 l-4 -1.5 l4 -1.5z" /></g>
-      <path d="M30 42 Q30 10 60 10 Q90 10 90 42 Q84 26 60 26 Q36 26 30 42Z" fill="#7c4a2d" />
-      <circle cx="60" cy="52" r="30" fill="#ffe0c2" stroke="#f2b98d" strokeWidth="2" />
-      <path d="M31 46 Q36 22 60 22 Q84 22 89 46 Q78 32 60 33 Q42 32 31 46Z" fill="#7c4a2d" />
-      <g fill="none" stroke="#475569" strokeWidth="2.5"><circle cx="47" cy="52" r="9" /><circle cx="73" cy="52" r="9" /><path d="M56 52 h8" /></g>
-      <g fill="#1f2937"><circle cx="47" cy="52" r="5" /><circle cx="73" cy="52" r="5" /></g>
-      <g fill="#fff"><circle cx="49" cy="50" r="2" /><circle cx="75" cy="50" r="2" /><circle cx="45.5" cy="54.5" r="1" /><circle cx="71.5" cy="54.5" r="1" /></g>
-      <g fill="#fda4af" opacity=".8"><ellipse cx="38" cy="65" rx="6" ry="4" /><ellipse cx="82" cy="65" rx="6" ry="4" /></g>
-      <path d="M52 68 Q60 78 68 68 Q60 72 52 68Z" fill="#e11d48" stroke="#9f1239" strokeWidth="1.5" strokeLinejoin="round" />
-      <g className="lab-wave"><circle cx="99" cy="76" r="9" fill="#ffe0c2" stroke="#f2b98d" strokeWidth="2" /><path d="M93 70 v-8 M99 68 v-9 M105 70 v-8" stroke="#f2b98d" strokeWidth="4" strokeLinecap="round" /></g>
-    </svg>
-  );
+  return <ScientistFace look="teacher" size={104} className="float-y mx-auto" />;
 }
 
 function Choices({ yesRef, onAnswer }: { yesRef: React.RefObject<HTMLButtonElement | null>; onAnswer: (a: "yes" | "no") => void }) {
