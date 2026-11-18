@@ -138,7 +138,7 @@ export function median(values: number[]): number {
 }
 
 /** 계산 칸 이름으로 무엇을 하다 막혔는지 — 그래프 읽기(녹는점·끓는점·증류 온도), 용해도 표 읽기, 그 밖은 계산식 */
-const calcKind = (key: string): "graph" | "table" | "formula" => (/^(mp|bp|dist)_/.test(key) ? "graph" : /^precip_/.test(key) ? "table" : "formula");
+const calcKind = (key: string): "graph" | "table" | "formula" => (/^(mp|bp|dist)[._]/.test(key) ? "graph" : /^precip[._]/.test(key) ? "table" : "formula");
 const KIND_TEXT = { graph: "그래프에서 읽는 값을", table: "용해도 표로 구하는 값을", formula: "같은 계산값을" } as const;
 
 function reasonsOf(f: StudentFold, threshold: number, opts: FoldOptions): StuckReason[] {

@@ -26,7 +26,7 @@ describe("교사 대시보드", () => {
     expect(f.stuck.map((r) => r.code)).toEqual(["dwell"]);
   });
   it("그래프에서 읽는 값(끓는점)을 3번 틀리면 그래프 읽기에 맞는 다음 행동을 준다", () => {
-    const tries = [1, 2, 3].map((i) => ev("1", "calc_checked", 25 + i, { key: "bp_water_t1", correct: false }));
+    const tries = [1, 2, 3].map((i) => ev("1", "calc_checked", 25 + i, { key: "bp.water.t1", correct: false }));
     const f = foldClass([info("1")], tries, opts)[0];
     expect(f.stuck[0].code).toBe("graph_retry");
     expect(f.nextAction).toContain("평평한 구간");
@@ -66,7 +66,7 @@ describe("학생 화면", () => {
     Object.values(CATALOGS).forEach((c) => (c.missions ?? []).forEach((m) => (m.predict ?? []).forEach((id) => expect(c.predictionTargets.some((t) => t.id === id)).toBe(true))));
   });
   it("튜터: 틀린 계산 칸이 있으면 '몰라'에도 그 칸부터 짚는다", () => {
-    const s = { ...state({ checks: [{ key: "bp_water_t1", label: "끓는점", correct: false, errorType: "plateau", attempts: 3 }] }), off_task: true, off_task_streak: 1 };
+    const s = { ...state({ checks: [{ key: "bp.water.t1", label: "끓는점", correct: false, errorType: "plateau", attempts: 3 }] }), off_task: true, off_task_streak: 1 };
     expect(localTutor(s, "몰라", null).reply).toContain("'끓는점' 칸");
   });
 });

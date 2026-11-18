@@ -21,7 +21,7 @@ interface Props {
 }
 
 /** 그래프에서 읽어 적는 칸 */
-export const isGraphRead = (key: string) => /^(mp|bp|dist)_/.test(key);
+export const isGraphRead = (key: string) => /^(mp|bp|dist)[._]/.test(key);
 
 interface Group {
   trial: number;
