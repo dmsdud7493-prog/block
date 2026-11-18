@@ -15,7 +15,8 @@ const POLL_MS = 30_000;
 type Status = "connecting" | "live" | "polling";
 const LABEL: Record<Status, string> = { connecting: "연결 중…", live: "🟢 실시간", polling: "🟡 30초마다 새로고침" };
 
-export default function LiveRefresh({ classIds, generatedAt }: { classIds: string[]; generatedAt: number }) {
+/** throttleMs — 여러 반을 합쳐 무겁게 그리는 대시보드 첫 화면은 길게(10초) 잡는다 (2026-11-18, 28명 한 반 수업 점검) */
+export default function LiveRefresh({ classIds, generatedAt, throttleMs = THROTTLE_MS }: { classIds: string[]; generatedAt: number; throttleMs?: number }) {
   const { refresh } = useRouter();
   const [status, setStatus] = useState<Status>(isSupabaseConfigured() ? "connecting" : "polling");
   const last = useRef(0);
@@ -24,7 +25,7 @@ export default function LiveRefresh({ classIds, generatedAt }: { classIds: strin
 
   useEffect(() => {
     const kick = () => {
-      const wait = Math.max(0, last.current + THROTTLE_MS - Date.now());
+      const wait = Math.max(0, last.current + throttleMs - Date.now());
       if (pending.current) return;
       pending.current = setTimeout(() => {
         pending.current = null;
@@ -45,7 +46,7 @@ export default function LiveRefresh({ classIds, generatedAt }: { classIds: strin
       if (pending.current) clearTimeout(pending.current);
       void db.removeChannel(channel);
     };
-  }, [key, refresh]);
+  }, [key, refresh, throttleMs]);
 
   const time = new Date(generatedAt).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", second: "2-digit" });
   return <p className="text-xs text-muted" role="status" aria-live="polite">{LABEL[status]} · 마지막 갱신 {time}</p>;

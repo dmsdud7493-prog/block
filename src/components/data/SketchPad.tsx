@@ -78,7 +78,7 @@ export default function SketchPad({ spec, value, onChange }: { spec: SketchSpec;
     <fieldset className="mt-3 rounded border border-violet-300 bg-violet-50 p-2">
       <legend className="px-1 text-sm font-semibold">✏️ 그래프로도 그려 볼까요? (선택)</legend>
       <p className="text-xs text-muted">그래프 위를 누르거나 끌어서 시간마다 온도를 찍어요. 결과 그래프에 “내 예상”으로 겹쳐 보여 줘요.</p>
-      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full touch-none select-none rounded bg-white" role="img" aria-label={`예상 그래프 그리기 영역, ${filled}개 점을 찍었어요`}
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="mx-auto mt-1 block w-full max-w-[calc(45dvh*1.6)] touch-none select-none rounded bg-white" role="img" aria-label={`예상 그래프 그리기 영역, ${filled}개 점을 찍었어요`}
         onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); setDrag(true); at(e); }}
         onPointerMove={(e) => { if (drag) at(e); }}
         onPointerUp={() => setDrag(false)} onPointerCancel={() => setDrag(false)}>

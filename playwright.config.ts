@@ -9,6 +9,8 @@ export default defineConfig({
   use: { baseURL: `http://127.0.0.1:${PORT}`, trace: "retain-on-failure" },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    // 학생 기기: 갤럭시탭 가로(2026-11-18) — 터치, 1024×640(Tab S9 계열). npx playwright test --project=galaxy-tab
+    { name: "galaxy-tab", use: { ...devices["Galaxy Tab S9 landscape"] } },
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,

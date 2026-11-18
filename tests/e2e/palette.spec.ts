@@ -108,6 +108,9 @@ async function loadDensity(page: import("@playwright/test").Page, action: object
     blocks: { languageVersion: 0, blocks: [{ type: "proc_start", x: 24, y: 200, deletable: false, next: { block: a } }] },
   }), action);
   await page.waitForTimeout(150); // 불러온 뒤 머리 블록 자리 맞춤이 끝날 때까지
+  // 태블릿(1024×640)에서는 조립 칸이 첫 화면 아래에 있다 — 끌기 전에 조립 칸을 화면 위로 올린다
+  await page.evaluate(() => document.querySelector(".injectionDiv")?.scrollIntoView({ block: "start" }));
+  await page.waitForTimeout(150);
 }
 
 type SlotFn = { __labSlot: (id: string, input: string) => { x: number; y: number } };

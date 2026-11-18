@@ -119,7 +119,7 @@ export default function BlockToolbar({ ws, selId, onSelect, msg, setMsg }: { ws:
       <Btn onClick={() => copy(true)} disabled={!sel || !isStatement || !sel.isDeletable()} label="고른 블록부터 아래까지 복사">📋 아래까지 복사</Btn>
       <Btn onClick={paste} disabled={!hasClip}>📥 붙여넣기</Btn>
       <ClearAll ws={ws} onCleared={(n) => { onSelect(null); setMsg(n > 0 ? "블록을 모두 지웠어요. 잘못 지웠다면 Ctrl+Z로 되돌릴 수 있어요." : "지울 블록이 없어요."); }} />
-      <p className="min-w-0 flex-1 text-xs font-semibold text-muted" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 삭제돼요. 다른 블록을 그 빈칸으로 끌어 놓아 바꿀 수도 있어요." : "행동 블록을 골랐어요. 📋 복사 → 📥 붙여넣기 하면 바로 아래에 같은 블록이 생겨요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
+      <p className="min-w-0 basis-full text-xs font-semibold text-muted xl:basis-0 xl:flex-1" aria-live="polite">{msg || (sel ? (sel.outputConnection ? "빈칸 속 블록을 골랐어요. 블록 옆 ⊗를 누르면 삭제돼요. 다른 블록을 그 빈칸으로 끌어 놓아 바꿀 수도 있어요." : "행동 블록을 골랐어요. 📋 복사 → 📥 붙여넣기 하면 바로 아래에 같은 블록이 생겨요.") : "블록을 한 번 누르면 고를 수 있어요 (Ctrl+C·Ctrl+V도 돼요)")}</p>
     </div>
   );
 }

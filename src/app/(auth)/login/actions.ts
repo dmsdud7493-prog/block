@@ -10,6 +10,10 @@ export interface AuthState {
   error: string | null;
 }
 
+/** 한 반(28명)이 한꺼번에 로그인하면 학교 IP 하나에서 요청이 몰려 Supabase가 429를 줄 수 있다 — 틀렸다고 오해하지 않게 (2026-11-18) */
+const BUSY: AuthState = { error: "지금 친구들이 한꺼번에 들어오고 있어요. 10초쯤 기다렸다가 다시 눌러 주세요." };
+const isBusy = (e: unknown) => typeof e === "object" && e !== null && (e as { status?: number }).status === 429;
+
 const NOT_READY: AuthState = { error: "아직 학교 서버가 연결되지 않았어요. 체험 모드를 이용해 주세요." };
 
 export async function loginStudent(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -22,6 +26,7 @@ export async function loginStudent(_prev: AuthState, form: FormData): Promise<Au
     const email = await studentLoginEmail(code, no);
     const supabase = await createClient();
     const { error } = email ? await supabase.auth.signInWithPassword({ email, password: studentPassword(code, pin) }) : { error: true };
+    if (isBusy(error)) return BUSY;
     if (error) return { error: "반 코드·번호·PIN을 다시 확인해 주세요." };
   } catch {
     return { error: "잠시 후 다시 시도해 주세요." };
@@ -34,6 +39,7 @@ export async function loginTeacher(_prev: AuthState, form: FormData): Promise<Au
   try {
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email: String(form.get("email") ?? ""), password: String(form.get("password") ?? "") });
+    if (isBusy(error)) return BUSY;
     if (error) return { error: "이메일 또는 비밀번호를 다시 확인해 주세요." };
   } catch {
     return { error: "잠시 후 다시 시도해 주세요." };

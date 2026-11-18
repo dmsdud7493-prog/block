@@ -6,7 +6,7 @@
  * - 블록 변경 즉시 dryRun(지침 1.3·2.3)
  * - 실행·채점·예측 이벤트는 서버 기록에서 DB 트리거가 남긴다(위조 방지, 0009) — 여기서는 화면 조작만 로그
  */
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import type { CalcRequest, Program } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import { dryRun, type SimOptions } from "@/lib/engine/simulator/run";
@@ -14,33 +14,22 @@ import { changedVariables } from "@/lib/engine/rules/variables";
 import { ERROR_HINTS_MORE } from "@/lib/engine/hintsMore";
 import { graphTargets, runTarget, usedSubjects } from "@/lib/engine/predictionScope";
 import { missionPredict } from "./missions";
+import { useAutosave } from "./useAutosave";
 import type { LabBackend } from "./backend";
 import { initialLabState, labReducer, latestRun, missingPrediction } from "./state";
 import type { LabState, PredictionRecord, RunRecord } from "./types";
 
 export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydrate?: Partial<LabState>, simOpts: SimOptions = {}) {
   const [state, dispatch] = useReducer(labReducer, initialLabState(catalog.slug, hydrate));
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onProgram = useCallback((program: Program, blockly: object) => {
     dispatch({ type: "program", program, blockly, diagnostics: dryRun(program, catalog, simOpts) });
     backend.logEvent("block_edit", { steps: program.steps.length, variables: program.variables.length });
   }, [backend, catalog, simOpts]);
 
-  // 블록·탐구 카드가 바뀌면 1.5초 뒤 자동저장 (첫 렌더는 건너뜀 — 불러온 상태를 다시 저장하지 않기 위해)
-  const firstSave = useRef(true);
+  // 블록·탐구 카드 자동저장 — 4초 동안 더 바뀌지 않으면, 또는 창을 가리거나 실행할 때 (useAutosave)
   const { program, blockly, inquiry, programVersion } = state;
-  useEffect(() => {
-    if (firstSave.current) {
-      firstSave.current = false;
-      return undefined;
-    }
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => void backend.saveProgram(program, blockly, inquiry), 1500);
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
-  }, [backend, program, blockly, inquiry, programVersion]);
+  const flushSave = useAutosave(backend, program, blockly, inquiry, programVersion);
 
   const run = useCallback(async (justSaved?: PredictionRecord) => {
     // 블록이 하나도 없으면 실행하지 않는다(빈 실행이 '성공'으로 남지 않도록, 2026-11-18 점검)
@@ -48,6 +37,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
       dispatch({ type: "runFail", message: "실험 과정 블록을 먼저 조립해 주세요. 꾸러미에서 행동 블록을 끌어 와 '실험 과정' 아래에 붙여요." });
       return;
     }
+    flushSave();
     // 블록에 쓰인 물질에 맞는 예측을 묻는다(물·식용유만 다루면 철조각 예측은 묻지 않음)
     const scope = missionPredict(catalog, state);
     const first = runTarget(catalog, state.program, scope);
@@ -83,7 +73,7 @@ export function useLabController(catalog: AnyCatalog, backend: LabBackend, hydra
     const changed = changedVariables(prev, state.program, catalog.variableOptions, catalog.isTrialEnd);
     const record: RunRecord = { ...res.data, runNo, program: state.program, changedVars: changed };
     dispatch({ type: "runDone", run: record });
-  }, [backend, catalog, state]);
+  }, [backend, catalog, state, flushSave]);
 
   const predict = useCallback(async (target: string, choice: string, rationale: string, sketch?: (number | null)[]) => {
     const prev = state.predictions.find((p) => p.target === target);

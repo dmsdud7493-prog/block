@@ -47,9 +47,14 @@ export function demoBackend(slug: string, seed: string): LabBackend {
   };
 }
 
+/** 블록 편집 기록은 15초에 1건만 남긴다 — 교사 보드는 '최근 활동 시각'만 쓰는데, 블록을 옮길 때마다 남기면
+ *  28명 한 차시에 수천 건이 쌓여 보드가 느려지고 DB가 빨리 찬다(2026-11-18 수업 전 점검) */
+const EDIT_EVERY_MS = 15_000;
+
 export function sessionBackend(sessionId: string): LabBackend {
   let queue: { type: string; payload: Record<string, unknown> }[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let lastEdit = 0;
   const flush = () => {
     const batch = queue;
     queue = [];
@@ -69,6 +74,8 @@ export function sessionBackend(sessionId: string): LabBackend {
       }
     },
     logEvent: (type, payload) => {
+      if (type === "block_edit" && Date.now() - lastEdit < EDIT_EVERY_MS) return;
+      if (type === "block_edit") lastEdit = Date.now();
       queue = [...queue, { type, payload }];
       if (timer) clearTimeout(timer);
       timer = setTimeout(flush, 1500);

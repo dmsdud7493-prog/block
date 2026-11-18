@@ -4,7 +4,7 @@
  * 왼쪽: 블록 설계 / 가운데: 점검·모니터 / 오른쪽: AI 튜터 / 아래: 결과 표·그래프·차이 설명
  */
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getCatalog } from "@/lib/engine/experiments";
 import type { Diagnostic } from "@/lib/engine/types";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
@@ -114,12 +114,22 @@ function MonitorPane({ slug, ctl, settings, shown, runError, play, onFocus, onAc
   const { state } = ctl;
   const run = latestRun(state);
   return (
-    <section aria-label="점검과 실험 모니터" className="flex flex-col gap-3">
+    <section id="lab-monitor" aria-label="점검과 실험 모니터" className="flex scroll-mt-3 flex-col gap-3">
       <LabMonitor key={run?.runNo ?? 0} slug={slug} frames={run?.frames ?? []} runError={runError} play={play} onActiveBlock={onActive} onFinish={onFinish} />
       {state.runError ? <p role="alert" className="rounded-xl border-2 border-[#ff5252] bg-[#ffe9e9] p-2 text-sm font-semibold text-err">{state.runError}</p> : null}
       {settings.hintLevelEditing === "none" ? <p className="text-sm text-muted">이번 실험은 실행할 때만 점검 결과를 보여 줘요.</p> : <CheckPanel diagnostics={shown} onFocusBlock={onFocus} />}
     </section>
   );
+}
+
+/** 태블릿 세로 화면처럼 모니터가 조립판 아래에 있으면, 실행할 때 모니터가 보이게 내려 준다(2026-11-18 갤럭시탭 점검) */
+function useShowMonitorOnRun(running: boolean) {
+  useEffect(() => {
+    if (!running) return;
+    const el = document.getElementById("lab-monitor");
+    const box = el?.getBoundingClientRect();
+    if (box && (box.top < 0 || box.top > window.innerHeight * 0.6)) el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [running]);
 }
 
 /** 보고서 단계에서는 보고서 제목이 h1이므로 머리줄 제목을 문단으로 둔다 */
@@ -162,6 +172,7 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   // 다음 미션: 조립판은 그대로 둔다 — 물질만 바꿔 다시 쓰는 경우가 많다. 비우려면 블록 위 🧹 모두 지우기(사용자 요청 2026-11-13)
   const nextMission = useCallback(() => undefined, []);
   const runCtl = useRun(ctl, settings);
+  useShowMonitorOnRun(state.running);
   const missions = useMemo(() => missionProgress(catalog, state), [catalog, state]);
   const onActive = useCallback((id: string | null) => setActiveBlock(id), []);
   const onFinish = useCallback(() => backend.logEvent("playback_done", {}), [backend]);
@@ -191,16 +202,19 @@ function LabShellInner({ slug, backend, hydrate, initialBlockly, tutor, report, 
   }
 
   return (
-    <div className="flex min-h-screen flex-col xl:h-screen">
+    <div className="flex min-h-screen flex-col xl:h-dvh">
       <LabHeader title={catalog.title} goal={catalog.goal} badge={badge}>
         {stepper}
         <RunButton running={state.running} onRun={runCtl.onRun} errors={runCtl.errors} />
       </LabHeader>
-      {/* 넓은 화면(1536px~): 300·680+·460+. 학교 노트북(1280~1535px)에서도 세 칸이 한 화면에 다 들어오게 랩메이트 칸을 줄이고 조립·모니터 칸 최소 폭을 낮춘다(2026-11-17 점검: 1366에서 모니터가 잘림) */}
-      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 xl:grid xl:grid-cols-[240px_minmax(560px,1.3fr)_minmax(400px,1fr)] 2xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
-        <div className="xl:col-start-2 xl:row-start-1 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto">{design}</div>
-        <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:min-h-0 xl:overflow-y-auto xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} onNextMission={nextMission} /></div>
-        <aside aria-label="AI 튜터" className="min-h-[420px] xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
+      {/* 넓은 화면(1536px~): 300·680+·460+. 학교 노트북(1280~1535px)에서도 세 칸이 한 화면에 다 들어오게 랩메이트 칸을 줄이고 조립·모니터 칸 최소 폭을 낮춘다(2026-11-17 점검: 1366에서 모니터가 잘림) 갤럭시탭 가로(1024~1279px): 조립판·모니터 두 칸, 모니터는 화면에 붙어 따라오고 랩메이트는 아래(2026-11-18) */}
+      <main id="main" className="lab-hscroll flex min-h-0 flex-1 flex-col gap-3 p-3 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start xl:items-stretch xl:grid xl:grid-cols-[240px_minmax(560px,1.3fr)_minmax(400px,1fr)] 2xl:grid-cols-[300px_minmax(680px,1.4fr)_minmax(460px,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-0 xl:overflow-x-auto xl:overflow-y-hidden xl:p-0">
+        {/* 태블릿: 조립판·모니터를 한 묶음에 넣어 붙어 따라오는 모니터가 아래 랩메이트를 덮지 않게(모니터 아래 버튼이 가려지던 문제). xl에서는 묶음을 풀어(contents) 세 칸 그대로 */}
+        <div className="flex flex-col gap-3 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start xl:contents">
+        <div className="lg:col-start-1 lg:row-start-1 xl:col-start-2 xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto">{design}</div>
+        <div className="space-y-4 lg:sticky lg:top-3 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-1.5rem)] lg:overflow-y-auto xl:static xl:col-start-3 xl:max-h-none xl:min-h-0 xl:bg-white xl:p-4">{monitor}<ResultsSection catalog={catalog} ctl={ctl} onNextMission={nextMission} /></div>
+        </div>
+        <aside aria-label="AI 튜터" className="min-h-[420px] lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:min-h-0 xl:border-r xl:border-line">{tutor ? tutor(ctl) : null}</aside>
       </main>
       {gate ? <PredictionGate target={gate} record={state.predictions.find((p) => p.target === gate.id)} purpose={state.gateFor === "graph" ? "그래프를 보기 전에" : "실험하기 전에"} onHint={() => dispatch({ type: "hint", target: gate.id })} onSubmit={(c, r, sk) => void submitGate(gate.id, c, r, sk)} onCancel={() => dispatch({ type: "closeGate" })} /> : null}
     </div>

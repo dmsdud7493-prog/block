@@ -4,6 +4,8 @@
  * 보호자 동의서 수령 표시(미표시 학생은 실험 시작 불가), PIN 재발급.
  */
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { postJson } from "@/components/lab/api";
 import type { StudentRow } from "@/lib/teacherTypes";
 import { useAction } from "./useAction";
 import DangerButton from "./DangerButton";
@@ -48,6 +50,38 @@ function StudentLine({ s }: { s: StudentRow }) {
   );
 }
 
+/**
+ * 반 전체 동의서 수령 표시 (2026-11-18, 28명 한 반 수업 점검) — 한 명씩 체크하면 28번 눌러야 한다.
+ * 실제로 받은 경우에만 쓰도록 같은 자리에서 한 번 더 확인한다. 기존 app_set_consent를 학생마다 부른다(DB 변경 없음).
+ */
+function ConsentAll({ students }: { students: StudentRow[] }) {
+  const { refresh } = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const todo = students.filter((s) => !s.consentOnFile);
+  if (todo.length === 0) return null;
+  const run = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await Promise.all(todo.map((s) => postJson("/api/class/consent", { studentId: s.id, onFile: true })));
+      const failed = res.filter((r) => r.error).length;
+      setMsg(failed ? `${todo.length - failed}명 표시, ${failed}명은 다시 눌러 주세요.` : `${todo.length}명 모두 수령으로 표시했어요.`);
+    } catch {
+      setMsg("연결이 끊겼어요. 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+      refresh();
+    }
+  };
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+      <DangerButton label={`✅ 미수령 ${todo.length}명 모두 수령 표시`} warning="보호자 동의서를 실제로 모두 받았을 때만 눌러 주세요." confirmLabel="모두 수령 표시" busy={busy} onConfirm={() => void run()} />
+      {msg ? <span role="status">{msg}</span> : null}
+    </div>
+  );
+}
+
 export default function StudentManager({ classId, joinCode, students }: { classId: string; joinCode: string; students: StudentRow[] }) {
   const [nos, setNos] = useState("");
   const [created, setCreated] = useState<Created[]>([]);
@@ -75,6 +109,7 @@ export default function StudentManager({ classId, joinCode, students }: { classI
       </form>
       {add.error ? <p role="alert" className="text-sm text-err">{add.error}</p> : null}
       <PinSheet joinCode={joinCode} rows={created} />
+      <ConsentAll students={students} />
       <table className="mt-3 w-full text-sm">
         <caption className="sr-only">학생 목록과 보호자 동의 상태</caption>
         <thead><tr className="bg-slate-100"><th scope="col" className="p-2 text-left">번호</th><th scope="col" className="p-2 text-left">보호자 동의서</th><th scope="col" className="p-2 text-left">PIN</th><th scope="col" className="p-2 text-left">삭제</th></tr></thead>

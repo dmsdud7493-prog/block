@@ -37,7 +37,7 @@ export default async function Dashboard() {
     <main id="main" className="mx-auto max-w-6xl space-y-6 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-bold">📊 대시보드</h1>
-        {boards.length ? <LiveRefresh classIds={boards.map((b) => b.classId)} generatedAt={generatedAt} /> : null}
+        {boards.length ? <LiveRefresh classIds={boards.map((b) => b.classId)} generatedAt={generatedAt} throttleMs={10_000} /> : null}
       </div>
       {boards.length === 0 ? <p>먼저 <Link href="/dashboard/classes" className="underline">반을 만들어</Link> 학생 계정을 준비하세요.</p> : null}
       {boards.map((b) => <ClassSection key={b.classId} board={b} />)}

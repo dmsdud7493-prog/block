@@ -13,7 +13,8 @@ import { reportContentSchema } from "@/lib/report/template";
 import { changedSections } from "@/lib/report/diff";
 import type { ClassBoard, ChatLine, RunLine, SessionDetail, SubmissionDetail } from "@/lib/teacherTypes";
 
-const EVENT_LIMIT = 5000;
+const EVENT_PAGE = 1000;
+const EVENT_LIMIT = 20000;
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 type Embedded<T> = T | T[] | null;
@@ -37,13 +38,22 @@ async function loadSessions(db: Db, assignmentId: string): Promise<SessionRow[]>
   return (data ?? []) as unknown as SessionRow[];
 }
 
-async function loadEvents(db: Db, classId: string, sessionIds: string[]): Promise<EventRow[]> {
-  if (sessionIds.length === 0) return [];
+/** Supabase는 한 번에 최대 1,000행만 돌려준다(max_rows). 한 반 28명 한 차시면 블록 기록만으로 1,000행을 넘으므로
+ *  1,000행씩 나눠 끝까지 읽는다(2026-11-18 수업 전 점검). 최신순·id로 순서를 고정해 쪽이 겹치거나 빠지지 않게 한다 */
+async function eventPage(db: Db, classId: string, sessionIds: string[], from: number): Promise<EventRow[]> {
   const { data } = await db.from("events")
     .select("session_id, student_id, event_type, payload, ts")
     .eq("class_id", classId).in("session_id", sessionIds)
-    .order("ts", { ascending: false }).limit(EVENT_LIMIT);
-  return (data ?? []) as EventRow[];
+    .order("ts", { ascending: false }).order("id", { ascending: false })
+    .range(from, from + EVENT_PAGE - 1);
+  const rows = (data ?? []) as EventRow[];
+  if (rows.length < EVENT_PAGE || from + EVENT_PAGE >= EVENT_LIMIT) return rows;
+  return [...rows, ...(await eventPage(db, classId, sessionIds, from + EVENT_PAGE))];
+}
+
+async function loadEvents(db: Db, classId: string, sessionIds: string[]): Promise<EventRow[]> {
+  if (sessionIds.length === 0) return [];
+  return eventPage(db, classId, sessionIds, 0);
 }
 
 /** T-04 실시간 보드 + 4카드 — 과제 하나(기본: 가장 최근 배정)를 기준으로 */

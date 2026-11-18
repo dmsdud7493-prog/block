@@ -38,6 +38,7 @@ async function answerGates(page: Page) {
   for (let i = 0; i < 4 && (await dialog.isVisible().catch(() => false)); i += 1) {
     const pad = dialog.getByRole("img", { name: /예상 그래프 그리기/ });
     if (await pad.count()) {
+      await pad.scrollIntoViewIfNeeded(); // 태블릿(640px 높이)에서는 대화 상자 안에서 내려 봐야 보인다
       const box = (await pad.boundingBox())!;
       for (const fx of [0.15, 0.5, 0.85]) await page.mouse.click(box.x + box.width * fx, box.y + box.height * (0.8 - fx / 2));
       await expect(pad).toHaveAttribute("aria-label", /3개 점/);
