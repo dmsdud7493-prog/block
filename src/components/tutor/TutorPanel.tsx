@@ -144,5 +144,6 @@ export default function TutorPanel({ ctl, catalog, mode, sessionId, seed, initia
 }
 
 function Chips({ chips, disabled, onPick }: { chips: string[]; disabled: boolean; onPick: (c: string) => void }) {
-  return <div className="flex flex-wrap gap-1.5 px-3 pb-2">{chips.map((c) => <button key={c} type="button" disabled={disabled} className="tap rounded-full border border-[#d7e3fb] bg-[#eef3ff] px-3 text-xs font-semibold text-brand hover:bg-[#dfe9ff]" onClick={() => onPick(c)}>{c}</button>)}</div>;
+  // 칩은 낮게(32px) — 랩메이트 대사 칸을 넓힌다(2026-11-19 사용자 요청). 32px도 WCAG 2.5.8(24px) 이상
+  return <div className="flex flex-wrap gap-1 px-3 pb-1.5">{chips.map((c) => <button key={c} type="button" disabled={disabled} className="min-h-8 rounded-full border border-[#d7e3fb] bg-[#eef3ff] px-2.5 py-0.5 text-left text-xs font-semibold leading-tight text-brand hover:bg-[#dfe9ff]" onClick={() => onPick(c)}>{c}</button>)}</div>;
 }

@@ -1,6 +1,7 @@
 "use client";
 /**
  * 오늘의 미션 카드 — 무엇을 알아낼지만 보여 준다(순서는 학생이 블록으로, 규칙 6).
+ * 블록 조립판이 넓게 보이도록 낮게 만든다(2026-11-19 사용자 요청: 글자·여백·과학자 비커를 줄임).
  * 미션이 하나뿐이면 번호(①)와 진행 수(0/1)를 붙이지 않는다. 번호 앞뒤 아이콘은 두지 않는다. 마친 미션은 "완료" 글자, 지금 할 미션은 굵게, 다음 미션은 흐리게(화면 읽기용 글자로도 상태를 적는다).
  */
 import type { MissionProgress } from "@/components/lab/missions";
@@ -14,7 +15,7 @@ function Row({ n, title, state, numbered }: { n: number; title: string; state: "
   return (
     <li className={tone}>
       {numbered ? `${NUM[n] ?? `${n + 1}.`} ` : null}{title}
-      {state === "done" ? <span className="ml-1 rounded-full bg-white px-1.5 text-sm font-bold">완료</span> : <span className="sr-only"> ({word})</span>}
+      {state === "done" ? <span className="ml-1 rounded-full bg-white px-1.5 text-xs font-bold">완료</span> : <span className="sr-only"> ({word})</span>}
     </li>
   );
 }
@@ -24,14 +25,14 @@ export default function MissionBar({ progress, fixedText = null, slug = "" }: { 
   if (missions.length === 0) return null;
   const all = current >= missions.length;
   return (
-    <section id="today-mission" tabIndex={-1} aria-label="오늘의 미션" className="scroll-mt-4 outline-none focus-visible:ring-4 focus-visible:ring-sun rounded-lg border-2 border-sun bg-[#fffbea] px-4 py-2.5 text-base leading-relaxed shadow-sm">
-      <h3 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg text-nav">
+    <section id="today-mission" tabIndex={-1} aria-label="오늘의 미션" className="scroll-mt-4 outline-none focus-visible:ring-4 focus-visible:ring-sun rounded-lg border-2 border-sun bg-[#fffbea] px-3 py-1.5 text-sm leading-snug shadow-sm">
+      <h3 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-base text-nav">
         🎯 오늘의 미션
-        {missions.length > 1 ? <span className="ml-auto rounded-full bg-white px-2 font-sans text-sm font-bold text-muted">{done.filter(Boolean).length}/{missions.length}</span> : null}
+        {missions.length > 1 ? <span className="ml-auto rounded-full bg-white px-2 font-sans text-xs font-bold text-muted">{done.filter(Boolean).length}/{missions.length}</span> : null}
       </h3>
-      <div className="mt-1 flex items-start gap-3">
-        <ol className="min-w-0 flex-1 space-y-1">{missions.map((m, i) => <Row key={m.id} n={i} title={m.title} numbered={missions.length > 1} state={done[i] ? "done" : i === current ? "now" : "locked"} />)}</ol>
-        <ScientistBeaker slug={slug} done={done.filter(Boolean).length} total={missions.length} />
+      <div className="mt-0.5 flex items-start gap-2">
+        <ol className="min-w-0 flex-1 space-y-0.5">{missions.map((m, i) => <Row key={m.id} n={i} title={m.title} numbered={missions.length > 1} state={done[i] ? "done" : i === current ? "now" : "locked"} />)}</ol>
+        <ScientistBeaker slug={slug} done={done.filter(Boolean).length} total={missions.length} size={48} />
       </div>
       {fixedText ? <p className="mt-1 rounded bg-white px-2 py-1 text-sm font-semibold text-nav">📏 이번 실험은 넣는 양이 정해져 있어요: {fixedText}</p> : null}
       {all ? <p className="mt-1 font-bold text-ok">🏆 미션을 {missions.length > 1 ? "모두 " : ""}마쳤어요! 결과 해석과 보고서로 정리해 봐요.</p> : null}

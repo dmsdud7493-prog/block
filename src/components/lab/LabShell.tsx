@@ -101,7 +101,7 @@ function DesignPane({ slug, examples, missions, fixedText, initial, diagnostics,
       {missions.missions.length > 0 && missions.done[0] ? null : <ExampleSteps steps={examples} />}
       <BlockHelp />
       {/* 조립판은 도구 막대 + 블록 꾸러미가 다 보일 만큼은 늘 확보한다(창이 낮으면 이 칸이 세로로 스크롤된다) */}
-      <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white xl:min-h-[480px]">
+      <div className="relative min-h-[480px] flex-1 overflow-hidden rounded-lg border border-line bg-white lg:min-h-[560px] xl:min-h-[480px]">
         <BlocklyWorkspace slug={slug} initialState={initial} diagnostics={diagnostics} activeBlockId={activeBlock} errorBlockId={errorBlock} selectBlockId={focusBlock} onProgramChange={onProgram} onBlockClick={onBlockClick} />
       </div>
     </section>

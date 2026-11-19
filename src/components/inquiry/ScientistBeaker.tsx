@@ -22,11 +22,11 @@ function Foam({ color }: { color: string }) {
 }
 
 /** 비커 — 미션 수만큼 눈금, done만큼 액체 */
-function Beaker({ s, done, total, burst, full }: { s: Scientist; done: number; total: number; burst: boolean; full: boolean }) {
+function Beaker({ s, done, total, burst, full, size }: { s: Scientist; done: number; total: number; burst: boolean; full: boolean; size: number }) {
   const level = BOTTOM - ((BOTTOM - TOP) * done) / Math.max(1, total);
   const ticks = Array.from({ length: total }, (_, i) => BOTTOM - ((BOTTOM - TOP) * (i + 1)) / total);
   return (
-    <svg viewBox="0 0 100 100" width="76" height="76" aria-hidden="true" className="overflow-visible">
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" className="overflow-visible">
       <defs><clipPath id={`beaker-${s.look}`}><path d="M24 14 L24 88 Q24 94 30 94 L70 94 Q76 94 76 88 L76 14 Z" /></clipPath></defs>
       <g clipPath={`url(#beaker-${s.look})`}>
         <rect className="lab-fill" x="20" y={level} width="60" height={BOTTOM + 4 - level} fill={s.liquid} opacity=".8" />
@@ -56,7 +56,7 @@ function useBurst(done: number): boolean {
   return burst;
 }
 
-export default function ScientistBeaker({ slug, done, total }: { slug: string; done: number; total: number }) {
+export default function ScientistBeaker({ slug, done, total, size = 76 }: { slug: string; done: number; total: number; size?: number }) {
   const s = scientistOf(slug);
   const burst = useBurst(done);
   if (!s || total === 0) return null;
@@ -65,10 +65,10 @@ export default function ScientistBeaker({ slug, done, total }: { slug: string; d
   return (
     <figure className={`relative flex shrink-0 flex-col items-center ${burst ? "pop-in" : ""}`}>
       <div className="flex items-end" role="img" aria-label={`과학자 짝꿍 ${s.name}과 비커: 미션 ${total}개 중 ${done}개를 마쳐 비커가 ${full ? "가득 찼어요" : "차오르는 중이에요"}`}>
-        <ScientistFace look={s.look} happy={burst || full} size={76} />
-        <Beaker s={s} done={done} total={total} burst={burst} full={full} />
+        <ScientistFace look={s.look} happy={burst || full} size={size} />
+        <Beaker s={s} done={done} total={total} burst={burst} full={full} size={size} />
       </div>
-      <figcaption className="text-xs font-bold leading-tight text-nav">{s.name}</figcaption>
+      <figcaption className="text-[11px] font-bold leading-tight text-nav">{s.name}</figcaption>
       {say ? <p aria-hidden="true" className="mt-0.5 whitespace-nowrap rounded-full bg-sun px-2 text-xs font-extrabold text-nav">{full ? "🏅 배지 획득!" : `🎉 미션 ${done} 성공!`}</p> : null}
       <span className="sr-only" aria-live="polite">{say ?? ""}</span>
     </figure>
