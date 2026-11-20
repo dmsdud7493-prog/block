@@ -2,7 +2,8 @@
 /**
  * 미션 진행 = 과학자 짝꿍 옆 비커가 차오른다 (2026-11-18 사용자 요청: 배지 모으기 + 차오르는 진행 막대).
  * - 미션을 하나 마칠 때마다 비커 눈금 하나만큼 액체가 차오르고 방울이 퐁퐁 올라온다(얼굴은 웃는 눈).
- * - 모두 마치면 비커가 보글보글 넘치고 "배지 획득" — 배지는 실험 목록의 배지 진열장에 모인다.
+ * - 모두 마치면 비커가 보글보글 넘치고 "보고서를 내면 배지가 진열장에 들어가요!" — 배지는 보고서를 제출해야
+ *   실험 목록의 배지 진열장에 켜진다(BadgeShelf). 배지를 보고서 제출의 동기로 쓴다(2026-11-20 사용자 결정).
  * 움직임 줄이기 설정이면 애니메이션 없이 높이만 바뀐다(globals.css). 바뀐 내용은 화면 읽기 프로그램에 알린다.
  */
 import { useEffect, useRef, useState } from "react";
@@ -61,7 +62,7 @@ export default function ScientistBeaker({ slug, done, total, size = 76 }: { slug
   const burst = useBurst(done);
   if (!s || total === 0) return null;
   const full = done >= total;
-  const say = full ? `${s.name} 배지 획득! 비커가 가득 찼어요.` : burst ? `미션 ${done} 성공! 비커가 차올랐어요.` : null;
+  const say = full ? `미션을 모두 마쳐 비커가 가득 찼어요. 보고서를 내면 ${s.name} 배지가 진열장에 들어가요.` : burst ? `미션 ${done} 성공! 비커가 차올랐어요.` : null;
   return (
     <figure className={`relative flex shrink-0 flex-col items-center ${burst ? "pop-in" : ""}`}>
       <div className="flex items-end" role="img" aria-label={`과학자 짝꿍 ${s.name}과 비커: 미션 ${total}개 중 ${done}개를 마쳐 비커가 ${full ? "가득 찼어요" : "차오르는 중이에요"}`}>
@@ -69,7 +70,7 @@ export default function ScientistBeaker({ slug, done, total, size = 76 }: { slug
         <Beaker s={s} done={done} total={total} burst={burst} full={full} size={size} />
       </div>
       <figcaption className="text-[11px] font-bold leading-tight text-nav">{s.name}</figcaption>
-      {say ? <p aria-hidden="true" className="mt-0.5 whitespace-nowrap rounded-full bg-sun px-2 text-xs font-extrabold text-nav">{full ? "🏅 배지 획득!" : `🎉 미션 ${done} 성공!`}</p> : null}
+      {say ? <p aria-hidden="true" className={`mt-0.5 bg-sun px-2 text-xs font-extrabold leading-tight text-nav ${full ? "max-w-[10rem] rounded-xl py-0.5 text-center" : "whitespace-nowrap rounded-full"}`}>{full ? "🏅 보고서를 내면 배지가 진열장에 들어가요!" : `🎉 미션 ${done} 성공!`}</p> : null}
       <span className="sr-only" aria-live="polite">{say ?? ""}</span>
     </figure>
   );
