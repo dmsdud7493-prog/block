@@ -72,6 +72,33 @@ function ConsentAll({ students }: { students: StudentRow[] }) {
   );
 }
 
+/**
+ * 반 전체 PIN 재발급 + 입장 카드 한꺼번에 인쇄 (2026-11-20 사용자 요청).
+ * 되돌릴 수 없으므로(옛 PIN·옛 카드가 모두 무효) 같은 자리에서 한 번 더 확인한다.
+ */
+function ReissueAll({ classId, count, onDone }: { classId: string; count: number; onDone: (rows: Created[]) => void }) {
+  const act = useAction<{ created: Created[] }>("/api/class/pins");
+  const [round, setRound] = useState(0); // 끝나면 확인 상자를 닫는다(새로 그리기)
+  const run = async () => {
+    try {
+      const r = await act.run({ classId });
+      if (r) onDone(r.created);
+    } catch {
+      onDone([]);
+    } finally {
+      setRound((n) => n + 1);
+    }
+  };
+  if (count === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+      <DangerButton key={round} label={`🔄 반 전체(${count}명) PIN 재발급·입장 카드 인쇄`} warning="모든 학생의 옛 PIN과 이미 나눠 준 입장 카드는 더 이상 쓸 수 없게 돼요. 새 카드를 바로 인쇄해 나눠 주세요." confirmLabel="모두 재발급" busy={act.busy} onConfirm={() => void run()} />
+      {act.busy ? <span role="status">새 PIN을 만드는 중… (학생 수만큼 몇 초 걸려요)</span> : null}
+      {act.error ? <span role="alert" className="text-err">{act.error}</span> : null}
+    </div>
+  );
+}
+
 export default function StudentManager({ classId, joinCode, students }: { classId: string; joinCode: string; students: StudentRow[] }) {
   const [nos, setNos] = useState("");
   const [created, setCreated] = useState<Created[]>([]);
@@ -98,6 +125,7 @@ export default function StudentManager({ classId, joinCode, students }: { classI
         <button type="submit" disabled={add.busy || !nos.trim()} className="tap rounded bg-brand px-4 font-bold text-white">계정 만들기</button>
       </form>
       {add.error ? <p role="alert" className="text-sm text-err">{add.error}</p> : null}
+      <ReissueAll classId={classId} count={students.length} onDone={setCreated} />
       <PinSheet joinCode={joinCode} rows={created} />
       <ConsentAll students={students} />
       <table className="mt-3 w-full text-sm">

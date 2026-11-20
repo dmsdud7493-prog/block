@@ -77,6 +77,34 @@ async function resetPinInner(teacherId: string, studentId: string): Promise<stri
   return pin;
 }
 
+/**
+ * 반 전체 PIN 재발급 (2026-11-20 사용자 요청: 한 번에 재발급하고 입장 카드를 한꺼번에 인쇄).
+ * 교사 소유 반인지 확인한 뒤 학생마다 새 PIN을 만든다. 한 명이 실패해도 나머지는 계속하고, 실패한 학생은 error로 알린다.
+ * 옛 PIN·옛 입장 카드는 바로 못 쓰게 된다. 새 PIN은 이 응답에서 한 번만 보여 준다.
+ */
+export async function resetClassPins(teacherId: string, classId: string): Promise<CreatedStudent[]> {
+  try {
+    const admin = createAdminClient();
+    const { data: cls } = await admin.from("classes").select("join_code, teacher_id").eq("id", classId).single();
+    if (!cls || cls.teacher_id !== teacherId) throw new Error("forbidden");
+    const { data } = await admin.from("enrollments").select("student_id, student_no").eq("class_id", classId);
+    const rows = [...(data ?? [])].sort((x, y) => String(x.student_no).localeCompare(String(y.student_no), "ko", { numeric: true }));
+    return await rows.reduce<Promise<CreatedStudent[]>>(async (accP, r) => [...(await accP), await resetOne(cls.join_code, r.student_id as string, r.student_no as string)], Promise.resolve([]));
+  } catch (e) {
+    throw e instanceof Error && e.message === "forbidden" ? e : new Error("server_error");
+  }
+}
+
+async function resetOne(joinCode: string, studentId: string, studentNo: string): Promise<CreatedStudent> {
+  const pin = newPin();
+  try {
+    const { error } = await createAdminClient().auth.admin.updateUserById(studentId, { password: studentPassword(joinCode, pin) });
+    return error ? { studentNo, pin: null, error: "재발급하지 못했어요 — 이 학생만 다시 재발급하세요" } : { studentNo, pin };
+  } catch {
+    return { studentNo, pin: null, error: "재발급하지 못했어요 — 이 학생만 다시 재발급하세요" };
+  }
+}
+
 /** 로그인용: 반 코드 + 번호 → 내부 로그인 ID */
 export async function studentLoginEmail(joinCode: string, studentNo: string): Promise<string | null> {
   try {
