@@ -23,7 +23,7 @@ function Qr({ text, size }: { text: string; size: string }) {
     return { n: m.size + 4, d: path };
   }, [text]);
   return (
-    <svg viewBox={`0 0 ${n} ${n}`} style={{ width: size, height: size }} shapeRendering="crispEdges" role="img" aria-label="입장 QR 코드">
+    <svg viewBox={`0 0 ${n} ${n}`} style={{ width: size, height: size, flexShrink: 0 }} shapeRendering="crispEdges" role="img" aria-label="입장 QR 코드">
       <rect width={n} height={n} fill="#fff" />
       <path d={d} fill="#000" />
     </svg>
@@ -32,14 +32,15 @@ function Qr({ text, size }: { text: string; size: string }) {
 
 function Card({ origin, joinCode, row }: { origin: string; joinCode: string; row: CardRow }) {
   return (
-    <div className="join-card flex items-center gap-[3mm] overflow-hidden rounded-[3mm] border-2 border-nav bg-white p-[3mm] text-nav" style={{ width: "85.6mm", height: "54mm" }}>
-      {row.pin && origin ? <Qr text={joinCardUrl(origin, { code: joinCode, no: row.studentNo, pin: row.pin })} size="40mm" /> : <p className="w-[40mm] text-xs text-err">{row.error ?? "PIN 없음"}</p>}
+    <div className="join-card flex items-center gap-[2.5mm] overflow-hidden rounded-[3mm] border-2 border-nav bg-white p-[3mm] text-nav" style={{ width: "85.6mm", height: "54mm" }}>
+      {row.pin && origin ? <Qr text={joinCardUrl(origin, { code: joinCode, no: row.studentNo, pin: row.pin })} size="36mm" /> : <p className="w-[36mm] shrink-0 text-xs text-err">{row.error ?? "PIN 없음"}</p>}
       <div className="min-w-0 flex-1 leading-tight">
-        <p className="text-[9pt] font-bold">🔬 가상실험실 입장 카드</p>
+        {/* 제목은 한 줄로(2026-11-20: 인쇄하면 '드'가 다음 줄로 내려감) — 줄바꿈 금지 + QR을 36 mm로 줄여 글자 칸을 넓힘 */}
+        <p className="whitespace-nowrap text-[8.5pt] font-bold tracking-tight">🔬 가상실험실 입장 카드</p>
         <p className="mt-[2mm] text-[22pt] font-extrabold">{row.studentNo}</p>
         <p className="mt-[2mm] text-[8pt]">반 코드 <span className="font-mono font-bold">{joinCode}</span></p>
         <p className="text-[8pt]">PIN <span className="font-mono font-bold">{row.pin ?? "—"}</span></p>
-        <p className="mt-[2mm] text-[7pt] text-muted">태블릿 카메라로 QR을 찍으면 바로 들어가요</p>
+        <p className="mt-[2mm] text-[7pt] text-muted">태블릿 카메라로 QR을 찍으면<br />바로 들어가요</p>
       </div>
     </div>
   );
