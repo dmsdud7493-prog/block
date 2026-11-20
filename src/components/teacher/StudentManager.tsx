@@ -1,6 +1,6 @@
 "use client";
 /**
- * 학생 계정 (R1·R2·R9): 번호만 입력 → 계정·PIN 생성(한 번만 표시, 출력해서 배부),
+ * 학생 계정 (R1·R2·R9): 번호만 입력 → 계정·PIN 생성(한 번만 표시, QR 입장 카드로 인쇄해 배부 — 2026-11-20),
  * 보호자 동의서 수령 표시(미표시 학생은 실험 시작 불가), PIN 재발급.
  */
 import { useState } from "react";
@@ -9,25 +9,15 @@ import { postJson } from "@/components/lab/api";
 import type { StudentRow } from "@/lib/teacherTypes";
 import { useAction } from "./useAction";
 import DangerButton from "./DangerButton";
+import JoinCards from "./JoinCards";
 
 interface Created { studentNo: string; pin: string | null; error?: string }
 
 function PinSheet({ joinCode, rows }: { joinCode: string; rows: Created[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div className="mt-3 rounded border-2 border-dashed border-brand p-3">
-      <p className="text-sm font-bold">🖨 학생에게 나눠 줄 입장 정보 (이 화면을 닫으면 PIN을 다시 볼 수 없어요 — 인쇄하거나 재발급하세요)</p>
-      <table className="mt-2 w-full text-sm">
-        <caption className="sr-only">새로 만든 학생 입장 정보</caption>
-        <thead><tr><th scope="col" className="text-left">번호</th><th scope="col" className="text-left">반 코드</th><th scope="col" className="text-left">PIN</th></tr></thead>
-        <tbody>{rows.map((r) => <tr key={r.studentNo}><td>{r.studentNo}</td><td className="font-mono">{joinCode}</td><td className="font-mono">{r.pin ?? r.error}</td></tr>)}</tbody>
-      </table>
-      <button type="button" className="tap mt-2 rounded border border-line px-3 text-sm" onClick={() => window.print()}>인쇄</button>
-    </div>
-  );
+  return <JoinCards joinCode={joinCode} rows={rows} title="🖨 학생에게 나눠 줄 입장 카드 (이 화면을 닫으면 PIN을 다시 볼 수 없어요 — 바로 인쇄하거나 재발급하세요)" />;
 }
 
-function StudentLine({ s }: { s: StudentRow }) {
+function StudentLine({ s, joinCode }: { s: StudentRow; joinCode: string }) {
   const consent = useAction("/api/class/consent");
   const pin = useAction<{ pin: string }>("/api/class/pin");
   const [newPin, setNewPin] = useState<string | null>(null);
@@ -44,7 +34,7 @@ function StudentLine({ s }: { s: StudentRow }) {
     <tr className="border-t border-line">
       <th scope="row" className="p-2 text-left">{s.studentNo}</th>
       <td className="p-2"><label className="tap flex items-center gap-2"><input type="checkbox" checked={s.consentOnFile} disabled={consent.busy} onChange={(e) => void consent.run({ studentId: s.id, onFile: e.target.checked })} />{s.consentOnFile ? `수령 (${s.consentDate ?? ""})` : "미수령"}</label></td>
-      <td className="p-2"><button type="button" className="tap rounded border border-line px-2 text-sm" onClick={() => void reissue()}>PIN 재발급</button>{newPin ? <span className="ml-2 font-mono" aria-live="polite">새 PIN {newPin}</span> : null}</td>
+      <td className="p-2"><button type="button" className="tap rounded border border-line px-2 text-sm" onClick={() => void reissue()}>PIN 재발급</button>{newPin ? <span className="ml-2 font-mono" aria-live="polite">새 PIN {newPin}</span> : null}{newPin ? <JoinCards joinCode={joinCode} rows={[{ studentNo: s.studentNo, pin: newPin }]} title="새 입장 카드 (옛 카드는 이제 쓸 수 없어요)" /> : null}</td>
       <td className="p-2"><DangerButton label="계정·기록 삭제" warning={`${s.studentNo}의 계정과 실험·대화·보고서 기록이 모두 지워지고 되돌릴 수 없어요.`} confirmLabel="영구 삭제" busy={remove.busy} onConfirm={() => void remove.run({ studentId: s.id })} />{remove.error ? <span role="alert" className="ml-2 text-err">{remove.error}</span> : null}</td>
     </tr>
   );
@@ -113,7 +103,7 @@ export default function StudentManager({ classId, joinCode, students }: { classI
       <table className="mt-3 w-full text-sm">
         <caption className="sr-only">학생 목록과 보호자 동의 상태</caption>
         <thead><tr className="bg-slate-100"><th scope="col" className="p-2 text-left">번호</th><th scope="col" className="p-2 text-left">보호자 동의서</th><th scope="col" className="p-2 text-left">PIN</th><th scope="col" className="p-2 text-left">삭제</th></tr></thead>
-        <tbody>{students.map((s) => <StudentLine key={s.id} s={s} />)}</tbody>
+        <tbody>{students.map((s) => <StudentLine key={s.id} s={s} joinCode={joinCode} />)}</tbody>
       </table>
     </section>
   );

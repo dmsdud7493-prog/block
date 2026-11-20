@@ -36,7 +36,7 @@ function HeroIntro() {
       <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">🔬 물질의 특성<br />가상실험실</h1>
       <p className="mt-3 max-w-xl text-[#d6e4f0]">블록을 끼워 실험 순서를 조립하고, 결과를 먼저 예상한 다음, 가상 실험으로 직접 확인해 봐요. 실험 도구가 깨질 걱정은 없어요!</p>
       <p className="mt-6 flex flex-wrap gap-3">
-        <Link href="/login" className="tap btn-sun inline-flex items-center px-7 text-lg">🎒 학생 입장</Link>
+        <Link href="/login?scan=1" className="tap btn-sun inline-flex items-center px-7 text-lg">🎒 학생 입장</Link>
         <Link href="/login?role=teacher" className="tap inline-flex items-center rounded-full border-2 border-white/60 px-6 font-bold text-white hover:bg-white/10">🧑‍🏫 교사 입장</Link>
       </p>
     </div>

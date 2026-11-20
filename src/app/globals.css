@@ -200,6 +200,14 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   html, body { background: #ffffff !important; }
 }
 
+/* 학생 입장 카드 인쇄(2026-11-20) — '입장 카드 인쇄'를 누를 때만 카드 사본만 찍는다. 화면에서는 사본을 숨긴다 */
+.join-print { display: none; }
+@media print {
+  body.print-cards > *:not(.join-print) { display: none !important; }
+  body.print-cards .join-print { display: block; }
+  .join-card { break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 /* 밀도: 핀셋에서 철조각을 놓으면 손에서는 사라지고(35% 무렵), 그 조각이 떨어져 바닥에 닿는다 */
 .lab-tip-release { animation: lab-tip-release calc(1.5s / var(--lab-speed, 1)) linear both; }
 @keyframes lab-tip-release { 0%, 34% { opacity: 1; } 38%, 100% { opacity: 0; } }
