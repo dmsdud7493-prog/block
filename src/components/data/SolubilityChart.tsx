@@ -7,42 +7,16 @@ import { CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tool
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import type { RunRecord } from "@/components/lab/types";
 import { subjectLabel } from "@/lib/engine/subjectLabel";
+import { bestSolubilityPoints } from "@/lib/report/solubility";
 
 const COLORS = ["#1d4ed8", "#0e7490", "#b45309"];
 const labelOf = subjectLabel;
 
-export interface DissolvedRecord { subject: string; trial: number; value: number }
+export { dissolvedRecords, solubilityPoints } from "@/lib/report/solubility";
 
-/**
- * 회차마다 녹은 양 — 지금은 '넣은 총량 − 녹지 않고 남은 양'으로 구한다(표에는 녹은 양을 보여 주지 않고 학생이 뺀다).
- * 예전 기록(녹은 양을 그대로 측정값으로 남김)도 읽는다. 그래프는 미션을 모두 마친 뒤에 열린다.
- */
-export function dissolvedRecords(run: RunRecord): DissolvedRecord[] {
-  const old = run.measurements.filter((m) => /^dissolved\.[^.]+\.t\d+$/.test(m.key)).map((m) => ({ subject: m.subject, trial: m.trial, value: m.value }));
-  const now = run.measurements.filter((m) => /^residue\.[^.]+\.t\d+$/.test(m.key)).flatMap((r) => {
-    const added = run.measurements.find((m) => m.key === `added.${r.subject}.t${r.trial}`);
-    return added ? [{ subject: r.subject, trial: r.trial, value: Math.round((added.value - r.value) * 100) / 100 }] : [];
-  });
-  return [...old, ...now];
-}
-
-export function solubilityPoints(run: RunRecord): { subject: string; points: { x: number; y: number }[] }[] {
-  const dissolved = dissolvedRecords(run);
-  const subjects = [...new Set(dissolved.map((d) => d.subject))];
-  return subjects.map((subject) => ({
-    subject,
-    points: dissolved
-      .filter((d) => d.subject === subject)
-      .flatMap((d) => {
-        const t = run.measurements.find((m) => m.key === `temp.${subject}.t${d.trial}`);
-        return t ? [{ x: t.value, y: d.value }] : [];
-      })
-      .sort((a, b) => a.x - b.x),
-  }));
-}
-
-export default function SolubilityChart({ catalog, run }: { catalog: AnyCatalog; run: RunRecord }) {
-  const groups = solubilityPoints(run).filter((g) => g.points.length > 0);
+/** runs: 성공한 실행들 — 온도를 가장 여러 가지로 잰 실행의 점을 그린다 */
+export default function SolubilityChart({ catalog, runs }: { catalog: AnyCatalog; runs: RunRecord[] }) {
+  const groups = bestSolubilityPoints(runs);
   if (groups.length === 0) return <p className="text-sm text-muted">온도를 잰 기록이 있어야 그래프를 그릴 수 있어요.</p>;
   return (
     <ResponsiveContainer width="100%" height={300}>

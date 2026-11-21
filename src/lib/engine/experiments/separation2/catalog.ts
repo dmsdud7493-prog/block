@@ -111,6 +111,8 @@ export const separation2Catalog: ExperimentCatalog<Separation2State> = {
 
     {
       id: "filter_split",
+      // 그래프가 없는 실험 — 결과 표가 답을 드러내므로 실행 전에 함께 묻는다
+      beforeRun: true,
       question: "식힌 비커의 내용물을 거르면 거름종이 위와 걸러진 용액에는 각각 무엇이 있을까요?",
       choices: [
         { id: "boric_paper_cuso4_filtrate", label: "거름종이 위: 붕산 / 걸러진 용액: 황산 구리(II)가 녹아 있음" },
@@ -126,6 +128,8 @@ export const separation2Catalog: ExperimentCatalog<Separation2State> = {
   ],
 
   reference: [SOLUBILITY_REFERENCE],
+  // 그래프는 그리지 않는다 — 여러 번 실험하면 회차별 비교 표로 오차를 살핀다(사용자 요청 2026-11-21)
+  resultView: { kind: "table" },
   // 교사가 '넣는 양 정해 주기'로 배정했을 때의 양 — 예시 순서·예측 질문(붕산 10 g, 황산 구리(II) 1 g)과 같은 값
   fixedAmounts: [{ item: "hot_water", value: 100, unit: "g" }, { item: "boric_acid", value: 10, unit: "g" }, { item: "cuso4", value: 1, unit: "g" }],
   missions: [

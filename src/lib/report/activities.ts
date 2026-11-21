@@ -9,7 +9,9 @@ import type { Step } from "@/lib/engine/types";
 import { renderProgram } from "@/lib/engine/dsl/render";
 import { splitTrials } from "@/lib/engine/rules/variables";
 import { fixJosa, fmtMeasure, fmtNum } from "@/lib/engine/format";
-import { missionRuns } from "@/components/lab/missions";
+import { missionRunList } from "@/components/lab/missions";
+import { compareRuns } from "./compare";
+import { solubilityPoints } from "./solubility";
 import type { ReportContent } from "./template";
 import { stepMark } from "./marks";
 import { subjectLabel } from "@/lib/engine/subjectLabel";
@@ -116,16 +118,38 @@ export function missionDefs(c: AnyCatalog): ActivityDef[] {
 
 interface MissionPart { def: ActivityDef; run: RunRecord; trials: number[]; steps: Step[] }
 
-/** 미션을 모두 마쳤으면 미션 순서대로(미션 1 → 과정의 활동 1) 그 미션을 마친 실행에서 해당 회차만 골라 낸다 */
+/**
+ * 미션 순서대로(미션 1 → 과정의 활동 1) 그 미션을 한 실행에서 해당 회차만 골라 낸다.
+ * 실행을 찾은 미션만 담는다 — 다시 들어와 장면 기록이 없거나 마지막에 다른 실행을 해도 활동 1·2·3이 빠지지 않게(2026-11-21).
+ */
 function missionParts(c: AnyCatalog, s: LabState): MissionPart[] | null {
-  const runs = missionRuns(c, s);
-  if (!runs) return null;
+  const runs = missionRunList(c, s);
+  if (!runs.some((r) => r !== null)) return null;
   const defs = missionDefs(c);
-  return runs.map((run, i) => {
+  return runs.flatMap((run, i) => {
+    if (!run) return [];
     const g = groupTrials(c, run.program.steps, run, defs).find((x) => x.def === defs[i]);
     const all = splitTrials(run.program.steps, c.isTrialEnd).map((_, k) => k + 1);
-    return { def: defs[i], run, trials: g?.trials ?? all, steps: g?.steps ?? run.program.steps };
+    return [{ def: defs[i], run, trials: g?.trials ?? all, steps: g?.steps ?? run.program.steps }];
   });
+}
+
+/** 용해도: 온도를 두 가지 넘게 바꿔 잰 물질의 물의 온도–녹은 양 그래프(보고서 자료) */
+function curveOf(c: AnyCatalog, run: RunRecord, trials: number[]): Pick<DataItem, "series" | "axis"> | null {
+  if (c.slug !== "solubility") return null;
+  const groups = solubilityPoints(run, trials).filter((g) => new Set(g.points.map((p) => p.x)).size >= 2);
+  if (groups.length === 0) return null;
+  return {
+    series: groups.map((g) => ({ label: itemLabel(c, g.subject), points: g.points.map((p): [number, number] => [p.x, p.y]) })),
+    axis: { x: "물의 온도", xUnit: "℃", y: "녹은 양", yUnit: "g" },
+  };
+}
+
+/** 그래프 대신 표로 비교하는 실험(용해도 차 분리) — 두 번 넘게 실험했으면 회차별 비교 표를 자료로 덧붙인다 */
+function compareItem(c: AnyCatalog, s: LabState): Omit<DataItem, "note">[] {
+  if (c.resultView?.kind !== "table") return [];
+  const t = compareRuns(s.runs, s.calc);
+  return t.rows.length >= 2 ? [{ title: "여러 번 실험한 결과 비교(오차 살펴보기)", columns: t.columns, rows: t.rows, observations: t.same.length ? [`회차마다 같게 한 값: ${t.same.join(" · ")}`] : [], series: [] }] : [];
 }
 
 const stepsText = (c: AnyCatalog, steps: Step[]) => renderProgram(c, steps).map((line, i) => `${stepMark(i)} ${line}`).join("\n");
@@ -152,6 +176,7 @@ export function dataOf(c: AnyCatalog, s: LabState, notes: string[] = []): Report
     ...tableOf(c, s, g.run, g.trials),
     observations: observationsOf(g.run, g.steps),
     series: seriesOf(c, g.run, g.trials),
+    ...(curveOf(c, g.run, g.trials) ?? {}),
   })).filter((d) => d.rows.length > 0 || d.observations.length > 0 || d.series.length > 0);
-  return items.slice(0, 8).map((d, i) => ({ ...d, note: notes[i] ?? "" }));
+  return [...items, ...compareItem(c, s)].slice(0, 8).map((d, i) => ({ ...d, note: notes[i] ?? "" }));
 }

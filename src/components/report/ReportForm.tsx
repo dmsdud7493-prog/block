@@ -72,8 +72,8 @@ function DataBlock({ d, i, p }: { d: ReportContent["data"][number]; i: number; p
     <li className="space-y-2 rounded-lg border border-line bg-white p-2 print:break-inside-avoid">
       <p className="font-bold"><Badge text={`자료 ${n}`} />{d.title}</p>
       {d.rows.length ? <ResultsTable table={{ columns: d.columns, rows: d.rows }} caption={`자료 ${n} ${d.title}`} /> : null}
-      {d.observations.map((o) => <p key={o} className="rounded bg-[#f4f8ff] px-2 py-1 text-sm">👀 관찰: {o}</p>)}
-      <SeriesChart series={d.series} title={`자료 ${n}`} />
+      {d.observations.map((o) => <p key={o} className="rounded bg-[#f4f8ff] px-2 py-1 text-sm">{o.startsWith("회차마다") ? `📌 ${o}` : `👀 관찰: ${o}`}</p>)}
+      <SeriesChart series={d.series} title={`자료 ${n}`} axis={d.axis} />
       <SectionField id={`r-data-${n}`} label={`자료 ${n}에서 알 수 있는 점`} starter={fixJosa(`자료 ${n}을(를) 보면`)} rows={2} readOnly={p.readOnly} value={d.note} maxLength={800} onChange={setNote} />
     </li>
   );

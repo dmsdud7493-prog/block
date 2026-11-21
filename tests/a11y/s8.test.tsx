@@ -6,7 +6,7 @@ import { axe } from "jest-axe";
 import { useState } from "react";
 import SketchPad, { HIT_RADIUS, sketchTimes, type Sketch } from "@/components/data/SketchPad";
 import { plateausOf } from "@/components/data/TimeTempChart";
-import { solubilityPoints } from "@/components/data/SolubilityChart";
+import { solubilityPoints } from "@/lib/report/solubility";
 import { sketchLines } from "@/components/data/ResultChart";
 import MeltingScene from "@/components/monitor/scenes/MeltingScene";
 import { getCatalog } from "@/lib/engine/experiments";

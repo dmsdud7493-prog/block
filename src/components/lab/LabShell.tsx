@@ -17,7 +17,7 @@ import LabMonitor from "@/components/monitor/LabMonitor";
 import PredictionGate from "@/components/data/PredictionGate";
 import type { LabBackend } from "./backend";
 import { useLabController, type LabController } from "./useLabController";
-import { latestRun, reportReady, resultsDone } from "./state";
+import { latestRun, noGraph, reportReady, resultsDone } from "./state";
 import type { LabState, Phase } from "./types";
 import ResultsSection from "./ResultsSection";
 import { DEFAULT_SETTINGS, editorDiagnostics, type LabSettings } from "./editorDiagnostics";
@@ -44,7 +44,7 @@ function stepperState(s: LabState, catalog: AnyCatalog): { done: Partial<Record<
   const run = latestRun(s);
   const done = resultsDone(s, catalog);
   const missionsLeft = (catalog.missions?.length ?? 0) > 0 && !allMissionsDone(missionProgress(catalog, s));
-  const why = missionsLeft ? "오늘의 미션을 모두 마친 다음 열려요" : catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인한 다음 열려요" : "결과를 보고 예상과 비교한 다음 열려요";
+  const why = missionsLeft ? "오늘의 미션을 모두 마친 다음 열려요" : noGraph(catalog) ? "표의 계산값을 모두 맞게 확인한 다음 열려요" : "결과를 보고 예상과 비교한 다음 열려요";
   return {
     done: { design: s.runs.length > 0, predict: s.predictions.length > 0, run: Boolean(run?.ok), interpret: done },
     locked: reportReady(s, catalog) ? {} : { report: why },

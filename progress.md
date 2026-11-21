@@ -62,3 +62,8 @@
 - 과정 번호: 글에는 `1.` … `11.`로 쓰고 읽기·인쇄 화면은 직접 그린 동그라미 번호(`SectionField` StepLines, `lib/report/marks.ts`). 예전 ➊… 글은 불러올 때·표시할 때 맞춘다. 6개 실험 공통 경로.
 - 교사 화면 이동 링크 → 단추(`NavButton`/`NavRow`), 채점 화면 인쇄 단추.
 - `/dashboard/classes/[classId]/reports` — 과제별 제출 보고서 모두 + 공개된 채점, 학생마다 새 쪽 인쇄(PDF 저장). `classReports()`.
+
+### 2026-11-21 (2) 용해도 차 분리 그래프 제거 · 용해도 온도 그래프 · 밀도 보고서 활동 1·2·3
+- separation2: `resultView: { kind: "table" }` — 그래프 단계 없음. 두 번 넘게 실행하면 회차별 비교 표(`RunCompare`, `lib/report/compare.ts`)와 보고서 자료 추가. `filter_split` 예측은 실행 전에(beforeRun).
+- solubility: 그래프가 마지막 실행이 아니라 온도를 가장 여러 가지로 잰 실행을 그림(`bestSolubilityPoints`). 보고서 미션 ③ 자료에 물의 온도–녹은 양 그래프(data.axis).
+- density 보고서: 미션마다 실행을 따로 찾아 활동 1·2·3(`missionRunList`). 다시 들어온 뒤에도 장면 미션 실행의 프레임을 남김(`hydrate.keepFrames`).

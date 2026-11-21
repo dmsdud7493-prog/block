@@ -27,6 +27,8 @@ export const reportContentSchema = z.object({
     rows: z.array(z.array(z.string().max(80)).max(12)).max(60).default([]),
     observations: z.array(z.string().max(300)).max(10).default([]),
     series: z.array(z.object({ label: z.string().max(60), points: z.array(z.tuple([z.number(), z.number()])).max(80) })).max(6).default([]),
+    /** series가 시간–온도가 아닐 때의 축 이름·단위(용해도: 물의 온도–녹은 양). 없으면 시간(초)–온도(℃) */
+    axis: z.object({ x: z.string().max(30), xUnit: z.string().max(10), y: z.string().max(30), yUnit: z.string().max(10) }).optional(),
     note: t(800),
   })).max(8).default([]),
   interpretation: z.object({

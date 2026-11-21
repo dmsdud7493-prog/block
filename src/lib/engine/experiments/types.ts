@@ -117,8 +117,9 @@ export interface ExperimentCatalog<S> {
   /**
    * 결과 영역 모양. "graph"(기본) = 그래프 + 예상과 결과 비교.
    * "layers" = 그래프·비교 없이 계산값만 확인하고, 두 액체를 한 비커에 담은 모습(layers.liquids, 아래→위)을 보여 준다.
+   * "table" = 그래프 없이 계산값을 확인하고, 여러 번 실험하면 회차별 비교 표로 오차를 살핀다(용해도 차를 이용한 분리, 2026-11-21).
    */
-  resultView?: { kind: "graph" } | { kind: "layers"; liquids: string[] };
+  resultView?: { kind: "graph" } | { kind: "layers"; liquids: string[] } | { kind: "table" };
   /** 이 목록의 대상(subject)을 모두 측정하면 실험 완료 */
   requiredSubjects: string[];
   initialState: () => S;

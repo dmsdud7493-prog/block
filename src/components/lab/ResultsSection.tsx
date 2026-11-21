@@ -8,9 +8,10 @@ import { useState } from "react";
 import type { AnyCatalog } from "@/lib/engine/experiments/types";
 import DataTable from "@/components/data/DataTable";
 import LayerResult from "@/components/data/LayerResult";
+import RunCompare from "@/components/data/RunCompare";
 import ReferencePanel from "@/components/data/ReferencePanel";
 import type { LabController } from "./useLabController";
-import { latestRun, missingPrediction, reportReady } from "./state";
+import { latestRun, missingPrediction, noGraph, reportReady } from "./state";
 import { allMissionsDone, missionPredict, missionProgress } from "./missions";
 
 const ResultChart = dynamic(() => import("@/components/data/ResultChart"), { ssr: false, loading: () => <p className="text-muted">그래프를 그리는 중…</p> });
@@ -54,7 +55,7 @@ function ToReport({ ctl, catalog, onNextMission }: { ctl: LabController; catalog
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" className="tap rounded-full bg-ok px-5 py-2 font-bold text-white shadow-[0_3px_0_#05613f] disabled:opacity-50" disabled={!ready} onClick={() => ctl.dispatch({ type: "phase", phase: "report" })}>📝 실험 보고서 쓰러 가기</button>
-      {!ready ? <span className="text-sm text-muted">{catalog.resultView?.kind === "layers" ? "표의 계산값을 모두 맞게 확인하면 열려요." : "그래프를 그리면 열려요."}</span> : null}
+      {!ready ? <span className="text-sm text-muted">{noGraph(catalog) ? "표의 계산값을 모두 맞게 확인하면 열려요." : "그래프를 그리면 열려요."}</span> : null}
     </div>
   );
 }
@@ -67,6 +68,18 @@ function LayersView({ catalog, ctl, liquids, onNext }: { catalog: AnyCatalog; ct
     <>
       {okRun ? <LayerResult catalog={catalog} run={okRun} calc={state.calc} liquids={liquids} /> : null}
       {okRun ? <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} /> : null}
+    </>
+  );
+}
+
+/** 용해도 차 분리: 그래프 없이 계산값 확인 → (여러 번 실험했으면) 회차별 비교 표 → 보고서로 */
+function TableView({ catalog, ctl, onNext }: { catalog: AnyCatalog; ctl: LabController; onNext: () => void }) {
+  const okRun = [...ctl.state.runs].reverse().find((r) => r.ok);
+  if (!okRun) return null;
+  return (
+    <>
+      <RunCompare runs={ctl.state.runs} calc={ctl.state.calc} />
+      <ToReport ctl={ctl} catalog={catalog} onNextMission={onNext} />
     </>
   );
 }
@@ -100,9 +113,9 @@ export default function ResultsSection({ catalog, ctl, onNextMission }: { catalo
     <section aria-label="실험 결과" className="space-y-3">
       {catalog.reference?.map((t) => <ReferencePanel key={t.title} table={t} />)}
       {okRun ? <DataTable catalog={catalog} run={okRun} calc={state.calc} graphReady={state.graphOpened} shownNo={state.runs.filter((r) => r.ok && r.runNo <= okRun.runNo).length} onCheck={(req, v, u, raw) => ctl.check(req, okRun.runNo, v, u, raw)} /> : null}
-      {catalog.resultView?.kind === "layers"
-        ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} onNext={onNextMission} />
-        : <GraphView catalog={catalog} ctl={ctl} onNext={onNextMission} />}
+      {catalog.resultView?.kind === "layers" ? <LayersView catalog={catalog} ctl={ctl} liquids={catalog.resultView.liquids} onNext={onNextMission} /> : null}
+      {catalog.resultView?.kind === "table" ? <TableView catalog={catalog} ctl={ctl} onNext={onNextMission} /> : null}
+      {noGraph(catalog) ? null : <GraphView catalog={catalog} ctl={ctl} onNext={onNextMission} />}
     </section>
   );
 }

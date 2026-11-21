@@ -91,9 +91,12 @@ export function missingPrediction(s: LabState, targets: string[]): string | null
   return targets.find((t) => !s.predictions.some((p) => p.target === t && p.choice)) ?? null;
 }
 
+/** 그래프를 그리지 않는 실험(밀도: 층 그림, 용해도 차 분리: 비교 표) */
+export const noGraph = (catalog: AnyCatalog): boolean => catalog.resultView?.kind === "layers" || catalog.resultView?.kind === "table";
+
 /** 결과 확인을 마쳤는가 — 그래프형: 예상과 결과 비교(지침 3.3) / 층 그림형(밀도): 마지막 성공 실행의 계산값을 모두 맞힘 */
 export function resultsDone(s: LabState, catalog: AnyCatalog): boolean {
-  if (catalog.resultView?.kind !== "layers") return s.graphOpened;
+  if (!noGraph(catalog)) return s.graphOpened;
   const ok = [...s.runs].reverse().find((r) => r.ok);
   return Boolean(ok && ok.calcRequests.length > 0 && ok.calcRequests.every((c) => s.calc[c.key]?.correct));
 }
@@ -105,7 +108,7 @@ export function resultsDone(s: LabState, catalog: AnyCatalog): boolean {
 export function reportReady(s: LabState, catalog: AnyCatalog): boolean {
   const p = missionProgress(catalog, s);
   if (p.missions.length === 0) return resultsDone(s, catalog);
-  return allMissionsDone(p) && (catalog.resultView?.kind === "layers" || s.graphOpened);
+  return allMissionsDone(p) && (noGraph(catalog) || s.graphOpened);
 }
 
 /** 지침 3.3: 결과를 본 뒤 차이 설명을 모두 했는가 */

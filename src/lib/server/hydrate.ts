@@ -4,6 +4,8 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { runProgram } from "./simulation";
+import { getCatalog } from "@/lib/engine/experiments";
+import { runShowsEvent } from "@/components/lab/missions";
 import type { CalcEntry, PredictionRecord, RunRecord, SessionView } from "@/components/lab/types";
 import type { Program } from "@/lib/engine/types";
 import type { ErrorType } from "@/lib/engine/grader/errorTypes";
@@ -15,6 +17,18 @@ type RunRow = { run_no: number; ok: boolean; program: Program; diagnostics: RunR
 function toRun(r: RunRow, slug: string, seed: string, withFrames: boolean): RunRecord {
   const frames = withFrames ? runProgram(slug, r.program, seed, r.run_no).frames : [];
   return { runNo: r.run_no, ok: r.ok, frames, measurements: r.measurements, calcRequests: r.calc_requests, series: r.series, diagnostics: r.diagnostics, program: r.program, changedVars: r.changed_vars };
+}
+
+/**
+ * 프레임(장면 기록)은 마지막 실행과, 장면으로 완료를 판단하는 미션(밀도 ③ 한 비커)의 장면이 나온 마지막 실행에만 남긴다.
+ * 예전에는 마지막 실행에만 남겨서, 다시 들어온 뒤 다른 실행을 하면 미션 ③ 기록을 못 찾아 보고서 활동 2·3이 빠졌다(2026-11-21).
+ */
+const eventsOf = (slug: string) => (getCatalog(slug)?.missions ?? []).flatMap((m) => (m.done.event ? [m.done.event] : []));
+
+function keepFrames(slug: string, runs: RunRecord[]): RunRecord[] {
+  const events = eventsOf(slug);
+  const keep = new Set([runs.length - 1, ...events.map((e) => runs.findLastIndex((r) => r.ok && runShowsEvent(r, e)))]);
+  return runs.map((r, i) => (keep.has(i) ? r : { ...r, frames: [] }));
 }
 
 function toCalc(rows: { key: string; value: number; unit: string; is_correct: boolean; error_type: string | null; attempt: number; runs: { run_no: number } | null }[]): Record<string, CalcEntry> {
@@ -47,7 +61,7 @@ async function loadSessionViewInner(sessionId: string): Promise<SessionView | nu
     db.from("chat_messages").select("role, content, meta").eq("session_id", sessionId).order("id", { ascending: false }).limit(40),
   ]);
   const runRows = (runs.data ?? []) as RunRow[];
-  const runRecords = runRows.map((r, i) => toRun(r, slug, s.seed, i === runRows.length - 1));
+  const runRecords = keepFrames(slug, runRows.map((r, i) => toRun(r, slug, s.seed, i === runRows.length - 1 || eventsOf(slug).length > 0)));
   const predictions: PredictionRecord[] = (preds.data ?? []).map((p) => ({ target: p.target, choice: p.choice, rationale: p.rationale, hintsUsed: p.hints_used, matched: p.matched, rationaleAfter: p.rationale_after ?? undefined, ...(Array.isArray(p.sketch) ? { sketch: p.sketch as (number | null)[] } : {}) }));
   const latest = prog.data?.[0];
   const inquiry = s.inquiry as { problem?: string; hypothesis?: string };

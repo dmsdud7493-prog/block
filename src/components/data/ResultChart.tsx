@@ -91,7 +91,7 @@ export default function ResultChart({ catalog, runs, predictions = [] }: { catal
       <figcaption className="font-bold">📈 결과 그래프 {okRuns.length > 1 ? "(점선: 이전 실행)" : ""}</figcaption>
       {catalog.slug === "density" ? <MassVolume catalog={catalog} run={last} /> : null}
       {hasSeries ? <TimeTempChart catalog={catalog} runs={okRuns.slice(-3)} sketches={sketchLines(catalog, predictions)} /> : null}
-      {catalog.slug === "solubility" ? <SolubilityChart catalog={catalog} run={last} /> : null}
+      {catalog.slug === "solubility" ? <SolubilityChart catalog={catalog} runs={okRuns} /> : null}
       {!hasSeries && catalog.slug !== "density" && catalog.slug !== "solubility" ? <AmountBars catalog={catalog} run={last} /> : null}
       {hasSeries ? <SeriesTable catalog={catalog} run={last} /> : null}
     </figure>

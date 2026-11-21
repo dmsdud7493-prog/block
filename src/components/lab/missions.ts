@@ -4,6 +4,7 @@
  */
 import type { AnyCatalog, MissionDef } from "@/lib/engine/experiments/types";
 import type { LabState, RunRecord } from "./types";
+import { usedSubjects } from "@/lib/engine/predictionScope";
 
 export interface MissionProgress {
   missions: MissionDef[];
@@ -78,6 +79,17 @@ export function missionRuns(catalog: AnyCatalog, s: LabState): RunRecord[] | nul
   const found = p.missions.map((m) => runFor(m, s));
   return found.every((r): r is RunRecord => r !== null) ? found : null;
 }
+
+/** 장면 미션인데 장면 기록(프레임)이 없는 실행뿐일 때 — 그 물질을 모두 쓴 마지막 성공 실행(계산할 것이 없는 실행 먼저) */
+function looseRunFor(m: MissionDef, s: LabState): RunRecord | null {
+  const need = m.done.event?.settled ?? [];
+  if (need.length === 0) return null;
+  const fits = s.runs.filter((r) => r.ok && need.every((x) => usedSubjects(r.program).has(x)));
+  return [...fits].reverse().find((r) => r.calcRequests.length === 0) ?? fits[fits.length - 1] ?? null;
+}
+
+/** 미션마다 그 미션을 한 실행(없으면 null) — 미션을 모두 마치지 않았거나 다시 들어와 장면 기록이 없어도 찾는다(보고서 활동 1·2·3용) */
+export const missionRunList = (catalog: AnyCatalog, s: LabState): (RunRecord | null)[] => (catalog.missions ?? []).map((m) => runFor(m, s) ?? looseRunFor(m, s));
 
 function runFor(m: MissionDef, s: LabState): RunRecord | null {
   const want = m.done.solved ?? [];

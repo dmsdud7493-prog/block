@@ -24,6 +24,16 @@ function stateOf(steps: ReturnType<typeof S>[]): LabState {
   return { ...initialLabState("density"), program, runs: [run], calc } as LabState;
 }
 
+/** 미션마다 따로 실행한 기록(실행 1, 2, 3 …) — 계산값은 그 실행에서 모두 맞힌 것으로 */
+function statesOf(list: ReturnType<typeof S>[][]): LabState {
+  return list.reduce<LabState>((st, steps, i) => {
+    const one = stateOf(steps);
+    const run = { ...one.runs[0], runNo: i + 1 } as RunRecord;
+    const calc = Object.fromEntries(Object.entries(one.calc).map(([k, v]) => [k, { ...v, runNo: i + 1 }]));
+    return { ...st, program: one.program, runs: [...st.runs, run], calc: { ...st.calc, ...calc } } as LabState;
+  }, initialLabState("density") as LabState);
+}
+
 describe("활동 나누기", () => {
   it("단계가 10개를 넘어도 번호 모양이 같다(11.도 1.과 같은 모양)", () => {
     const acts = activitiesOf(densityCatalog, stateOf([...liquid("water"), ...liquid("oil"), ...liquid("water")]));
@@ -50,9 +60,19 @@ describe("활동 나누기", () => {
     expect(data[2].rows).toEqual([]);
     expect(data[2].observations[0]).toBe("비커 속에서 큰 철조각과 작은 철조각은 함께 바닥에 가라앉고, 그 위로 아래부터 물 → 식용유 순서로 자리 잡았어요.");
   });
-  it("학생이 먼저 한 활동이 활동 1이 된다(금속부터 하면 금속이 1)", () => {
+  it("활동은 미션 순서대로(금속부터 해도 액체가 활동 1) — 다른 실험 보고서와 같게 (2026-11-21)", () => {
     const s = stateOf([...iron("iron_big"), ...liquid("water")]);
-    expect(activitiesOf(densityCatalog, s).map((a) => a.title)).toEqual([densityCatalog.reportActivities![1].title, densityCatalog.reportActivities![0].title]);
+    expect(activitiesOf(densityCatalog, s).map((a) => a.title)).toEqual([densityCatalog.reportActivities![0].title, densityCatalog.reportActivities![1].title]);
+  });
+  it("다시 들어와 장면 기록(프레임)이 없고 마지막에 미션 1을 다시 실행해도 활동 1·2·3이 모두 나온다", () => {
+    const A = [...liquid("water"), ...liquid("oil")];
+    const B = [...iron("iron_big"), ...iron("iron_small")];
+    const s = statesOf([A, B, together, A]);
+    const stripped = { ...s, runs: s.runs.map((r, i) => (i === s.runs.length - 1 ? r : { ...r, frames: [] })) } as LabState;
+    const acts = activitiesOf(densityCatalog, stripped);
+    expect(acts.map((a) => a.title)).toEqual(densityCatalog.reportActivities!.map((d) => d.title));
+    expect(acts.map((a) => a.steps.split("\n").length)).toEqual([10, 10, 4]);
+    expect(acts.every((a) => a.steps.startsWith("1. "))).toBe(true);
   });
   it("카탈로그에 활동이 없으면 측정 대상마다 활동 하나, 대상이 하나면 실험 이름으로", () => {
     expect(activityDefs(boilingCatalog).map((a) => a.title)).toEqual(["물의 끓는점 측정하기", "에탄올의 끓는점 측정하기"]);

@@ -75,6 +75,8 @@ for (const slug of ["melting", "boiling", "solubility", "separation1", "separati
     if (!GRAPH_FOR_MISSIONS.includes(slug)) {
       await expect(page.getByRole("button", { name: /그래프 그리기/ })).toHaveCount(0);
       await expect(page.getByText("🎯 오늘의 미션을 마치면 다음 단계가 열려요.")).toBeVisible();
+      // 용해도 차 분리는 그래프가 아예 없다 — 한 번 더 실험하면 회차별 비교 표가 생긴다는 안내(2026-11-21)
+      if (slug === "separation2") await expect(page.getByText(/한 번 더 실행하면, 회차마다 값을 나란히 놓은 비교 표가 생겨요/)).toBeVisible();
       await expect(page.getByRole("button", { name: /보고서 쓰러 가기/ })).toHaveCount(0);
       return;
     }
