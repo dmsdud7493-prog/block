@@ -11,14 +11,13 @@ import { splitTrials } from "@/lib/engine/rules/variables";
 import { fixJosa, fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { missionRuns } from "@/components/lab/missions";
 import type { ReportContent } from "./template";
+import { stepMark } from "./marks";
 import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 export interface ActivityDef { title: string; subjects: string[] }
 type DataItem = ReportContent["data"][number];
 
 const itemLabel = subjectLabel;
-const MARKS = ["➊", "➋", "➌", "➍", "➎", "➏", "➐", "➑", "➒", "➓"];
-export const stepMark = (i: number) => MARKS[i] ?? `${i + 1}.`;
 
 /** 활동 정의 — 카탈로그에 있으면 그대로, 없으면 측정 대상마다 하나("물의 끓는점 측정하기") */
 export function activityDefs(c: AnyCatalog): ActivityDef[] {
@@ -131,7 +130,7 @@ function missionParts(c: AnyCatalog, s: LabState): MissionPart[] | null {
 
 const stepsText = (c: AnyCatalog, steps: Step[]) => renderProgram(c, steps).map((line, i) => `${stepMark(i)} ${line}`).join("\n");
 
-/** 과정 — 활동별 제목과 ➊➋… 순서. 미션이 있는 실험은 미션을 모두 마친 뒤 미션 순서대로 한데 모은다 */
+/** 과정 — 활동별 제목과 1. 2. … 순서. 미션이 있는 실험은 미션을 모두 마친 뒤 미션 순서대로 한데 모은다 */
 export function activitiesOf(c: AnyCatalog, s: LabState): ReportContent["activities"] {
   const parts = missionParts(c, s);
   if (parts) return parts.slice(0, 8).map((m) => ({ title: m.def.title, steps: stepsText(c, m.steps) }));

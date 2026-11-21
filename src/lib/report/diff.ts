@@ -2,6 +2,7 @@
  * 고쳐서 다시 낸 보고서에서 학생이 고친 칸 — 교사가 다시 채점할 때 어디를 보면 되는지 알려 준다 (2026-11-18 점검).
  */
 import type { ReportContent } from "./template";
+import { unifyMarks } from "./marks";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? "") === JSON.stringify(b ?? "");
 
@@ -18,7 +19,7 @@ export function changedSections(prev: ReportContent, cur: ReportContent): string
   const idx = Array.from({ length: n }, (_, i) => i);
   return [
     ...head.filter(([k]) => !same(prev[k], cur[k])).map(([, label]) => label),
-    ...idx.filter((i) => !same(prev.activities[i]?.steps, cur.activities[i]?.steps)).map((i) => `과정: 활동 ${i + 1}`),
+    ...idx.filter((i) => !same(unifyMarks(prev.activities[i]?.steps ?? ""), unifyMarks(cur.activities[i]?.steps ?? ""))).map((i) => `과정: 활동 ${i + 1}`),
     ...idx.filter((i) => !same(prev.data[i]?.note, cur.data[i]?.note)).map((i) => `자료 ${i + 1}에서 알 수 있는 점`),
     ...INTERP.filter(([k]) => !same(prev.interpretation[k], cur.interpretation[k])).map(([, label]) => label),
     ...REFL.filter(([k]) => !same(prev.reflection[k], cur.reflection[k])).map(([, label]) => label),

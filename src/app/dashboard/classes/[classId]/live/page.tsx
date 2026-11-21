@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { classBoard } from "@/lib/server/dashboard";
+import NavButton, { NavRow } from "@/components/teacher/NavButton";
 import FourCards from "@/components/teacher/FourCards";
 import LiveBoard from "@/components/teacher/LiveBoard";
 import LiveRefresh from "@/components/teacher/LiveRefresh";
@@ -31,6 +32,7 @@ export default async function LivePage(props: Props) {
         <h1 className="text-2xl font-bold">🛰 {board.className} 실시간 보드</h1>
         <LiveRefresh classIds={[board.classId]} generatedAt={board.generatedAt} />
       </div>
+      <NavRow><NavButton href="/dashboard">← 대시보드</NavButton><NavButton href={`/dashboard/classes/${board.classId}`}>🏫 반 관리</NavButton><NavButton href={`/dashboard/classes/${board.classId}/reports${board.assignment ? `?assignment=${board.assignment.id}` : ""}`} tone="brand">📚 보고서 모아 보기 · 인쇄</NavButton></NavRow>
       <nav aria-label="과제 고르기" className="flex flex-wrap gap-2 text-sm">
         {board.assignments.map((a) => <Link key={a.id} href={`${base}?assignment=${a.id}`} aria-current={a.id === board.assignment?.id ? "page" : undefined} className={`tap flex items-center rounded border px-3 ${a.id === board.assignment?.id ? "border-brand bg-brand text-white" : "border-line"}`}>{a.title}</Link>)}
       </nav>

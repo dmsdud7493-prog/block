@@ -6,9 +6,9 @@ import { logout } from "@/app/(auth)/login/actions";
 
 function TeacherNav() {
   return (
-    <nav aria-label="교사 메뉴" className="flex gap-3 text-sm font-semibold">
-      <Link href="/dashboard" className="tap flex items-center">📊 대시보드</Link>
-      <Link href="/dashboard/classes" className="tap flex items-center">🏫 반 관리</Link>
+    <nav aria-label="교사 메뉴" className="flex gap-2 text-sm font-semibold">
+      <Link href="/dashboard" className="tap flex items-center rounded-lg border border-line bg-white px-3 hover:bg-slate-50">📊 대시보드</Link>
+      <Link href="/dashboard/classes" className="tap flex items-center rounded-lg border border-line bg-white px-3 hover:bg-slate-50">🏫 반 관리</Link>
     </nav>
   );
 }
@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (user.role === "student") redirect("/lab");
   return (
     <div className="min-h-screen">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 print:hidden">
         <TeacherNav />
         <form action={logout} className="flex items-center gap-2 text-sm"><span>{user.displayName} 선생님</span><button type="submit" className="tap rounded border border-line px-3">나가기</button></form>
       </header>

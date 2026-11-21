@@ -9,6 +9,7 @@ import { fmtMeasure, fmtNum } from "@/lib/engine/format";
 import { latestRun } from "@/components/lab/state";
 import { emptyReport, type ReportContent } from "./template";
 import { activitiesOf, dataOf } from "./activities";
+import { unifyActivities } from "./marks";
 import { subjectLabel } from "@/lib/engine/subjectLabel";
 
 const opt = (c: AnyCatalog, id: string | null) => c.variableOptions.find((o) => o.id === id)?.label ?? "";
@@ -87,7 +88,9 @@ export function transcribe(c: AnyCatalog, s: LabState): ReportContent {
 export function initialReport(c: AnyCatalog, s: LabState, saved: Partial<ReportContent> | null): ReportContent {
   const hasSaved = saved && Object.keys(saved).length > 0;
   if (!hasSaved) return transcribe(c, s);
-  const base = { ...emptyReport(), ...saved } as ReportContent;
+  const merged = { ...emptyReport(), ...saved } as ReportContent;
+  // 예전 번호(➊… 11.)는 같은 모양(①… ⑪)으로 바꿔 보여 준다
+  const base = { ...merged, activities: unifyActivities(merged.activities ?? []) };
   if (s.runs.length === 0) return base;
   // 예전 보고서(활동 없이 과정 글만)는 활동 하나로 옮겨 보여 준다. 자료는 실험 기록에서 새로 만들고, 학생이 쓴 "알 수 있는 점"은 이어 받는다
   // 저장된 활동이 실험 기록의 활동보다 적으면(예전 보고서·미션을 더 한 뒤) 모자란 활동을 뒤에 이어 붙인다 — 학생이 고친 활동은 그대로

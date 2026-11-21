@@ -109,7 +109,7 @@ test("밀도: 설계부터 보고서까지 — 미션 셋을 마치면 보고서
   await expect(page.getByRole("heading", { name: /탐구 보고서/ })).toBeVisible();
   // 활동지 모양: 과정은 미션 순서대로 활동 1(액체)·2(금속)·3(한 비커), 자료 해석도 자료 1·2·3, 변인 칸은 없다 (ADR-P20)
   await expect(page.getByText("활동 3", { exact: true })).toBeVisible();
-  await expect(page.locator("#r-act-1")).toHaveValue(/^➊ /);
+  await expect(page.locator("#r-act-1")).toHaveValue(/^1\. /);
   await expect(page.locator("#r-act-1")).toHaveValue(/식용유/);
   await expect(page.locator("#r-act-2")).toHaveValue(/철조각/);
   const results = page.getByRole("table", { name: /^자료 2 / });

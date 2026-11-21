@@ -25,12 +25,18 @@ function stateOf(steps: ReturnType<typeof S>[]): LabState {
 }
 
 describe("활동 나누기", () => {
-  it("밀도: 액체 → 금속 → 한 비커, 세 활동으로 나뉘고 단계에 ➊➋ 번호가 붙는다", () => {
+  it("단계가 10개를 넘어도 번호 모양이 같다(11.도 1.과 같은 모양)", () => {
+    const acts = activitiesOf(densityCatalog, stateOf([...liquid("water"), ...liquid("oil"), ...liquid("water")]));
+    const lines = acts.flatMap((a) => a.steps.split("\n"));
+    expect(lines.length).toBeGreaterThan(10);
+    expect(lines.every((l) => /^\d+\. /.test(l))).toBe(true);
+  });
+  it("밀도: 액체 → 금속 → 한 비커, 세 활동으로 나뉘고 단계에 1. 2. 번호가 붙는다", () => {
     const s = stateOf([...liquid("water"), ...liquid("oil"), ...iron("iron_big"), ...iron("iron_small"), ...together]);
     const acts = activitiesOf(densityCatalog, s);
     expect(acts.map((a) => a.title)).toEqual(densityCatalog.reportActivities!.map((a) => a.title));
     expect(acts[0].steps.split("\n")).toHaveLength(10);
-    expect(acts[0].steps.startsWith("➊ ")).toBe(true);
+    expect(acts[0].steps.startsWith("1. ")).toBe(true);
     expect(acts[1].steps).toContain("철조각");
   });
   it("밀도 자료: 활동마다 자료 하나 — 표(맞힌 계산값 포함)와 한 비커 관찰", () => {

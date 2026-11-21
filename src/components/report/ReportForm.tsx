@@ -44,13 +44,13 @@ function Simple({ k, rows, p }: { k: SimpleKey; rows?: number; p: Props }) {
 
 const Badge = ({ text }: { text: string }) => <span className="mr-1 rounded-full bg-[#4cbfe6] px-2 py-0.5 text-xs font-extrabold text-white">{text}</span>;
 
-/** 과정 — 활동 1, 2…마다 제목과 ➊➋ 순서(초안, 학생이 고친다). 예전 보고서는 과정 글 하나 */
+/** 과정 — 활동 1, 2…마다 제목과 1. 2. 순서(초안, 학생이 고친다). 예전 보고서는 과정 글 하나 */
 function Process({ p }: { p: Props }) {
   const acts = p.content.activities;
   const setSteps = (i: number) => (v: string) => p.update((c) => ({ ...c, activities: c.activities.map((a, j) => (j === i ? { ...a, steps: v } : a)), drafts: c.drafts.filter((d) => d !== "procedure") }));
   const draft = p.content.drafts.includes("procedure");
   if (acts.length === 0) {
-    return <SectionField id="r-procedure" label="" rows={8} readOnly={p.readOnly} draft={draft} value={p.content.procedure} maxLength={3000} ariaLabel="과정" onChange={(v) => p.update((c) => ({ ...c, procedure: v }))} />;
+    return <SectionField id="r-procedure" numbered label="" rows={8} readOnly={p.readOnly} draft={draft} value={p.content.procedure} maxLength={3000} ariaLabel="과정" onChange={(v) => p.update((c) => ({ ...c, procedure: v }))} />;
   }
   return <ol className="space-y-3">{acts.map((a, i) => <Activity key={`${i}-${a.title}`} a={a} i={i} p={p} draft={draft && i === 0} onChange={setSteps(i)} />)}</ol>;
 }
@@ -59,7 +59,7 @@ function Activity({ a, i, p, draft, onChange }: { a: ReportContent["activities"]
   return (
     <li className="space-y-1">
       <p className="font-bold text-[#1f6fb5]"><Badge text={`활동 ${i + 1}`} />{a.title}</p>
-      <SectionField id={`r-act-${i + 1}`} label="" rows={Math.min(10, a.steps.split("\n").length + 1)} readOnly={p.readOnly} draft={draft} value={a.steps} maxLength={3000} ariaLabel={`활동 ${i + 1} ${a.title} 과정`} onChange={onChange} />
+      <SectionField id={`r-act-${i + 1}`} numbered label="" rows={Math.min(10, a.steps.split("\n").length + 1)} readOnly={p.readOnly} draft={draft} value={a.steps} maxLength={3000} ariaLabel={`활동 ${i + 1} ${a.title} 과정`} onChange={onChange} />
     </li>
   );
 }

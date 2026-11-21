@@ -1,8 +1,8 @@
 /** 학생 상세 — 블록·실행/그래프·예상·AI 대화 (지침 5.1, R6) */
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sessionDetail } from "@/lib/server/dashboard";
+import NavButton, { NavRow } from "@/components/teacher/NavButton";
 import SessionTabs, { type TabId } from "@/components/teacher/SessionTabs";
 
 export const metadata: Metadata = { title: "학생 기록" };
@@ -27,9 +27,9 @@ export default async function SessionPage(props: Props) {
   const { detail, tab } = data;
   return (
     <main id="main" className="mx-auto max-w-5xl space-y-3 p-4">
-      <p className="text-sm"><Link className="underline" href={`/dashboard/classes/${detail.classId}/live`}>← 실시간 보드</Link></p>
+      <NavRow><NavButton href={`/dashboard/classes/${detail.classId}/live`}>← 실시간 보드</NavButton>{detail.submissionId ? <NavButton href={`/dashboard/submissions/${detail.submissionId}`} tone="brand">📝 보고서 채점하기</NavButton> : null}</NavRow>
       <h1 className="text-2xl font-bold">{detail.studentNo} · {detail.title}</h1>
-      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 상태 {STATUS_LABEL[detail.status] ?? detail.status}{detail.submissionId ? <> · <Link className="underline" href={`/dashboard/submissions/${detail.submissionId}`}>보고서 채점하기</Link></> : null}</p>
+      <p className="text-sm text-muted">시작 {new Date(detail.startedAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 상태 {STATUS_LABEL[detail.status] ?? detail.status}</p>
       <SessionTabs detail={detail} initial={tab} />
     </main>
   );

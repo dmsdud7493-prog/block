@@ -11,7 +11,7 @@ import { classDetail, teacherClasses } from "./teacher";
 import { predictionMatched } from "@/lib/engine/predictionKey";
 import { reportContentSchema } from "@/lib/report/template";
 import { changedSections } from "@/lib/report/diff";
-import type { ClassBoard, ChatLine, RunLine, SessionDetail, SubmissionDetail } from "@/lib/teacherTypes";
+import type { ClassBoard, ChatLine, ClassReportItem, ClassReports, RunLine, SessionDetail, SubmissionDetail } from "@/lib/teacherTypes";
 
 const EVENT_PAGE = 1000;
 const EVENT_LIMIT = 20000;
@@ -196,6 +196,46 @@ export async function submissionDetail(submissionId: string): Promise<Submission
       draft: draft.data ? { rubric: draft.data.rubric as Record<string, string>, feedback: draft.data.feedback as string, updatedAt: draft.data.updated_at as string } : null,
       history: audits.map((a) => ({ reason: a.reason, at: a.created_at })),
     };
+  } catch {
+    return null;
+  }
+}
+
+interface ReportRow {
+  id: string; student_id: string; status: SessionStatus;
+  submissions: Embedded<{ id: string; submitted_at: string; late: boolean; version: number; report_snapshot: unknown; rubric_scores: Record<string, string> | null; teacher_feedback: string | null; returned_at: string | null }>;
+}
+
+function reportItem(r: ReportRow, studentNo: string): ClassReportItem[] {
+  const sub = one(r.submissions);
+  if (!sub) return [];
+  const snap = (sub.report_snapshot ?? {}) as { content?: Record<string, unknown>; ai_assisted_sections?: string[] };
+  const open = r.status === "submitted" || r.status === "resubmitted";
+  const state = r.status === "returned" ? "returned" : open && sub.returned_at && sub.returned_at >= sub.submitted_at ? "graded" : "waiting";
+  return [{
+    submissionId: sub.id, studentNo, submittedAt: sub.submitted_at, late: sub.late, version: sub.version, state,
+    content: snap.content ?? {}, aiAssisted: snap.ai_assisted_sections ?? [],
+    rubric: sub.returned_at ? sub.rubric_scores ?? {} : {}, feedback: sub.returned_at ? sub.teacher_feedback ?? "" : "",
+  }];
+}
+
+/** 반 보고서 모아 보기·인쇄 (2026-11-21) — 과제 하나에 제출된 보고서 모두를 학번 순으로. RLS로 내 반만 읽힌다 */
+export async function classReports(classId: string, assignmentId?: string | null): Promise<ClassReports | null> {
+  try {
+    const cls = await classDetail(classId);
+    if (!cls) return null;
+    const assignment = cls.assignments.find((a) => a.id === assignmentId) ?? cls.assignments[cls.assignments.length - 1] ?? null;
+    const head = { classId, className: cls.name, assignments: cls.assignments, assignment };
+    if (!assignment) return { ...head, items: [], notSubmitted: [] };
+    const db = await createClient();
+    const { data } = await db.from("sessions")
+      .select("id, student_id, status, submissions(id, submitted_at, late, version, report_snapshot, rubric_scores, teacher_feedback, returned_at)")
+      .eq("assignment_id", assignment.id);
+    const rows = (data ?? []) as unknown as ReportRow[];
+    const noOf = new Map(cls.students.map((s) => [s.id, s.studentNo]));
+    const items = rows.flatMap((r) => reportItem(r, noOf.get(r.student_id) ?? "?")).sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+    const done = new Set(items.map((i) => i.studentNo));
+    return { ...head, items, notSubmitted: cls.students.map((s) => s.studentNo).filter((n) => !done.has(n)) };
   } catch {
     return null;
   }

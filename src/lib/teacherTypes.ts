@@ -63,3 +63,20 @@ export interface SubmissionDetail {
   loadedAt?: number;
   history: { reason: string; at: string }[];
 }
+
+/** 반 보고서 모아 보기·인쇄 — 과제 하나에 제출된 보고서 모두(학번 순) */
+export interface ClassReportItem {
+  submissionId: string;
+  studentNo: string;
+  submittedAt: string;
+  late: boolean;
+  version: number;
+  /** 🏁 채점 완료 / 돌려줌(고치는 중) / 채점 전 */
+  state: "graded" | "returned" | "waiting";
+  content: Record<string, unknown>;
+  aiAssisted: string[];
+  /** 학생에게 공개된 루브릭·코멘트(공개 전이면 비어 있음) */
+  rubric: Record<string, string>;
+  feedback: string;
+}
+export interface ClassReports { classId: string; className: string; assignments: AssignmentRow[]; assignment: AssignmentRow | null; items: ClassReportItem[]; notSubmitted: string[] }
