@@ -5,11 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import type { AssignmentRow, ClassSummary, StudentRow } from "@/lib/teacherTypes";
 export type { AssignmentRow, ClassSummary, StudentRow };
 
+/** 반 이름 순(2-1, 2-2, … 2-7, 2-10) — 만든 순서가 아니라 숫자를 읽어 차례대로 (2026-11-21) */
+export const sortClasses = <T extends { name: string }>(rows: T[]): T[] => [...rows].sort((a, b) => a.name.localeCompare(b.name, "ko", { numeric: true }));
+
 export async function teacherClasses(): Promise<ClassSummary[]> {
   try {
     const db = await createClient();
     const { data } = await db.from("classes").select("id, name, join_code, settings, enrollments(count)").order("created_at");
-    return (data ?? []).map((c) => ({ id: c.id, name: c.name, joinCode: c.join_code, settings: c.settings as Record<string, unknown>, studentCount: (c.enrollments as unknown as { count: number }[])[0]?.count ?? 0 }));
+    const rows = (data ?? []).map((c) => ({ id: c.id, name: c.name, joinCode: c.join_code, settings: c.settings as Record<string, unknown>, studentCount: (c.enrollments as unknown as { count: number }[])[0]?.count ?? 0 }));
+    return sortClasses(rows);
   } catch {
     return [];
   }

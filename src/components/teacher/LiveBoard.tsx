@@ -56,7 +56,7 @@ function Row({ f, subId }: { f: StudentFold; subId?: string }) {
       <td className="px-2 py-1">{STEP_LABEL[f.step]}</td>
       <td className="px-2 py-1 tabular-nums">{f.step === "submitted" ? "—" : `${Math.round(f.dwellSec / 60)}분`}</td>
       <td className="px-2 py-1 tabular-nums">{f.runs}{f.simErrorStreak ? ` (오류 연속 ${f.simErrorStreak})` : ""}</td>
-      <td className="px-2 py-1 tabular-nums">✓{f.calcCorrect}{wrong ? ` · 재시도 ${wrong}` : ""}</td>
+      <td className="px-2 py-1 tabular-nums">맞힘 {f.calcCorrect}개{wrong ? ` · 틀린 시도 ${wrong}번` : ""}</td>
       <td className="px-2 py-1 tabular-nums">같음 {f.predictionsMatched} · 다름 {f.predictionsMismatched}</td>
       <td className="px-2 py-1 tabular-nums">{f.aiReplies}{f.flagged ? <span className="ml-1 text-err">🚩{f.flagged}</span> : null}</td>
       <td className="px-2 py-1">{subId ? <Link className="underline" href={`/dashboard/submissions/${subId}`}>{statusLabel(f)}</Link> : statusLabel(f)}{f.late ? " · 마감 뒤" : ""}</td>
