@@ -12,6 +12,7 @@ import SeriesChart from "./SeriesChart";
 import ReflectionForm from "./ReflectionForm";
 import type { Updater } from "./useReport";
 import { fixJosa } from "@/lib/engine/format";
+import { deriveData } from "@/lib/report/derive";
 
 interface Props { content: ReportContent; update: (fn: Updater) => void; readOnly: boolean; onFocusSection: (title: string) => void; aiFlags?: string[] }
 
@@ -65,8 +66,9 @@ function Activity({ a, i, p, draft, onChange }: { a: ReportContent["activities"]
 }
 
 /** 자료 하나 — 표·관찰·시간–온도 그래프 + "알 수 있는 점" */
-function DataBlock({ d, i, p }: { d: ReportContent["data"][number]; i: number; p: Props }) {
+function DataBlock({ d: raw, i, p }: { d: ReportContent["data"][number]; i: number; p: Props }) {
   const n = i + 1;
+  const d = deriveData(raw);
   const setNote = (v: string) => p.update((c) => ({ ...c, data: c.data.map((x, j) => (j === i ? { ...x, note: v } : x)) }));
   return (
     <li className="space-y-2 rounded-lg border border-line bg-white p-2 print:break-inside-avoid">

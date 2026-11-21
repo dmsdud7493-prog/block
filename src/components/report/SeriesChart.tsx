@@ -26,7 +26,7 @@ function Plot({ series, axis, dots, width, height }: { series: Series; axis: Axi
       <YAxis type="number" dataKey="temp" unit={axis.yUnit} domain={["auto", "auto"]} />
       <Tooltip />
       <Legend verticalAlign="top" />
-      {series.map((s, i) => <Line key={s.label} name={s.label} data={s.points.map(([t, temp]) => ({ t, temp }))} dataKey="temp" stroke={COLORS[i % COLORS.length]} dot={dots} isAnimationActive={false} />)}
+      {series.map((s, i) => <Line key={s.label} name={s.label} data={s.points.map(([t, temp]) => ({ t, temp }))} dataKey="temp" stroke={COLORS[i % COLORS.length]} dot={dots} type={dots ? "monotone" : "linear"} strokeWidth={dots ? 2 : 1} isAnimationActive={false} />)}
     </LineChart>
   );
 }
@@ -36,7 +36,7 @@ export default function SeriesChart({ series, title, axis }: { series: Series; t
   const ax = axis ?? TIME_TEMP;
   return (
     <figure aria-label={`${title} ${ax.x}–${ax.y} 그래프`} className="rounded border border-line bg-white p-2">
-      {axis ? <figcaption className="text-sm font-semibold">📈 {ax.x}에 따른 {ax.y}</figcaption> : null}
+      {axis ? <figcaption className="text-sm font-semibold">📈 {ax.x}에 따른 {ax.y} 곡선</figcaption> : null}
       <ResponsiveContainer width="100%" height={220}><Plot series={series} axis={ax} dots={Boolean(axis)} /></ResponsiveContainer>
       <Table series={series} axis={ax} />
     </figure>
